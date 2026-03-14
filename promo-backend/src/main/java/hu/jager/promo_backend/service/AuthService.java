@@ -27,16 +27,17 @@ public class AuthService {
 
     // --- 1. HAGYOMÁNYOS (E-MAIL + JELSZÓ) REGISZTRÁCIÓ ---
     @Transactional
-    public AppUser register(String email, String rawPassword) {
+    public AppUser register(String email, String rawPassword, String name) { // <-- Itt a név paraméter
         if (userRepo.existsByEmail(email)) {
             throw new IllegalArgumentException("Ez az e-mail cím már regisztrálva van!");
         }
 
         AppUser user = new AppUser();
         user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(rawPassword)); // Jelszó titkosítása BCrypt-tel
-        user.setRole(AppUser.Role.USER); // Alapértelmezett rang
-        user.setProvider(AppUser.AuthProvider.LOCAL); // Hagyományos regisztráció
+        user.setPasswordHash(passwordEncoder.encode(rawPassword));
+        user.setName(name); // <-- EZT ADTUK HOZZÁ! Mentsük el az adatbázisba!
+        user.setRole(AppUser.Role.USER);
+        user.setProvider(AppUser.AuthProvider.LOCAL);
 
         return userRepo.save(user);
     }
@@ -76,6 +77,7 @@ public class AuthService {
         // 3. Adatok kinyerése a biztonságos tokenből
         GoogleIdToken.Payload payload = idToken.getPayload();
         String email = payload.getEmail();
+        String name = (String) payload.get("name");
 
         // 4. Megnézzük, létezik-e már a felhasználó
         Optional<AppUser> existingUser = userRepo.findByEmail(email);
@@ -92,6 +94,7 @@ public class AuthService {
             // 5. Ha még nem létezik, automatikusan beregisztráljuk
             AppUser newUser = new AppUser();
             newUser.setEmail(email);
+            newUser.setName(name);
             newUser.setRole(AppUser.Role.USER); // Szintén alapértelmezett rang
             newUser.setProvider(AppUser.AuthProvider.GOOGLE);
             // Jelszó mező üresen marad, mert a Google azonosítja

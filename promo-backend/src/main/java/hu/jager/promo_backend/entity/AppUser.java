@@ -21,6 +21,8 @@ public class AppUser {
     @Column(nullable = true)
     private String passwordHash;
 
+    private String name;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

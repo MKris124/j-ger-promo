@@ -22,9 +22,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request) {
         try {
-            AppUser user = authService.register(request.getEmail(), request.getPassword());
-            String token = jwtUtils.generateToken(user); // TOKEN GENERÁLÁSA
-            return ResponseEntity.ok(new AuthResponse(user, token)); // ÁTADJUK A DTO-NAK
+            // Itt adjuk át a request.getName()-et is a Service-nek!
+            AppUser user = authService.register(request.getEmail(), request.getPassword(), request.getName());
+            String token = jwtUtils.generateToken(user);
+            return ResponseEntity.ok(new AuthResponse(user, token));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
