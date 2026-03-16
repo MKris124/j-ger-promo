@@ -3,8 +3,8 @@ package hu.jager.promo_backend.controller;
 import hu.jager.promo_backend.dto.ClaimPrizeRequest;
 import hu.jager.promo_backend.dto.PlayGameRequest;
 import hu.jager.promo_backend.dto.PrizePocketDto;
+import hu.jager.promo_backend.dto.GameLogDto;
 import hu.jager.promo_backend.entity.AppSettings;
-import hu.jager.promo_backend.entity.GameLog;
 import hu.jager.promo_backend.entity.InventoryItem;
 import hu.jager.promo_backend.entity.PrizePocket;
 import hu.jager.promo_backend.service.AdminService;
@@ -50,6 +50,8 @@ public class GameController {
                 return ResponseEntity.noContent().build();
             }
             return ResponseEntity.ok(PrizePocketDto.from(pocket));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -87,7 +89,11 @@ public class GameController {
 
     // Saját játék előzmények
     @GetMapping("/my-logs")
-    public ResponseEntity<List<GameLog>> getMyLogs(@RequestParam Long userId) {
-        return ResponseEntity.ok(gameService.getLogsForUser(userId));
+    public ResponseEntity<List<GameLogDto>> getMyLogs(@RequestParam Long userId) {
+        return ResponseEntity.ok(
+                gameService.getLogsForUser(userId).stream()
+                        .map(GameLogDto::from)
+                        .toList()
+        );
     }
 }

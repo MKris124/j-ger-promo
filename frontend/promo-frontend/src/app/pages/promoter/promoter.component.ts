@@ -2,6 +2,8 @@ import { Component, inject, OnInit, OnDestroy, ElementRef, ViewChild, NgZone } f
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 
 // jsQR-t npm install jsqr paranccsal kell telepíteni
 declare const jsQR: any;
@@ -21,13 +23,14 @@ type ScanState = 'scanning' | 'loading' | 'preview' | 'success' | 'error';
 @Component({
   selector: 'app-promoter',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PageHeaderComponent],
   templateUrl: './promoter.component.html',
 })
 export class PromoterComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private zone = inject(NgZone);
+  private router = inject(Router);
 
   private apiBase = 'http://localhost:8080/api/promoter';
 
@@ -153,7 +156,10 @@ export class PromoterComponent implements OnInit, OnDestroy {
     }, 100);
   }
 
+  role = localStorage.getItem('role') || 'PROMOTER';
+
   logout(): void { this.authService.logout(); }
+  goTo(path: string): void { this.router.navigate([path]); }
 
   getPrizeName(): string {
     if (!this.pocket) return '';

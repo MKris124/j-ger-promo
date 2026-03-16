@@ -1,0 +1,102 @@
+<!-- Hamburger gomb -->
+<button
+  (click)="toggle()"
+  style="display:flex;flex-direction:column;justify-content:center;align-items:center;width:40px;height:40px;gap:6px;border-radius:8px;border:1px solid rgba(243,112,33,0.3);background:rgba(0,0,0,0.4);cursor:pointer;flex-shrink:0;"
+>
+  <span [style]="isOpen ? 'display:block;width:20px;height:2px;background:#F37021;transform:rotate(45deg) translate(3px,3px);transition:all 0.25s ease' : 'display:block;width:20px;height:2px;background:#9ca3af;transition:all 0.25s ease'"></span>
+  <span [style]="isOpen ? 'display:block;width:20px;height:2px;background:#F37021;opacity:0;transition:all 0.25s ease' : 'display:block;width:20px;height:2px;background:#9ca3af;transition:all 0.25s ease'"></span>
+  <span [style]="isOpen ? 'display:block;width:20px;height:2px;background:#F37021;transform:rotate(-45deg) translate(3px,-3px);transition:all 0.25s ease' : 'display:block;width:20px;height:2px;background:#9ca3af;transition:all 0.25s ease'"></span>
+</button>
+
+<!-- Overlay + panel — mindig renderelve, CSS transition mozgatja -->
+<!-- Overlay -->
+<div
+  [style]="isOpen
+    ? 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:9998;opacity:1;transition:opacity 0.28s ease;pointer-events:auto;'
+    : 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:9998;opacity:0;transition:opacity 0.28s ease;pointer-events:none;'"
+  (click)="close()"
+></div>
+
+<!-- Sidebar panel -->
+<div
+  (click)="onSidebarClick()"
+  [style]="isOpen
+    ? 'position:fixed;top:0;left:0;width:280px;height:100dvh;z-index:9999;background:#0a0a0a;border-right:1px solid rgba(243,112,33,0.15);display:flex;flex-direction:column;overflow:hidden;transform:translateX(0);transition:transform 0.28s cubic-bezier(0.32,0,0,1);'
+    : 'position:fixed;top:0;left:0;width:280px;height:100dvh;z-index:9999;background:#0a0a0a;border-right:1px solid rgba(243,112,33,0.15);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.32,0,0,1);'"
+>
+  <!-- Header -->
+  <div style="display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;flex:1;">
+      <img src="/assets/stag.png" style="width:32px;height:32px;flex-shrink:0;filter:invert(1) sepia(1) saturate(5) hue-rotate(340deg) brightness(1.1);">
+      <span style="color:#F37021;font-weight:800;letter-spacing:0.15em;font-size:12px;">JÄGERMEISTER</span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav style="flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;">
+
+    <!-- ADMIN aloldalak -->
+    @if (isAdminPage) {
+      <div style="padding:8px 8px 4px;color:#4b5563;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">Aloldalak</div>
+      @for (tab of adminTabs; track tab.key) {
+        <button
+          (click)="setSubTab(tab.key)"
+          [style]="activeSubTab === tab.key
+            ? 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(243,112,33,0.1);border:1px solid rgba(243,112,33,0.25);color:#F37021;font-weight:600;font-size:14px;width:100%;text-align:left;cursor:pointer;'
+            : 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:transparent;border:1px solid transparent;color:#9ca3af;font-weight:500;font-size:14px;width:100%;text-align:left;cursor:pointer;'"
+        >
+          <span style="font-size:16px;width:22px;text-align:center;flex-shrink:0;">{{ tab.icon }}</span>
+          <span style="flex:1;">{{ tab.label }}</span>
+          @if (activeSubTab === tab.key) {
+            <span style="width:5px;height:5px;border-radius:50%;background:#F37021;flex-shrink:0;"></span>
+          }
+        </button>
+      }
+      <div style="height:1px;background:rgba(255,255,255,0.05);margin:6px 6px;"></div>
+      <div style="padding:4px 8px 4px;color:#4b5563;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">Navigáció</div>
+    }
+
+    <!-- Nav itemek — aktív oldal kiemelve, többiek kattinthatók -->
+    @for (item of allNavItems; track item.path) {
+      <button
+        (click)="item.isActive ? null : navigate(item.path)"
+        [style]="item.isActive
+          ? 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(243,112,33,0.08);border:1px solid rgba(243,112,33,0.2);color:#F37021;font-weight:600;font-size:14px;width:100%;text-align:left;cursor:default;'
+          : 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:transparent;border:1px solid transparent;color:#9ca3af;font-weight:500;font-size:14px;width:100%;text-align:left;cursor:pointer;'"
+      >
+        <span style="font-size:16px;width:22px;text-align:center;flex-shrink:0;">{{ item.icon }}</span>
+        <span style="flex:1;">{{ item.label }}</span>
+        @if (item.isActive) {
+          <span style="width:5px;height:5px;border-radius:50%;background:#F37021;flex-shrink:0;"></span>
+        }
+      </button>
+    }
+
+  </nav>
+
+  <!-- Footer -->
+  <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+    <button
+      (click)="openProfile()"
+      style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.07);background:transparent;cursor:pointer;margin-bottom:8px;text-align:left;"
+    >
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(243,112,33,0.1);border:1px solid rgba(243,112,33,0.2);display:flex;align-items:center;justify-content:center;color:#F37021;font-weight:700;font-size:12px;flex-shrink:0;">
+        {{ userName?.charAt(0)?.toUpperCase() || '?' }}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:#f5f5f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ userName }}</div>
+        @if (role !== 'USER') {
+          <div [style]="role === 'ADMIN' ? 'font-size:10px;font-weight:700;text-transform:uppercase;color:#F37021;' : 'font-size:10px;font-weight:700;text-transform:uppercase;color:#60a5fa;'">{{ role }}</div>
+        }
+      </div>
+      <span style="color:#4b5563;font-size:14px;flex-shrink:0;">›</span>
+    </button>
+
+    <button
+      (click)="logout()"
+      style="width:100%;padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#6b7280;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;"
+    >
+      <span>⏻</span> Kilépés
+    </button>
+  </div>
+</div>

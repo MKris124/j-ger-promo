@@ -22,7 +22,9 @@ public class DrawService {
 
     /**
      * Fő sorsolási metódus — GameService hívja nyeréskor.
-     * Visszaadja a kisorsolt itemet, vagy null-t ha minden elfogyott (esemény leáll).
+     * Visszaadja a kisorsolt InventoryItem-et (NEM vonja le a készletből —
+     * a készlet levonás a PromoterService.redeemPrize()-ban történik beváltáskor).
+     * Ha semmi sincs → null → esemény leáll.
      */
     @Transactional
     public InventoryItem draw(AppUser winner) {
@@ -35,7 +37,6 @@ public class DrawService {
             result = drawWeighted(winner);
         }
 
-        // Ha null → minden elfogyott → automatikusan leállítjuk az eseményt
         if (result == null) {
             log.warn("Minden nyeremény elfogyott! Esemény automatikusan leáll.");
             settings.setEventActive(false);
@@ -47,12 +48,6 @@ public class DrawService {
 
     // ======================== TIMED MÓD ========================
 
-    /**
-     * Nyerő pillanatok módszer:
-     * - Ha van lejárt, még ki nem adott nyerő pillanat → annak itemjét adja (merch vagy shot)
-     * - Ha nincs lejárt pillanat → shot fallback
-     * - Ha shot sincs → null (leállás)
-     */
     private InventoryItem drawTimed(AppUser winner) {
         LocalDateTime now = LocalDateTime.now();
         Optional<WinningMoment> moment = winningMomentRepo.findNextUnclaimedMoment(now);
@@ -61,9 +56,7 @@ public class DrawService {
             WinningMoment wm = moment.get();
             InventoryItem item = wm.getInventoryItem();
 
-            item.setRemainingQuantity(item.getRemainingQuantity() - 1);
-            inventoryRepo.save(item);
-
+            // NEM vonjuk le a készletet itt — csak a pillanatot jelöljük kiadottnak
             wm.setClaimed(true);
             wm.setClaimedBy(winner);
             wm.setClaimedAt(now);
@@ -73,22 +66,14 @@ public class DrawService {
             return item;
         }
 
-        // Nincs lejárt pillanat → shot
         log.info("TIMED: nincs aktív pillanat → shot fallback");
         return fallbackToShot(winner);
     }
 
     // ======================== WEIGHTED MÓD ========================
 
-    /**
-     * Súlyozott sorsolás:
-     * Minden elérhető item a remainingQuantity arányában verseng.
-     * Shot természetesen több van → nagyobb esély.
-     * Ha merch elfogy → csak shot marad.
-     */
     private InventoryItem drawWeighted(AppUser winner) {
         List<InventoryItem> available = inventoryRepo.findByRemainingQuantityGreaterThan(0);
-
         if (available.isEmpty()) return null;
 
         int totalWeight = available.stream()
@@ -101,55 +86,38 @@ public class DrawService {
 
         for (InventoryItem item : available) {
             cumulative += item.getRemainingQuantity();
-            if (rand < cumulative) {
-                selected = item;
-                break;
-            }
+            if (rand < cumulative) { selected = item; break; }
         }
 
-        selected.setRemainingQuantity(selected.getRemainingQuantity() - 1);
-        inventoryRepo.save(selected);
-
+        // NEM vonjuk le — csak kisorsolás, levonás beváltáskor
         log.info("WEIGHTED: {} kapta: {}", winner.getEmail(), selected.getName());
         return selected;
     }
 
     // ======================== SHOT FALLBACK ========================
 
-    /**
-     * Ha nincs aktív nyerő pillanat (timed módban):
-     * A legtöbb készletű liquid itemet adja.
-     */
     private InventoryItem fallbackToShot(AppUser winner) {
         return inventoryRepo.findByRemainingQuantityGreaterThan(0)
                 .stream()
                 .filter(InventoryItem::isLiquid)
                 .max(Comparator.comparingInt(InventoryItem::getRemainingQuantity))
                 .map(shot -> {
-                    shot.setRemainingQuantity(shot.getRemainingQuantity() - 1);
-                    inventoryRepo.save(shot);
+                    // NEM vonjuk le — levonás beváltáskor
                     log.info("SHOT fallback: {} → {}", winner.getEmail(), shot.getName());
                     return shot;
                 })
-                .orElse(null); // Shot is elfogyott → teljes leállás
+                .orElse(null);
     }
 
     // ======================== NYERŐ PILLANATOK GENERÁLÁSA ========================
 
-    /**
-     * Admin hívja (settings mentésekor, ha TIMED mód és van start/end).
-     * Minden non-liquid (merch) item készletének megfelelő számú pillanatot generál,
-     * egyenletesen elosztva az esemény időtartamán.
-     * A shot itemekhez NEM generál pillanatot — azok mindig fallback-ként szerepelnek.
-     */
     @Transactional
     public int generateWinningMoments(LocalDateTime eventStart, LocalDateTime eventEnd) {
-        // Töröljük a régi, még ki nem adott pillanatokat
         winningMomentRepo.deleteAllByClaimedFalse();
 
         List<InventoryItem> merchItems = inventoryRepo.findByRemainingQuantityGreaterThan(0)
                 .stream()
-                .filter(item -> !item.isLiquid()) // csak merch, shot nem kap pillanatot
+                .filter(item -> !item.isLiquid())
                 .toList();
 
         if (merchItems.isEmpty()) {
@@ -163,36 +131,27 @@ public class DrawService {
 
         for (InventoryItem item : merchItems) {
             int quantity = item.getRemainingQuantity();
-            // Az időtartamot felosztjuk quantity darab egyenlő szeletre
             long sliceSeconds = totalSeconds / quantity;
 
             for (int i = 0; i < quantity; i++) {
-                // Minden szeletben véletlenszerű időpont
                 long offsetStart = i * sliceSeconds;
                 long offsetEnd = (i + 1) * sliceSeconds;
                 long randomOffset = offsetStart + (long)(random.nextDouble() * (offsetEnd - offsetStart));
 
-                LocalDateTime scheduledAt = eventStart.plusSeconds(randomOffset);
-
                 WinningMoment wm = new WinningMoment();
                 wm.setInventoryItem(item);
-                wm.setScheduledAt(scheduledAt);
+                wm.setScheduledAt(eventStart.plusSeconds(randomOffset));
                 wm.setClaimed(false);
                 moments.add(wm);
             }
-
             log.info("Generálva: {} db pillanat → {}", quantity, item.getName());
         }
 
         winningMomentRepo.saveAll(moments);
-        log.info("Összesen {} nyerő pillanat generálva ({} - {})", moments.size(), eventStart, eventEnd);
+        log.info("Összesen {} nyerő pillanat generálva", moments.size());
         return moments.size();
     }
 
-    /**
-     * Manuális módban: activatedAt-tól számol, nincs előre generálás.
-     * Ha nincs start/end, de TIMED módban van → weighted-re esik vissza.
-     */
     public boolean hasTimetableForCurrentEvent() {
         AppSettings s = settingsRepo.findById(1L).orElseThrow();
         return "TIMED".equals(s.getDrawMode())

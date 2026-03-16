@@ -1,9 +1,9 @@
-import { Component, inject, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
-import { QRCodeComponent } from 'angularx-qrcode';
+import { PageHeaderComponent } from '../../shared/page-header.component';
 import { CatchTheJagerComponent } from './games/jager.component';
 import { RideTheBusComponent } from './games/ride-the-bus.component';
 
@@ -16,26 +16,10 @@ interface PrizePocket {
   inventoryItem: { id: number; name: string; liquid: boolean } | null;
 }
 
-interface GameLog {
-  id: number;
-  gameName: string;
-  winner: boolean;
-  playedAt: string;
-}
-
-interface UserProfile {
-  id: number;
-  name: string;
-  email: string;
-  createdAt: string;
-}
-
-type Tab = 'game' | 'profile';
-
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, CatchTheJagerComponent, RideTheBusComponent, QRCodeComponent],
+  imports: [CommonModule, CatchTheJagerComponent, RideTheBusComponent, PageHeaderComponent],
   templateUrl: './game.component.html',
 })
 export class GameComponent implements OnInit, OnDestroy {
@@ -45,40 +29,39 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private apiBase = 'http://localhost:8080/api/game';
 
-  activeTab: Tab = 'game';
-
-  // Active game
-  activeGame: { id: number; name: string; frontendComponentName: string } | null = null;
+  activeGame: { id: number; name: string; gameKey: string } | null = null;
   gameResult: 'won' | 'lost' | null = null;
   lastPrize: PrizePocket | null = null;
-
-  // Profil adatok
-  profile: UserProfile | null = null;
-  pockets: PrizePocket[] = [];
-  gameLogs: GameLog[] = [];
-  profileLoading = true;
-
-  // QR modal
-  qrModalPocket: PrizePocket | null = null;
+  availableCount = 0;
 
   private refreshInterval: any = null;
 
   ngOnInit(): void {
-    this.loadProfile();
     this.loadActiveGame();
-    // 30mp-enként automatikusan frissítjük a zsebeket
-    this.refreshInterval = setInterval(() => {
-      if (this.activeTab === 'profile') this.loadProfile();
-    }, 30000);
+    this.loadAvailableCount();
+    this.refreshInterval = setInterval(() => this.loadAvailableCount(), 30000);
   }
 
   ngOnDestroy(): void {
     if (this.refreshInterval) clearInterval(this.refreshInterval);
   }
 
+  private getHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token') || '';
+    return new HttpHeaders({ Authorization: `Bearer ${token}` });
+  }
+
   loadActiveGame(): void {
     this.http.get<any>('http://localhost:8080/api/game/active', { headers: this.getHeaders() }).subscribe({
       next: (data) => { this.activeGame = data; },
+      error: () => {}
+    });
+  }
+
+  loadAvailableCount(): void {
+    const userId = localStorage.getItem('userId');
+    this.http.get<PrizePocket[]>(`${this.apiBase}/my-pockets?userId=${userId}`, { headers: this.getHeaders() }).subscribe({
+      next: (data) => { this.availableCount = data.filter(p => p.status === 'AVAILABLE').length; },
       error: () => {}
     });
   }
@@ -89,19 +72,16 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!gameId) return;
 
     this.http.post<PrizePocket>(
-      'http://localhost:8080/api/game/play',
+      `${this.apiBase}/play`,
       { userId, gameId, winner: true },
       { headers: this.getHeaders() }
     ).subscribe({
       next: (pocket) => {
         this.lastPrize = pocket;
         this.gameResult = 'won';
-        this.loadProfile(); // frissítjük a zsebeket
+        this.loadAvailableCount();
       },
-      error: (err) => {
-        // Max 2 nyeremény vagy minden elfogyott
-        this.gameResult = 'won'; // játék szempontjából nyert, de nincs új zseb
-      }
+      error: () => { this.gameResult = 'won'; }
     });
   }
 
@@ -109,13 +89,8 @@ export class GameComponent implements OnInit, OnDestroy {
     const userId = parseInt(localStorage.getItem('userId') || '0', 10);
     const gameId = this.activeGame?.id;
     if (!gameId) return;
-
-    this.http.post(
-      'http://localhost:8080/api/game/play',
-      { userId, gameId, winner: false },
-      { headers: this.getHeaders() }
-    ).subscribe({ next: () => {}, error: () => {} });
-
+    this.http.post(`${this.apiBase}/play`, { userId, gameId, winner: false }, { headers: this.getHeaders() })
+      .subscribe({ next: () => {}, error: () => {} });
     this.gameResult = 'lost';
   }
 
@@ -124,46 +99,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.lastPrize = null;
   }
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token') || '';
-    return new HttpHeaders({ Authorization: `Bearer ${token}` });
-  }
-
-  loadProfile(): void {
-    this.profileLoading = true;
-    const userId = localStorage.getItem('userId');
-
-    // Profil alap adatok localStorage-ból (token tartalmazza)
-    this.profile = {
-      id: parseInt(userId || '0'),
-      name: localStorage.getItem('userName') || 'Játékos',
-      email: '',
-      createdAt: '',
-    };
-
-    // Nyeremény zsebek
-    this.http.get<PrizePocket[]>(`${this.apiBase}/my-pockets?userId=${userId}`, { headers: this.getHeaders() }).subscribe({
-      next: (data) => {
-        this.pockets = data;
-        this.profileLoading = false;
-      },
-      error: () => { this.profileLoading = false; }
-    });
-
-    // Játék előzmények
-    this.http.get<GameLog[]>(`${this.apiBase}/my-logs?userId=${userId}`, { headers: this.getHeaders() }).subscribe({
-      next: (data) => { this.gameLogs = data; },
-      error: () => {}
-    });
-  }
-
-  openQr(pocket: PrizePocket): void {
-    this.qrModalPocket = pocket;
-  }
-
-  closeQr(): void {
-    this.qrModalPocket = null;
-    this.loadProfile(); // frissítjük a zsebeket — lehet hogy közben beváltotta a promoter
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
   }
 
   getPrizeIcon(pocket: PrizePocket): string {
@@ -175,37 +112,5 @@ export class GameComponent implements OnInit, OnDestroy {
     return pocket.inventoryItem?.name ?? 'Jäger Shot';
   }
 
-  getQrUrl(pocket: PrizePocket): string {
-    // QR kód tartalom — csak a hash, a promoter app ezt küldi el a backendnek
-    return pocket.qrCodeHash;
-  }
-
-  formatDate(dateStr: string): string {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleString('hu-HU', {
-      month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit'
-    });
-  }
-
-  isAllRedeemed(): boolean {
-    return this.pockets.length >= 2 && this.pockets.every(p => p.status === 'REDEEMED');
-  }
-
-  getEmptySlots(): number[] {
-    const filled = Math.min(this.pockets.length, 2);
-    return Array(2 - filled).fill(0);
-  }
-
-  getAvailableCount(): number {
-    return this.pockets.filter(p => p.status === 'AVAILABLE').length;
-  }
-
-  getWinCount(): number {
-    return this.gameLogs.filter(l => l.winner).length;
-  }
-
-  logout(): void {
-    this.authService.logout();
-  }
+  logout(): void { this.authService.logout(); }
 }

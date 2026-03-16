@@ -3,6 +3,7 @@ package hu.jager.promo_backend.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,14 +17,17 @@ public class GameLog {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private AppUser user;
 
-    @Column(nullable = false)
     private String gameName;
 
-    @Column(nullable = false)
-    private boolean isWinner; // Nyert vagy vesztett?
+    private boolean winner;
 
-    private LocalDateTime playedAt = LocalDateTime.now();
+    private LocalDateTime playedAt;
+
+    // Ha nyert, melyik nyereményt kapta — null ha veszített
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inventory_item_id", nullable = true)
+    private InventoryItem inventoryItem;
 }

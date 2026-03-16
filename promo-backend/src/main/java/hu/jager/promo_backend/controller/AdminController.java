@@ -22,8 +22,6 @@ public class AdminController {
     private final AdminService adminService;
     private final InventoryService inventoryService;
 
-    // ===================== BEÁLLÍTÁSOK =====================
-
     @GetMapping("/settings")
     public ResponseEntity<AppSettings> getSettings() {
         return ResponseEntity.ok(adminService.getSettings());
@@ -32,16 +30,11 @@ public class AdminController {
     @PostMapping("/settings")
     public ResponseEntity<AppSettings> updateSettings(@RequestBody UpdateSettingsRequest req) {
         return ResponseEntity.ok(adminService.updateSettings(
-                req.isEventActive(),
-                req.getShotsPerLiter(),
-                req.getActiveGameId(),
-                req.getDrawMode(),      // ← ez hiányzott
-                req.getEventStart(),
-                req.getEventEnd()
+                req.isEventActive(), req.getShotsPerLiter(), req.getActiveGameId(),
+                req.getDrawMode(), req.getEventStart(), req.getEventEnd()
         ));
     }
 
-    // Publikus event-status (login oldal használja)
     @GetMapping("/event-status")
     public ResponseEntity<Map<String, Boolean>> getEventStatus() {
         return ResponseEntity.ok(Map.of("eventActive", adminService.isEventCurrentlyActive()));
@@ -57,9 +50,7 @@ public class AdminController {
     @PostMapping("/games")
     public ResponseEntity<Game> createGame(@RequestBody CreateGameRequest req) {
         return ResponseEntity.ok(adminService.createGame(
-                req.getName(),
-                req.getFrontendComponentName(),
-                req.getDescription()
+                req.getName(), req.getGameKey(), req.getDescription()
         ));
     }
 
@@ -72,31 +63,37 @@ public class AdminController {
         }
     }
 
+    @DeleteMapping("/games/{gameId}")
+    public ResponseEntity<?> deleteGame(@PathVariable Long gameId) {
+        try {
+            adminService.deleteGame(gameId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     // ===================== KÉSZLET =====================
 
     @GetMapping("/inventory")
     public ResponseEntity<List<InventoryItemDto>> getAllInventory() {
         return ResponseEntity.ok(
-                inventoryService.getAllItems().stream()
-                        .map(InventoryItemDto::from)
-                        .toList()
+                inventoryService.getAllItems().stream().map(InventoryItemDto::from).toList()
         );
     }
 
     @PostMapping("/inventory")
     public ResponseEntity<InventoryItemDto> createMerch(@RequestBody CreateMerchRequest req) {
-        return ResponseEntity.ok(
-                InventoryItemDto.from(inventoryService.createNewMerch(req.getName(), req.isLiquid()))
-        );
+        return ResponseEntity.ok(InventoryItemDto.from(
+                inventoryService.createNewMerch(req.getName(), req.isLiquid())
+        ));
     }
 
     @PostMapping("/inventory/{itemId}/add")
     public ResponseEntity<InventoryItemDto> addStock(@PathVariable Long itemId,
                                                      @RequestBody AddStockRequest req) {
         try {
-            return ResponseEntity.ok(
-                    InventoryItemDto.from(inventoryService.addStock(itemId, req.getAddedQuantity()))
-            );
+            return ResponseEntity.ok(InventoryItemDto.from(inventoryService.addStock(itemId, req.getAddedQuantity())));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }

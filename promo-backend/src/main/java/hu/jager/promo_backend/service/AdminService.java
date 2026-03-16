@@ -19,6 +19,7 @@ public class AdminService {
     private final UserRepository userRepo;
     private final GameRepository gameRepo;
     private final DrawService drawService;
+    private final PrizePocketRepository prizePocketRepo;
 
     // ===================== SETTINGS =====================
 
@@ -32,7 +33,6 @@ public class AdminService {
     public boolean isEventCurrentlyActive() {
         AppSettings s = getSettings();
         LocalDateTime now = LocalDateTime.now();
-
         if (s.getEventStart() != null && s.getEventEnd() != null) {
             return now.isAfter(s.getEventStart()) && now.isBefore(s.getEventEnd());
         }
@@ -48,6 +48,7 @@ public class AdminService {
                                       LocalDateTime eventEnd) {
         AppSettings settings = getSettings();
         boolean wasActive = settings.isEventActive();
+        Long prevGameId = settings.getActiveGame() != null ? settings.getActiveGame().getId() : null;
 
         settings.setEventActive(isEventActive);
 
@@ -59,7 +60,6 @@ public class AdminService {
             settings.setDrawMode(drawMode);
         }
 
-        // Időzítés beállítása
         if (eventStart != null && eventEnd != null && eventEnd.isAfter(eventStart)) {
             settings.setEventStart(eventStart);
             settings.setEventEnd(eventEnd);
@@ -68,22 +68,33 @@ public class AdminService {
             settings.setEventEnd(null);
         }
 
-        // Aktív játék
         if (activeGameId != null) {
             Game game = gameRepo.findById(activeGameId)
                     .orElseThrow(() -> new IllegalArgumentException("Nem létező játék!"));
             settings.setActiveGame(game);
+
+            if (prevGameId != null && !prevGameId.equals(activeGameId)) {
+                // Játékváltáskor MINDEN zseb törlődik — beváltottak sem relevánsak már
+                prizePocketRepo.deleteAllPockets();
+                log.info("Játék váltás: összes zseb törölve");
+            }
         }
 
-        // Manuális mód: ha most kapcsolták BE → mentsük az időpontot
-        if (!wasActive && isEventActive && settings.getEventStart() == null) {
+        // Esemény BE → zsebek törlése + activatedAt mentése
+        if (!wasActive && isEventActive) {
             settings.setActivatedAt(LocalDateTime.now());
-            log.info("Esemény manuálisan bekapcsolva: {}", settings.getActivatedAt());
+            int deleted = prizePocketRepo.deleteAllNotRedeemed();
+            log.info("Esemény bekapcsolva: {} zseb törölve", deleted);
+        }
+
+        // Esemény KI → zsebek törlése
+        if (wasActive && !isEventActive) {
+            int deleted = prizePocketRepo.deleteAllNotRedeemed();
+            log.info("Esemény leállítva: {} zseb törölve", deleted);
         }
 
         AppSettings saved = settingsRepo.save(settings);
 
-        // TIMED mód + van start/end → automatikusan generáljuk a nyerő pillanatokat
         if ("TIMED".equals(saved.getDrawMode())
                 && saved.getEventStart() != null
                 && saved.getEventEnd() != null) {
@@ -101,10 +112,10 @@ public class AdminService {
     }
 
     @Transactional
-    public Game createGame(String name, String frontendComponentName, String description) {
+    public Game createGame(String name, String gameKey, String description) {
         Game game = new Game();
         game.setName(name);
-        game.setFrontendComponentName(frontendComponentName);
+        game.setGameKey(gameKey);
         game.setDescription(description);
         game.setActive(true);
         return gameRepo.save(game);
@@ -116,6 +127,22 @@ public class AdminService {
                 .orElseThrow(() -> new IllegalArgumentException("Nem létező játék!"));
         game.setActive(!game.isActive());
         return gameRepo.save(game);
+    }
+
+    @Transactional
+    public void deleteGame(Long gameId) {
+        Game game = gameRepo.findById(gameId)
+                .orElseThrow(() -> new IllegalArgumentException("Nem létező játék!"));
+
+        // Ha ez az aktív játék, töröljük az aktív játék referenciát
+        AppSettings settings = getSettings();
+        if (settings.getActiveGame() != null && settings.getActiveGame().getId().equals(gameId)) {
+            settings.setActiveGame(null);
+            settingsRepo.save(settings);
+        }
+
+        gameRepo.delete(game);
+        log.info("Játék törölve: {}", game.getName());
     }
 
     // ===================== USERS =====================

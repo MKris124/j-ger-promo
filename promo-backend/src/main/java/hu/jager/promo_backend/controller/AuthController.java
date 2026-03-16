@@ -61,6 +61,6 @@ public class AuthController {
     @GetMapping("/event-status")
     public ResponseEntity<?> getEventStatus() {
         AppSettings settings = adminService.getSettings();
-        return ResponseEntity.ok(Map.of("eventActive", settings.isEventActive()));
+        return ResponseEntity.ok(Map.of("eventActive", adminService.isEventCurrentlyActive()));
     }
 }

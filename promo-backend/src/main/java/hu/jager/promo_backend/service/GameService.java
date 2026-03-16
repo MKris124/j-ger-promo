@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,12 +40,16 @@ public class GameService {
         log.setUser(user);
         log.setGameName(game.getName());
         log.setWinner(isWinner);
-        gameLogRepo.save(log);
+        log.setPlayedAt(LocalDateTime.now());
+        // inventoryItem-et nyerés után állítjuk be
 
-        if (!isWinner) return null;
+        if (!isWinner) {
+            gameLogRepo.save(log);
+            return null;
+        }
 
         // Max 2 nyeremény ellenőrzése
-        long currentPrizes = prizePocketRepo.countByUserId(userId);
+        long currentPrizes = prizePocketRepo.countByUserIdAndStatus(userId, PrizePocket.Status.AVAILABLE);
         if (currentPrizes >= 2) {
             throw new IllegalStateException("Mára kimaxoltad a Jäger élményt!");
         }
@@ -53,9 +58,13 @@ public class GameService {
         InventoryItem won = drawService.draw(user);
 
         if (won == null) {
-            // Minden elfogyott — DrawService már leállította az eseményt
+            gameLogRepo.save(log);
             throw new IllegalStateException("Minden nyeremény elfogyott az estére!");
         }
+
+        // Log-ba mentjük mit nyert
+        log.setInventoryItem(won);
+        gameLogRepo.save(log);
 
         // PrizePocket létrehozása
         PrizePocket pocket = new PrizePocket();
@@ -73,7 +82,7 @@ public class GameService {
      */
     @Transactional
     public PrizePocket claimPrize(Long userId, Long inventoryItemId) {
-        long currentPrizes = prizePocketRepo.countByUserId(userId);
+        long currentPrizes = prizePocketRepo.countByUserIdAndStatus(userId, PrizePocket.Status.AVAILABLE);
         if (currentPrizes >= 2) {
             throw new IllegalStateException("Már elérted a maximális 2 nyereményt a mai napra!");
         }
@@ -83,8 +92,7 @@ public class GameService {
             throw new IllegalStateException("Hoppá, erről pont lecsúsztál! Kérlek, válassz mást!");
         }
 
-        item.setRemainingQuantity(item.getRemainingQuantity() - 1);
-        inventoryRepo.save(item);
+
 
         AppUser user = userRepo.findById(userId).orElseThrow();
         PrizePocket pocket = new PrizePocket();

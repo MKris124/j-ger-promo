@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { PageHeaderComponent } from '../../shared/page-header.component';
+import { GAME_REGISTRY, RegisteredGame } from '../../shared/game-registry';
 
 interface Game {
   id: number;
   name: string;
-  frontendComponentName: string;
+  gameKey: string;        // pl. "catch-the-jager"
   description: string;
   active: boolean;
 }
@@ -22,7 +24,6 @@ interface AppSettings {
   eventEnd: string | null;
   drawMode: 'TIMED' | 'PERCENTAGE';
 }
-
 interface InventoryItem {
   id: number;
   name: string;
@@ -48,7 +49,7 @@ interface Tab {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PageHeaderComponent],
   templateUrl: './admin.component.html',
 })
 export class AdminComponent implements OnInit {
@@ -73,7 +74,15 @@ export class AdminComponent implements OnInit {
   settings: AppSettings = { id: 1, eventActive: false, shotsPerLiter: 0, activeGame: null, eventStart: null, eventEnd: null, drawMode: 'TIMED' };
   shotsPerLiterInput = 0;
   // Időzítés mód: 'manual' vagy 'scheduled'
-  scheduleMode: 'manual' | 'scheduled' = 'manual';
+  get scheduleMode(): 'manual' | 'scheduled' { return this._scheduleMode; }
+  set scheduleMode(val: 'manual' | 'scheduled') {
+    this._scheduleMode = val;
+    // Manuális módban TIMED nem elérhető → automatikusan PERCENTAGE-re vált
+    if (val === 'manual' && this.settings.drawMode === 'TIMED') {
+      this.settings.drawMode = 'PERCENTAGE';
+    }
+  }
+  private _scheduleMode: 'manual' | 'scheduled' = 'manual';
   eventStartInput = '';   // datetime-local input value: "2026-05-10T22:00"
   eventEndInput = '';
 
@@ -83,7 +92,9 @@ export class AdminComponent implements OnInit {
   newGameComponent = '';
   newGameDesc = '';
 
-  // --- Inventory ---
+  // Games - inline component szerkesztés
+  editingComponentGameId: number | null = null;
+  editingComponentValue = '';
   inventoryItems: InventoryItem[] = [];
   newMerchName = '';
   newMerchIsLiquid = false;
@@ -98,6 +109,10 @@ export class AdminComponent implements OnInit {
     this.loadGames();
     this.loadInventory();
     this.loadUsers();
+    // Sidebar admin tab váltás figyelése
+    window.addEventListener('adminTabChange', (e: any) => {
+      this.activeTab = e.detail;
+    });
   }
 
   private getHeaders(): HttpHeaders {
@@ -222,6 +237,43 @@ export class AdminComponent implements OnInit {
     this.updateSettings();
   }
 
+  // Game registry segédmetódusok
+  getGameByKey(key: string): Game | undefined {
+    return this.games.find(g => g.gameKey === key);
+  }
+
+  addGameFromRegistry(reg: RegisteredGame): void {
+    this.loading = true;
+    const body = { name: reg.name, gameKey: reg.id, description: reg.description };
+    this.http.post<Game>(`${this.apiBase}/games`, body, { headers: this.getHeaders() }).subscribe({
+      next: (game) => {
+        this.games.push(game);
+        this.loading = false;
+        this.showToast(`"${game.name}" hozzáadva!`, 'success');
+      },
+      error: () => { this.loading = false; this.showToast('Hozzáadás sikertelen', 'error'); }
+    });
+  }
+
+  setActiveGameByKey(key: string): void {
+    const game = this.getGameByKey(key);
+    if (game) this.setActiveGame(game);
+  }
+
+  deleteGame(game: Game): void {
+    if (!confirm(`Biztosan törlöd: "${game.name}"?`)) return;
+    this.http.delete(`${this.apiBase}/games/${game.id}`, { headers: this.getHeaders() }).subscribe({
+      next: () => {
+        this.games = this.games.filter(g => g.id !== game.id);
+        if (this.settings.activeGame?.id === game.id) {
+          this.settings.activeGame = null;
+        }
+        this.showToast(`"${game.name}" törölve`, 'success');
+      },
+      error: () => this.showToast('Törlés sikertelen', 'error')
+    });
+  }
+
   // =================== INVENTORY ===================
 
   loadInventory(): void {
@@ -298,8 +350,14 @@ export class AdminComponent implements OnInit {
 
   // =================== UTILS ===================
 
+  // Game registry — ezekből választhat az admin
+  registeredGames: RegisteredGame[] = GAME_REGISTRY;
+
+  getActiveTabLabel(): string {
+    return this.tabs.find(t => t.key === this.activeTab)?.label || '';
+  }
+
   logout(): void { this.authService.logout(); }
-  goToGame(): void { this.router.navigate(['/game']); }
 
   private showToast(message: string, type: 'success' | 'error'): void {
     this.toast = { message, type };

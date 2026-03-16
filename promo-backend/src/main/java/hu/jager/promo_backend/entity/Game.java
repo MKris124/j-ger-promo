@@ -15,12 +15,14 @@ public class Game {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String name; // Pl. "Jäger Busz"
+    private String name;
 
-    @Column(nullable = false)
-    private String frontendComponentName; // Pl. "RideTheBusComponent" - az Angular ez alapján tudja, mit nyisson meg
+    // Frontend registry kulcs — pl. "catch-the-jager", "ride-the-bus"
+    // Ezzel keresi meg a frontend a megfelelő komponenst
+    @Column(unique = true, nullable = false)
+    private String gameKey;
 
-    private String description; // Opcionális leírás a játékról
+    private String description;
 
-    private boolean isActive = true; // Bekapcsolva/Kikapcsolva
+    private boolean isActive = true;
 }

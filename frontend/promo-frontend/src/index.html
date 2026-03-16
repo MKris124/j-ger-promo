@@ -1,11 +1,37 @@
 <!doctype html>
-<html lang="en">
+<html lang="hu">
 <head>
   <meta charset="utf-8">
-  <title>PromoFrontend</title>
+  <title>Promóciós Játék</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="description" content="StagPlay — Jägermeister promóciós játék">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="StagPlay">
+  <link rel="icon" type="image/x-icon" href="stag.ico">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0a0a0a;
+      color: #f5f5f5;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overscroll-behavior: none;
+    }
+    /* Splash screen amíg az Angular betölt */
+    app-root:empty::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
   <app-root></app-root>

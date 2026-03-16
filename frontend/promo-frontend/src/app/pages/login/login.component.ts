@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
@@ -8,7 +9,7 @@ import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, CommonModule, GoogleSigninButtonModule],
+  imports: [FormsModule, CommonModule, GoogleSigninButtonModule, RouterModule],
   templateUrl: './login.component.html'
 })
 export class LoginComponent implements OnInit {
@@ -26,9 +27,9 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
 
-  // Esemény státusz
-  eventActive = true;      // optimista default — betöltés után frissül
-  eventLoading = true;     // amíg töltjük, ne villogjon a "szünetel" üzenet
+  // Esemény státusz — default false, amíg nem töltöttük be
+  eventActive = false;
+  eventLoading = true;
 
   ngOnInit() {
     // Esemény státusz lekérése — publikus endpoint kell hozzá a backenden

@@ -1,45 +1,38 @@
 <!-- IDLE -->
 @if (gameState === 'idle') {
   <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-6 text-center">
-    <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center">
-      <span class="text-4xl">🚌</span>
-    </div>
+    <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-4xl">🚌</div>
     <div>
       <h2 class="text-2xl font-extrabold tracking-wider uppercase text-jager-light mb-2">Jäger Busz</h2>
       <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
         4 szint, egyre nehezebb tippek.<br>
         Az első szinttől jár a <span class="text-jager-orange font-semibold">Shot</span> —
-        de ha kockáztatsz és tovább mész, <span class="text-jager-orange font-semibold">főnyereményt</span> nyerhetsz!<br>
+        de ha kockáztatsz és tovább mész, elveszted a shotot, viszont
+        <span class="text-jager-orange font-semibold">főnyereményt</span> nyerhetsz!<br>
         <span class="text-red-400 text-xs">Ha tévedsz, mindent elveszítesz.</span>
       </p>
     </div>
-
-    <!-- Szintek előnézet -->
     <div class="w-full max-w-xs flex flex-col gap-2">
       <div class="flex items-center gap-3 px-3 py-2 bg-black/30 rounded-lg border border-gray-800">
-        <span class="text-lg w-8 text-center">🎨</span>
-        <div class="text-left"><div class="text-xs font-bold text-gray-300">1. szint</div><div class="text-[10px] text-gray-500">Narancs vagy Zöld?</div></div>
+        <span class="text-lg w-8 text-center text-red-500">♥</span>
+        <div class="text-left"><div class="text-xs font-bold text-gray-300">1. szint</div><div class="text-[10px] text-gray-500">Piros vagy Fekete?</div></div>
         <span class="ml-auto text-xs text-jager-orange font-bold">Shot</span>
       </div>
       <div class="flex items-center gap-3 px-3 py-2 bg-black/30 rounded-lg border border-gray-800">
         <span class="text-lg w-8 text-center">📊</span>
-        <div class="text-left"><div class="text-xs font-bold text-gray-300">2. szint</div><div class="text-[10px] text-gray-500">Kisebb vagy Nagyobb?</div></div>
+        <div class="text-left"><div class="text-xs font-bold text-gray-300">2. szint</div><div class="text-[10px] text-gray-500">Kisebb, Rajta vagy Nagyobb?</div></div>
       </div>
       <div class="flex items-center gap-3 px-3 py-2 bg-black/30 rounded-lg border border-gray-800">
         <span class="text-lg w-8 text-center">↔</span>
         <div class="text-left"><div class="text-xs font-bold text-gray-300">3. szint</div><div class="text-[10px] text-gray-500">Közötte vagy Kívül?</div></div>
       </div>
       <div class="flex items-center gap-3 px-3 py-2 bg-black/30 rounded-lg border border-jager-orange/20">
-        <span class="text-lg w-8 text-center">🦌</span>
-        <div class="text-left"><div class="text-xs font-bold text-jager-orange">4. szint</div><div class="text-[10px] text-gray-500">A szimbólum</div></div>
+        <span class="text-lg w-8 text-center">🃏</span>
+        <div class="text-left"><div class="text-xs font-bold text-jager-orange">4. szint</div><div class="text-[10px] text-gray-500">Melyik szín?</div></div>
         <span class="ml-auto text-xs text-jager-orange font-bold">Főnyeremény!</span>
       </div>
     </div>
-
-    <button
-      (click)="startGame()"
-      class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
-    >
+    <button (click)="startGame()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase">
       Felszállok!
     </button>
   </div>
@@ -49,15 +42,14 @@
 @if (gameState === 'playing') {
   <div class="flex flex-col min-h-[60vh] p-4 gap-4">
 
-    <!-- Progress -->
+    <!-- Progress bar -->
     <div class="flex items-center gap-2 justify-center">
       @for (r of rounds; track r.level) {
-        <div
-          [class]="r.level < currentLevel
-            ? 'w-8 h-8 rounded-full bg-jager-orange flex items-center justify-center text-black text-xs font-black'
-            : r.level === currentLevel
-              ? 'w-8 h-8 rounded-full bg-jager-orange/20 border-2 border-jager-orange flex items-center justify-center text-jager-orange text-xs font-black'
-              : 'w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-600 text-xs font-bold'"
+        <div [class]="r.level < currentLevel
+          ? 'w-8 h-8 rounded-full bg-jager-orange flex items-center justify-center text-black text-xs font-black'
+          : r.level === currentLevel
+            ? 'w-8 h-8 rounded-full bg-jager-orange/20 border-2 border-jager-orange flex items-center justify-center text-jager-orange text-xs font-black'
+            : 'w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-600 text-xs font-bold'"
         >{{ r.level + 1 }}</div>
         @if (r.level < 3) {
           <div [class]="r.level < currentLevel ? 'flex-1 h-0.5 bg-jager-orange' : 'flex-1 h-0.5 bg-gray-800'"></div>
@@ -65,34 +57,33 @@
       }
     </div>
 
-    <!-- Shot prize indicator -->
-    @if (hasShotPrize) {
+    <!-- Shot indicator — csak az 1. szint nyerése UTÁN és CSAK amíg nem döntött -->
+    @if (hasShotPrize && roundState === 'won_round') {
       <div class="flex items-center gap-2 px-3 py-2 bg-jager-orange/10 border border-jager-orange/30 rounded-lg text-xs text-jager-orange font-semibold">
-        <span>🥃</span> Jäger Shot — a tiéd! Befejezed vagy tovább mész?
+        <span>🥃</span> 1. szint teljesítve — jár a Shot! Kikéred most, vagy kockáztatsz tovább?
       </div>
     }
 
-    <!-- Korábbi lapok -->
+    <!-- Korábbi lapok — fehér kártyahát, piros/fekete szín -->
     @if (previousCards.length > 0) {
-      <div class="flex gap-3 justify-center flex-wrap">
+      <div class="flex gap-2 justify-center flex-wrap">
         @for (card of previousCards; track $index) {
-          <div [class]="'w-16 h-24 rounded-xl border-2 flex flex-col items-center justify-center gap-1 ' + getColorClass(card.color) + ' ' + getColorBg(card.color)">
-            <span class="text-xl">{{ getSuitIcon(card.suit) }}</span>
-            <span class="text-lg font-black">{{ card.label }}</span>
+          <div class="w-14 h-20 rounded-xl border-2 border-gray-300 bg-white flex flex-col items-center justify-center gap-0.5 shadow">
+            <span [class]="'text-xl font-black ' + getCardColorClass(card)">{{ getSuitSymbol(card.suit) }}</span>
+            <span [class]="'text-base font-black ' + getCardColorClass(card)">{{ card.label }}</span>
           </div>
         }
       </div>
     }
 
-    <!-- Aktuális lap megjelenítés -->
+    <!-- Aktuális lap -->
     <div class="flex justify-center">
       @if (currentCard && roundState !== 'guess') {
-        <div [class]="'w-24 h-36 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 shadow-lg ' + getColorClass(currentCard.color) + ' ' + getColorBg(currentCard.color)">
-          <span class="text-3xl">{{ getSuitIcon(currentCard.suit) }}</span>
-          <span class="text-3xl font-black">{{ currentCard.label }}</span>
+        <div class="w-24 h-36 rounded-2xl border-2 border-gray-300 bg-white flex flex-col items-center justify-center gap-1 shadow-lg">
+          <span [class]="'text-4xl ' + getCardColorClass(currentCard)">{{ getSuitSymbol(currentCard.suit) }}</span>
+          <span [class]="'text-3xl font-black ' + getCardColorClass(currentCard)">{{ currentCard.label }}</span>
         </div>
       } @else {
-        <!-- Kártyahát -->
         <div class="w-24 h-36 rounded-2xl border-2 border-jager-orange/30 bg-jager-orange/5 flex items-center justify-center">
           <span class="text-4xl font-black text-jager-orange/30">J</span>
         </div>
@@ -103,7 +94,7 @@
     @if (roundState === 'guess') {
       <div class="text-center">
         <h3 class="text-lg font-extrabold text-jager-light mb-4">{{ currentRound.question }}</h3>
-        <div class="grid gap-3" [class]="currentLevel === 3 ? 'grid-cols-2' : 'grid-cols-2'">
+        <div [class]="currentLevel === 1 ? 'grid grid-cols-3 gap-3' : 'grid grid-cols-2 gap-3'">
           @for (opt of currentRound.options; track $index) {
             <button
               (click)="guess($index)"
@@ -114,56 +105,46 @@
       </div>
     }
 
-    <!-- Reveal animáció -->
+    <!-- Felfedés -->
     @if (roundState === 'reveal') {
       <div class="text-center py-4">
         <div class="text-gray-400 text-sm animate-pulse">Felfedés...</div>
       </div>
     }
 
-    <!-- Nyerés (közbülső) -->
+    <!-- Nyerés -->
     @if (roundState === 'won_round') {
       <div class="flex flex-col gap-3">
-        <div class="text-center py-2">
+        <div class="text-center py-1">
           <p class="text-green-400 font-extrabold text-xl">✓ Eltaláltad!</p>
         </div>
-
         @if (currentLevel < 3) {
-          <!-- Még nem az utolsó szint -->
           @if (hasShotPrize) {
-            <button
-              (click)="keepShot()"
-              class="w-full py-4 bg-jager-dark border border-jager-orange/40 text-jager-orange font-bold rounded-2xl text-sm uppercase tracking-wider"
-            >
-              🥃 Kikérem a Shotot — kész!
+            <button (click)="keepShot()"
+              class="w-full py-4 bg-jager-dark border border-jager-orange/40 text-jager-orange font-bold rounded-2xl text-sm uppercase tracking-wider">
+              🥃 Kikérem a Shotot — kész vagyok
             </button>
           }
-          <button
-            (click)="continueGame()"
-            class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold rounded-2xl text-sm uppercase tracking-wider"
-          >
-            Kockáztatok — tovább! 🎰
+          <button (click)="continueGame()"
+            class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold rounded-2xl text-sm uppercase tracking-wider">
+            {{ hasShotPrize ? 'Kockáztatok — elvesztem a shotot! 🎰' : 'Tovább →' }}
           </button>
         } @else {
-          <!-- Utolsó szint teljesítve! -->
-          <button
-            (click)="continueGame()"
-            class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold rounded-2xl text-lg uppercase tracking-widest"
-          >
+          <button (click)="continueGame()"
+            class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold rounded-2xl text-lg uppercase tracking-widest">
             🏆 Főnyeremény bekérése!
           </button>
         }
       </div>
     }
 
-    <!-- Vesztés (közbülső) -->
+    <!-- Vesztés -->
     @if (roundState === 'lost_round') {
       <div class="flex flex-col gap-3 text-center">
         <p class="text-red-400 font-extrabold text-xl">✗ Nem sikerült!</p>
-        @if (hasShotPrize) {
-          <p class="text-gray-400 text-sm">Elveszítettéd a shotot is...</p>
-        }
-        <button (click)="bust()" class="w-full py-4 bg-jager-dark border border-red-500/30 text-red-400 font-bold rounded-2xl text-sm uppercase tracking-wider">
+        <p class="text-gray-500 text-sm">Próbálj újra bármikor!</p>
+        <button (click)="bust()"
+          class="w-full py-4 bg-jager-dark border border-red-500/30 text-red-400 font-bold rounded-2xl text-sm uppercase tracking-wider">
           Értem — újra próbálom
         </button>
       </div>
@@ -172,47 +153,49 @@
   </div>
 }
 
-<!-- CHAMPION: Főnyeremény -->
-@if (gameState === 'champion') {
+<!-- KEPT SHOT — nyert, nem veszített -->
+@if (gameState === 'kept_shot') {
   <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center">
-    <div class="w-28 h-28 rounded-full bg-jager-orange/20 border-4 border-jager-orange flex items-center justify-center text-6xl animate-bounce">
-      🏆
-    </div>
+    <div class="w-24 h-24 rounded-full bg-jager-orange/20 border-4 border-jager-orange flex items-center justify-center text-5xl">🥃</div>
     <div>
-      <h2 class="text-3xl font-extrabold tracking-wider uppercase text-jager-orange mb-2">Te vagy a sofőr!</h2>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-jager-orange mb-2">Jó döntés!</h2>
       <p class="text-gray-300 text-sm leading-relaxed max-w-xs">
-        Mind a 4 szintet teljesítetted!<br>
-        <span class="text-jager-orange font-semibold">Válassz egy főnyereményt</span> a profilodon — a sorsolás megtörtént!
+        Kivetted a shotot — okos játékos!<br>
+        <span class="text-gray-400">Nézd meg a kártyádat a profilodon.</span>
       </p>
     </div>
-    <div class="bg-black/50 border border-jager-orange/30 rounded-2xl px-6 py-4 w-full max-w-xs">
-      <p class="text-xs text-gray-500 uppercase tracking-widest mb-2">A nyereményed</p>
-      <p class="text-lg font-bold text-jager-light">🎁 Főnyeremény kisorsolt!</p>
-      <p class="text-xs text-gray-500 mt-1">Nézd meg a Profilom fülön</p>
-    </div>
-    <button (click)="retry()" class="w-full max-w-xs py-3 border border-jager-orange/30 text-jager-orange font-bold rounded-xl text-sm transition-colors hover:bg-jager-orange/10 uppercase tracking-wider">
+    <button (click)="retry()" class="w-full max-w-xs py-3 border border-jager-orange/30 text-jager-orange font-bold rounded-xl text-sm hover:bg-jager-orange/10 uppercase tracking-wider transition-colors">
       Újra játszom
     </button>
   </div>
 }
 
-<!-- BUSTED: Vesztés -->
-@if (gameState === 'busted') {
+<!-- CHAMPION -->
+@if (gameState === 'champion') {
   <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center">
-    <div class="w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center text-5xl">
-      🚌
-    </div>
+    <div class="w-28 h-28 rounded-full bg-jager-orange/20 border-4 border-jager-orange flex items-center justify-center text-6xl animate-bounce">🏆</div>
     <div>
-      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-red-400 mb-2">Lestál a buszról!</h2>
-      <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
-        Nem sikerült a tipp.<br>
-        A beváltás nincs limitálva — próbálj újra bármikor!
+      <h2 class="text-3xl font-extrabold tracking-wider uppercase text-jager-orange mb-2">Te vagy a sofőr!</h2>
+      <p class="text-gray-300 text-sm leading-relaxed max-w-xs">
+        Mind a 4 szintet teljesítetted!<br>
+        <span class="text-jager-orange font-semibold">Főnyeremény</span> vár rád — nézd meg a profilodon!
       </p>
     </div>
-    <button
-      (click)="startGame()"
-      class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
-    >
+    <button (click)="retry()" class="w-full max-w-xs py-3 border border-jager-orange/30 text-jager-orange font-bold rounded-xl text-sm hover:bg-jager-orange/10 uppercase tracking-wider transition-colors">
+      Újra játszom
+    </button>
+  </div>
+}
+
+<!-- BUSTED -->
+@if (gameState === 'busted') {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center">
+    <div class="w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center text-5xl">🚌</div>
+    <div>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-red-400 mb-2">Lestál a buszról!</h2>
+      <p class="text-gray-400 text-sm leading-relaxed max-w-xs">Nem sikerült a tipp — próbálj újra bármikor!</p>
+    </div>
+    <button (click)="startGame()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase">
       Újra felszállok!
     </button>
   </div>
