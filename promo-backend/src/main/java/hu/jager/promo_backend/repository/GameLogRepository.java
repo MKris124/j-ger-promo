@@ -14,4 +14,6 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
 
     // Megszámolja, hányszor próbálkozott összesen
     long countByUserId(Long userId);
+
+    List<GameLog> findByUserIdOrderByPlayedAtDesc(Long userId);
 }

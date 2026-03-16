@@ -3,12 +3,16 @@ package hu.jager.promo_backend.controller;
 import hu.jager.promo_backend.dto.AuthRequest;
 import hu.jager.promo_backend.dto.AuthResponse;
 import hu.jager.promo_backend.dto.GoogleLoginRequest;
+import hu.jager.promo_backend.entity.AppSettings;
 import hu.jager.promo_backend.entity.AppUser;
 import hu.jager.promo_backend.security.JwtUtils; // Ezt importáljuk!
+import hu.jager.promo_backend.service.AdminService;
 import hu.jager.promo_backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,7 +21,8 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-    private final JwtUtils jwtUtils; // Ezt behúzzuk a token generáláshoz!
+    private final JwtUtils jwtUtils;
+    private final AdminService adminService;
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request) {
@@ -51,5 +56,11 @@ public class AuthController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/event-status")
+    public ResponseEntity<?> getEventStatus() {
+        AppSettings settings = adminService.getSettings();
+        return ResponseEntity.ok(Map.of("eventActive", settings.isEventActive()));
     }
 }

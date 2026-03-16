@@ -1,3 +1,286 @@
-<p>
-  game works!
-</p>
+<div class="min-h-screen flex flex-col bg-jager-dark text-jager-light">
+
+  <!-- HEADER -->
+  <header class="bg-black/60 backdrop-blur-md border-b border-jager-orange/20 px-4 py-3 flex items-center justify-between flex-shrink-0 sticky top-0 z-30">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 bg-jager-orange rounded-lg flex items-center justify-center text-black font-black text-base">J</div>
+      <span class="text-jager-orange font-extrabold tracking-widest text-sm">JÄGER PROMO</span>
+    </div>
+    <div class="flex items-center gap-2">
+      @if (getAvailableCount() > 0) {
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-jager-orange/10 border border-jager-orange/30 text-jager-orange text-xs font-bold">
+          🎁 {{ getAvailableCount() }}
+        </div>
+      }
+      <button (click)="logout()" class="px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:border-red-500/50 hover:text-red-400 text-xs font-medium transition-colors whitespace-nowrap">
+        Kilépés
+      </button>
+    </div>
+  </header>
+
+  <!-- TAB NAV -->
+  <div class="bg-black/40 backdrop-blur-md border-b border-jager-orange/10 px-4 flex gap-1 sticky top-[57px] z-20">
+    <button
+      (click)="activeTab = 'game'"
+      [class]="activeTab === 'game'
+        ? 'flex items-center gap-2 px-4 py-3 border-b-2 border-jager-orange text-jager-orange text-sm font-semibold transition-colors'
+        : 'flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-gray-500 text-sm font-medium hover:text-gray-300 transition-colors'"
+    >
+      <span>🎮</span> Játék
+    </button>
+    <button
+      (click)="activeTab = 'profile'"
+      [class]="activeTab === 'profile'
+        ? 'flex items-center gap-2 px-4 py-3 border-b-2 border-jager-orange text-jager-orange text-sm font-semibold transition-colors relative'
+        : 'flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-gray-500 text-sm font-medium hover:text-gray-300 transition-colors relative'"
+    >
+      <span>👤</span> Profilom
+      @if (getAvailableCount() > 0) {
+        <span class="absolute top-2 right-1 w-2 h-2 rounded-full bg-jager-orange"></span>
+      }
+    </button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="flex-1 overflow-y-auto">
+
+    <!-- ===== JÁTÉK TAB ===== -->
+    @if (activeTab === 'game') {
+
+      <!-- Nyeremény overlay — nyerés után megjelenik -->
+      @if (gameResult === 'won' && lastPrize) {
+        <div class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end justify-center p-4">
+          <div class="w-full max-w-sm bg-[#111] border border-jager-orange/30 rounded-2xl p-6 flex flex-col items-center gap-4 text-center mb-4">
+            <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange flex items-center justify-center text-5xl">
+              {{ lastPrize.inventoryItem?.liquid ? '🍶' : (lastPrize.inventoryItem ? '🎁' : '🥃') }}
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Nyereményed</p>
+              <h3 class="text-xl font-extrabold text-jager-light">{{ lastPrize.inventoryItem?.name ?? 'Jäger Shot' }}</h3>
+              <p class="text-xs text-gray-500 mt-1">Bekerült a kártyádra — váltsd be a promoternél!</p>
+            </div>
+            <button
+              (click)="clearGameResult(); activeTab = 'profile'"
+              class="w-full py-3 bg-jager-orange text-black font-extrabold rounded-xl uppercase tracking-wider text-sm"
+            >
+              Megnézem a kártyám →
+            </button>
+            <button (click)="clearGameResult()" class="text-xs text-gray-600 hover:text-gray-400">
+              Bezárás
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Nincs aktív játék -->
+      @if (!activeGame) {
+        <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center gap-4">
+          <div class="text-5xl mb-2">⏳</div>
+          <h2 class="text-xl font-extrabold tracking-wider uppercase text-jager-light">Játék hamarosan</h2>
+          <p class="text-gray-400 text-sm max-w-xs">Az admin még nem aktivált játékot. Hamarosan indul!</p>
+        </div>
+      }
+
+      <!-- Kapd el a Jägert -->
+      @if (activeGame?.frontendComponentName === 'CatchTheJagerComponent') {
+        <app-catch-jager
+          (gameWon)="onGameWon()"
+          (gameLost)="onGameLost()"
+        ></app-catch-jager>
+      }
+
+      <!-- Jäger Busz -->
+      @if (activeGame?.frontendComponentName === 'RideTheBusComponent') {
+        <app-ride-the-bus
+          (gameWon)="onGameWon()"
+          (gameLost)="onGameLost()"
+        ></app-ride-the-bus>
+      }
+
+    }
+
+    <!-- ===== PROFIL TAB ===== -->
+    @if (activeTab === 'profile') {
+      <div class="p-4 max-w-lg mx-auto flex flex-col gap-4 pb-8">
+
+        <!-- Profil kártya -->
+        <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5">
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-2xl font-black text-jager-orange flex-shrink-0">
+              {{ profile?.name?.charAt(0)?.toUpperCase() || '?' }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-lg font-extrabold text-jager-light truncate">{{ profile?.name || 'Játékos' }}</h2>
+              <div class="flex items-center gap-3 mt-1">
+                <span class="text-xs text-gray-500">🎮 {{ gameLogs.length }} játék</span>
+                <span class="text-xs text-gray-500">🏆 {{ getWinCount() }} nyeremény</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== NYEREMÉNY ZSEBEK ===== -->
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 px-1">Nyeremény kártya</h3>
+
+          @if (profileLoading) {
+            <div class="flex justify-center py-8">
+              <svg class="animate-spin h-8 w-8 text-jager-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke-width="3" stroke-linecap="round"></path>
+              </svg>
+            </div>
+          }
+
+          @if (!profileLoading) {
+            <!-- 2 zseb megjelenítése -->
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl overflow-hidden">
+
+              <!-- Kártya fejléc -->
+              <div class="px-5 py-3 border-b border-jager-orange/10 flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-widest text-gray-400">Jäger Kártya</span>
+                <span class="text-[10px] text-gray-600">Max. 2 nyeremény</span>
+              </div>
+
+              <!-- Zsebek -->
+              <div class="divide-y divide-jager-orange/10">
+
+                @for (pocket of pockets; track pocket.id) {
+                  <div class="px-5 py-4 flex items-center gap-4">
+                    <!-- Ikon -->
+                    <div [class]="pocket.status === 'AVAILABLE'
+                      ? 'w-12 h-12 rounded-xl bg-jager-orange/10 border border-jager-orange/30 flex items-center justify-center text-2xl flex-shrink-0'
+                      : 'w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl flex-shrink-0 opacity-40'"
+                    >
+                      {{ getPrizeIcon(pocket) }}
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                      <div [class]="pocket.status === 'AVAILABLE' ? 'text-sm font-semibold text-jager-light' : 'text-sm font-semibold text-gray-600 line-through'">
+                        {{ getPrizeName(pocket) }}
+                      </div>
+                      @if (pocket.status === 'AVAILABLE') {
+                        <div class="text-xs text-green-400 mt-0.5">✓ Beváltható</div>
+                      } @else {
+                        <div class="text-xs text-gray-600 mt-0.5">Beváltva {{ formatDate(pocket.redeemedAt!) }}</div>
+                      }
+                    </div>
+
+                    <!-- QR gomb / Beváltva badge -->
+                    @if (pocket.status === 'AVAILABLE') {
+                      <button
+                        (click)="openQr(pocket)"
+                        class="flex-shrink-0 px-3 py-2 bg-jager-orange hover:bg-orange-500 text-black font-bold text-xs rounded-lg transition-colors uppercase tracking-wider"
+                      >
+                        QR
+                      </button>
+                    } @else {
+                      <span class="flex-shrink-0 px-3 py-2 bg-white/5 border border-white/10 text-gray-600 font-bold text-xs rounded-lg uppercase tracking-wider">
+                        ✓ Kész
+                      </span>
+                    }
+                  </div>
+                }
+
+                <!-- Üres zsebek feltöltése ha kevesebb mint 2 -->
+                @for (empty of getEmptySlots(); track empty) {
+                  <div class="px-5 py-4 flex items-center gap-4 opacity-30">
+                    <div class="w-12 h-12 rounded-xl border border-dashed border-gray-700 flex items-center justify-center text-gray-700 flex-shrink-0">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-sm text-gray-700">Üres zseb</div>
+                      <div class="text-xs text-gray-700 mt-0.5">Játssz és nyerj!</div>
+                    </div>
+                  </div>
+                }
+
+              </div>
+
+              <!-- Ha mindkét zseb beváltva: lezárt állapot -->
+              @if (isAllRedeemed()) {
+                <div class="px-5 py-4 bg-jager-orange/5 border-t border-jager-orange/10 text-center">
+                  <p class="text-xs text-gray-500 leading-relaxed">
+                    🎉 Mára kimaxoltad a Jäger élményt!<br>
+                    <span class="text-gray-600">Irány a tánctér!</span>
+                  </p>
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+
+        <!-- ===== JÁTÉK ELŐZMÉNYEK ===== -->
+        @if (gameLogs.length > 0) {
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 px-1">Játék előzmények</h3>
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl overflow-hidden">
+              @for (log of gameLogs; track log.id) {
+                <div class="px-5 py-3.5 flex items-center justify-between border-b border-white/5 last:border-0">
+                  <div class="flex items-center gap-3">
+                    <span class="text-lg">{{ log.winner ? '🏆' : '😅' }}</span>
+                    <div>
+                      <div class="text-sm font-medium text-gray-300">{{ log.gameName }}</div>
+                      <div class="text-xs text-gray-600">{{ formatDate(log.playedAt) }}</div>
+                    </div>
+                  </div>
+                  @if (log.winner) {
+                    <span class="px-2.5 py-1 rounded-lg bg-jager-orange/10 border border-jager-orange/20 text-jager-orange text-[10px] font-bold uppercase tracking-wider">Nyert</span>
+                  } @else {
+                    <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-gray-600 text-[10px] font-bold uppercase tracking-wider">Próba</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+
+</div>
+
+<!-- ===== QR MODAL ===== -->
+@if (qrModalPocket) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+    (click)="closeQr()"
+  >
+    <div
+      class="bg-[#111111] border border-jager-orange/30 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center gap-5"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Fejléc -->
+      <div class="text-center">
+        <div class="text-3xl mb-2">{{ getPrizeIcon(qrModalPocket) }}</div>
+        <h3 class="text-lg font-extrabold text-jager-light">{{ getPrizeName(qrModalPocket) }}</h3>
+        <p class="text-xs text-gray-500 mt-1">Mutasd a QR kódot a promóternek</p>
+      </div>
+
+      <!-- QR kód -->
+      <div class="bg-white rounded-2xl p-3 flex items-center justify-center">
+        <qrcode
+          [qrdata]="qrModalPocket.qrCodeHash"
+          [width]="200"
+          [margin]="2"
+          [colorDark]="'#000000'"
+          [colorLight]="'#ffffff'"
+          [errorCorrectionLevel]="'M'"
+        ></qrcode>
+      </div>
+
+      <button
+        (click)="closeQr()"
+        class="w-full py-3 border border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300 font-medium rounded-xl text-sm transition-colors"
+      >
+        Bezárás
+      </button>
+    </div>
+  </div>
+}

@@ -1,3 +1,197 @@
-<p>
-  promoter works!
-</p>
+<div class="min-h-screen bg-jager-dark text-jager-light flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-black/60 backdrop-blur-md border-b border-jager-orange/20 px-4 py-3 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-jager-orange rounded-lg flex items-center justify-center text-black font-black text-base">J</div>
+      <div>
+        <div class="text-jager-orange font-extrabold tracking-widest text-xs leading-none">JÄGER</div>
+        <div class="text-[9px] text-gray-500 tracking-widest uppercase mt-0.5">Promoter</div>
+      </div>
+    </div>
+    <button (click)="logout()" class="px-3 py-1.5 rounded-lg border border-gray-700 text-gray-500 hover:border-red-500/50 hover:text-red-400 text-xs transition-colors">
+      Kilépés
+    </button>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="flex-1 flex flex-col items-center justify-center p-4">
+
+    <!-- ===== SCANNING STATE ===== -->
+    @if (state === 'scanning') {
+      <div class="w-full max-w-sm flex flex-col items-center gap-5">
+
+        <div class="text-center">
+          <h1 class="text-2xl font-extrabold tracking-wider uppercase text-jager-light">QR Beolvasás</h1>
+          <p class="text-gray-400 text-sm mt-1">Tartsd a kamerát a játékos QR kódja elé</p>
+        </div>
+
+        <!-- Kamera nézet -->
+        <div class="relative w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden border-2 border-jager-orange/30 bg-black">
+          <video #videoEl
+            class="absolute inset-0 w-full h-full object-cover"
+            autoplay
+            playsinline
+            muted
+          ></video>
+          <canvas #canvasEl class="hidden"></canvas>
+
+          <!-- Scanner overlay — sarokkeretek -->
+          <div class="absolute inset-0 pointer-events-none">
+            <!-- Homályos keret a sarkokon kívül -->
+            <div class="absolute inset-0 bg-black/30"></div>
+            <!-- Scan zóna -->
+            <div class="absolute inset-8 border-0">
+              <!-- 4 sarok -->
+              <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-jager-orange rounded-tl-lg"></div>
+              <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-jager-orange rounded-tr-lg"></div>
+              <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-jager-orange rounded-bl-lg"></div>
+              <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-jager-orange rounded-br-lg"></div>
+              <!-- Scan vonal animáció -->
+              <div class="absolute left-0 right-0 h-0.5 bg-jager-orange/70 scan-line"></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-600 text-center">A kamera automatikusan felismeri a QR kódot</p>
+      </div>
+    }
+
+    <!-- ===== LOADING STATE ===== -->
+    @if (state === 'loading') {
+      <div class="flex flex-col items-center gap-4">
+        <svg class="animate-spin h-12 w-12 text-jager-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+        <p class="text-gray-400 text-sm">Nyeremény ellenőrzése...</p>
+      </div>
+    }
+
+    <!-- ===== PREVIEW STATE ===== -->
+    @if (state === 'preview' && pocket) {
+      <div class="w-full max-w-sm flex flex-col gap-4">
+
+        <div class="text-center mb-2">
+          <p class="text-gray-400 text-sm uppercase tracking-widest text-xs font-semibold">Beolvasva — nyeremény</p>
+        </div>
+
+        <!-- Nyeremény kártya -->
+        <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
+          <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-5xl">
+            {{ getPrizeIcon() }}
+          </div>
+          <div>
+            <h2 class="text-2xl font-extrabold text-jager-light tracking-wide">{{ getPrizeName() }}</h2>
+            @if (pocket.inventoryItem?.liquid) {
+              <p class="text-sm text-blue-400 mt-1">Folyadék nyeremény</p>
+            } @else if (pocket.inventoryItem) {
+              <p class="text-sm text-purple-400 mt-1">Merch nyeremény</p>
+            } @else {
+              <p class="text-sm text-jager-orange mt-1">Shot nyeremény</p>
+            }
+            @if (pocket.userName) {
+              <p class="text-xs text-gray-500 mt-2">👤 {{ pocket.userName }}</p>
+            }
+          </div>
+        </div>
+
+        <!-- BEVÁLT gomb -->
+        <button
+          (click)="redeem()"
+          [disabled]="redeeming"
+          class="w-full py-5 bg-jager-orange hover:bg-orange-500 disabled:opacity-50 text-black font-extrabold text-xl rounded-2xl transition-colors tracking-widest uppercase shadow-lg shadow-jager-orange/20 flex items-center justify-center gap-3"
+        >
+          @if (redeeming) {
+            <svg class="animate-spin h-6 w-6 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke-width="3" stroke-linecap="round"></path>
+            </svg>
+            Feldolgozás...
+          } @else {
+            <span>✓</span>
+            <span>Beváltom</span>
+          }
+        </button>
+
+        <!-- Mégsem -->
+        <button
+          (click)="resetScanner()"
+          class="w-full py-3 border border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300 font-medium rounded-xl text-sm transition-colors"
+        >
+          Mégsem — visszatérés
+        </button>
+
+      </div>
+    }
+
+    <!-- ===== SUCCESS STATE ===== -->
+    @if (state === 'success' && pocket) {
+      <div class="w-full max-w-sm flex flex-col items-center gap-5 text-center">
+
+        <!-- Success ikon -->
+        <div class="w-24 h-24 rounded-full bg-green-500/10 border-2 border-green-500/40 flex items-center justify-center text-5xl">
+          ✅
+        </div>
+
+        <div>
+          <h2 class="text-2xl font-extrabold text-green-400 tracking-wide uppercase">Beváltva!</h2>
+          <p class="text-gray-400 text-sm mt-2">
+            <span class="text-jager-light font-semibold">{{ getPrizeName() }}</span> sikeresen átadva.
+          </p>
+        </div>
+
+        <div class="bg-black/50 border border-green-500/20 rounded-xl px-5 py-3 text-xs text-gray-500">
+          A nyeremény lezárva és levonva a készletből.
+        </div>
+
+        <!-- Következő beolvasás -->
+        <button
+          (click)="resetScanner()"
+          class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
+        >
+          Következő →
+        </button>
+
+      </div>
+    }
+
+    <!-- ===== ERROR STATE ===== -->
+    @if (state === 'error') {
+      <div class="w-full max-w-sm flex flex-col items-center gap-5 text-center">
+
+        <div class="w-20 h-20 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center text-4xl">
+          ❌
+        </div>
+
+        <div>
+          <h2 class="text-xl font-extrabold text-red-400 uppercase tracking-wide">Hiba</h2>
+          <p class="text-gray-400 text-sm mt-2 leading-relaxed">{{ errorMessage }}</p>
+        </div>
+
+        <button
+          (click)="resetScanner()"
+          class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
+        >
+          Újra próbálom
+        </button>
+
+      </div>
+    }
+
+  </div>
+
+</div>
+
+<style>
+.scan-line {
+  animation: scan 2s linear infinite;
+  top: 0;
+}
+
+@keyframes scan {
+  0%   { top: 0%; opacity: 1; }
+  90%  { top: 100%; opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+</style>

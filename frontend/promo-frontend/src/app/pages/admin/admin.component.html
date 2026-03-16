@@ -1,3 +1,662 @@
-<p>
-  admin works!
-</p>
+<!-- Mobile: flex-col + bottom nav | Desktop: flex-row + sidebar -->
+<div class="min-h-screen flex flex-col md:flex-row bg-jager-dark text-jager-light">
+
+  <!-- ===== SIDEBAR (desktop) / TOP BAR (mobile, kétszintes) ===== -->
+
+  <!-- MOBIL top bar — két sor, csak mobilon látszik -->
+  <header class="md:hidden flex flex-col bg-black/60 backdrop-blur-md border-b border-jager-orange/20 sticky top-0 z-40">
+    <!-- 1. sor: brand + státusz + ki gomb -->
+    <div class="flex items-center justify-between px-4 py-2.5 border-b border-jager-orange/10">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-jager-orange rounded-lg flex items-center justify-center text-black font-black text-base flex-shrink-0">J</div>
+        <div class="flex flex-col leading-none">
+          <span class="text-jager-orange font-extrabold tracking-widest text-xs">JÄGER</span>
+          <span class="text-[9px] text-gray-500 tracking-widest uppercase mt-0.5">Admin Panel</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (settings.eventActive) {
+          <div class="flex items-center gap-1.5 text-green-400 text-[10px] font-bold uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+            Aktív
+          </div>
+          <button (click)="goToGame()" class="px-2.5 py-1.5 rounded-lg bg-jager-orange/10 border border-jager-orange/30 text-jager-orange text-[10px] font-bold uppercase tracking-wider transition-colors">
+            ▶ Játék
+          </button>
+        } @else {
+          <div class="flex items-center gap-1.5 text-red-400 text-[10px] font-bold uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+            Szünetel
+          </div>
+        }
+        <button (click)="logout()" class="ml-1 px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:border-red-500/50 hover:text-red-400 text-xs font-medium transition-colors">
+          Kilépés
+        </button>
+      </div>
+    </div>
+    <!-- 2. sor: navigáció -->
+    <nav class="flex items-center px-2 py-1.5 gap-1">
+      @for (tab of tabs; track tab.key) {
+        <button
+          (click)="activeTab = tab.key"
+          [class]="activeTab === tab.key
+            ? 'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-jager-orange/10 border border-jager-orange/30 text-jager-orange text-xs font-semibold'
+            : 'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-gray-500 text-xs font-medium transition-colors hover:text-gray-300'"
+        >
+          <span class="text-sm leading-none">{{ tab.icon }}</span>
+          <span>{{ tab.shortLabel }}</span>
+        </button>
+      }
+    </nav>
+  </header>
+
+  <!-- DESKTOP sidebar — csak md+ látszik -->
+  <aside class="hidden md:flex md:w-56 md:flex-shrink-0 md:flex-col md:h-screen md:sticky md:top-0 bg-black/50 backdrop-blur-md border-r border-jager-orange/20">
+    <div class="flex items-center gap-3 px-5 py-6 border-b border-jager-orange/20">
+      <div class="w-10 h-10 bg-jager-orange rounded-lg flex items-center justify-center text-black font-black text-xl flex-shrink-0">J</div>
+      <div class="flex flex-col">
+        <span class="text-jager-orange font-extrabold tracking-widest text-sm leading-none">JÄGER</span>
+        <span class="text-[10px] text-gray-500 tracking-widest uppercase mt-0.5">Admin Panel</span>
+      </div>
+    </div>
+
+    <nav class="flex-1 p-3 flex flex-col gap-1">
+      @for (tab of tabs; track tab.key) {
+        <button
+          (click)="activeTab = tab.key"
+          [class]="activeTab === tab.key
+            ? 'flex items-center gap-3 px-4 py-2.5 rounded-lg bg-jager-orange/10 border border-jager-orange/30 text-jager-orange text-sm font-medium w-full text-left'
+            : 'flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-400 hover:bg-white/5 hover:text-jager-light text-sm font-medium w-full text-left transition-colors'"
+        >
+          <span>{{ tab.icon }}</span>
+          <span>{{ tab.label }}</span>
+        </button>
+      }
+    </nav>
+
+    <div class="p-3 border-t border-jager-orange/20 flex flex-col gap-2">
+      @if (settings.eventActive) {
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-[10px] font-bold tracking-widest uppercase">
+          <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+          Esemény aktív
+        </div>
+        <button
+          (click)="goToGame()"
+          class="px-3 py-2 rounded-lg bg-jager-orange/10 border border-jager-orange/30 text-jager-orange text-xs font-bold transition-colors w-full uppercase tracking-wider hover:bg-jager-orange/20"
+        >▶ Játékba ugrás</button>
+      } @else {
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold tracking-widest uppercase">
+          <span class="w-2 h-2 rounded-full bg-red-400"></span>
+          Szünetel
+        </div>
+      }
+      <button
+        (click)="logout()"
+        class="px-3 py-2 rounded-lg border border-gray-700 text-gray-500 hover:border-red-500/50 hover:text-red-400 text-xs transition-colors w-full"
+      >Kilépés</button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="flex-1 overflow-y-auto p-4 md:p-10">
+
+    <!-- Toast -->
+    @if (toast) {
+      @if (toast.type === 'success') {
+        <div class="fixed top-4 left-4 right-4 md:left-auto md:right-8 md:top-6 md:w-auto z-50 px-5 py-3 rounded-lg border border-green-500/40 bg-green-500/10 text-green-400 text-sm font-medium text-center">
+          {{ toast.message }}
+        </div>
+      } @else {
+        <div class="fixed top-4 left-4 right-4 md:left-auto md:right-8 md:top-6 md:w-auto z-50 px-5 py-3 rounded-lg border border-red-500/40 bg-red-500/10 text-red-400 text-sm font-medium text-center">
+          {{ toast.message }}
+        </div>
+      }
+    }
+
+    <!-- ===== SETTINGS ===== -->
+    @if (activeTab === 'settings') {
+      <section class="max-w-2xl mx-auto md:mx-0 md:max-w-4xl">
+        <div class="mb-6 md:mb-8">
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Beállítások</h1>
+          <p class="text-gray-400 text-sm mt-1">Az esemény és a sorsolási paraméterek kezelése.</p>
+        </div>
+
+        <div class="flex flex-col gap-4 md:gap-5">
+
+          <!-- 1. sor: event toggle + kemcső/liter -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+
+            <!-- Event toggle -->
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 md:p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="text-xl">🎯</span>
+                <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Esemény státusz</h2>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-400">
+                  {{ settings.eventActive ? 'Játékosok játszhatnak' : 'Regisztráció szünetel' }}
+                </span>
+                <button
+                  (click)="toggleEvent()"
+                  [class]="settings.eventActive
+                    ? 'relative w-12 h-6 rounded-full bg-jager-orange border border-jager-orange transition-all duration-200 flex-shrink-0'
+                    : 'relative w-12 h-6 rounded-full bg-gray-700 border border-gray-600 transition-all duration-200 flex-shrink-0'"
+                >
+                  <span
+                    [class]="settings.eventActive
+                      ? 'absolute top-0.5 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow'
+                      : 'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-gray-500 transition-all duration-200'"
+                  ></span>
+                </button>
+              </div>
+              <p class="text-xs text-gray-600 mt-3">Ez a manuális kapcsoló. Ha időzítés is be van állítva, az automatikusan felülírja.</p>
+            </div>
+
+            <!-- Shots per liter -->
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 md:p-6">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-xl">🍶</span>
+                <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Kemcső db / Liter</h2>
+              </div>
+              <p class="text-xs text-gray-400 mb-4 leading-relaxed">
+                Hány Jäger kemcsövet ér egy 1 literes üveg.
+              </p>
+              <div class="flex items-center gap-3 mb-4">
+                <div class="flex items-center bg-jager-dark border border-gray-700 rounded-lg overflow-hidden">
+                  <button
+                    (click)="shotsPerLiterInput = shotsPerLiterInput > 0 ? +(shotsPerLiterInput - 0.5).toFixed(1) : 0"
+                    class="w-11 h-11 text-gray-400 hover:bg-jager-orange/10 hover:text-jager-orange text-xl transition-colors"
+                  >−</button>
+                  <input
+                    type="number"
+                    [(ngModel)]="shotsPerLiterInput"
+                    min="0"
+                    step="0.5"
+                    class="w-16 h-11 text-center bg-transparent text-jager-light font-bold text-lg focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button
+                    (click)="shotsPerLiterInput = +(shotsPerLiterInput + 0.5).toFixed(1)"
+                    class="w-11 h-11 text-gray-400 hover:bg-jager-orange/10 hover:text-jager-orange text-xl transition-colors"
+                  >+</button>
+                </div>
+                <span class="text-sm text-gray-400">kemcső / liter</span>
+              </div>
+              @if (shotsPerLiterInput > 0) {
+                <div class="bg-jager-dark border border-gray-700 rounded-lg p-3">
+                  <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Példa arányok</p>
+                  <div class="grid grid-cols-3 gap-2">
+                    @for (ex of getLiterExamples(); track ex.label) {
+                      <div class="flex flex-col items-center gap-0.5">
+                        <span class="text-jager-orange font-bold text-sm">{{ ex.shots }}</span>
+                        <span class="text-gray-500 text-xs">{{ ex.label }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- 2. sor: időzítés -->
+          <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 md:p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xl">⏰</span>
+              <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Esemény időzítés</h2>
+            </div>
+
+            <!-- Mód választó -->
+            <div class="grid grid-cols-2 gap-2 mb-5">
+              <button
+                (click)="scheduleMode = 'manual'"
+                [class]="scheduleMode === 'manual'
+                  ? 'py-2.5 rounded-lg text-sm font-medium bg-jager-orange/10 border border-jager-orange/40 text-jager-orange'
+                  : 'py-2.5 rounded-lg text-sm font-medium bg-jager-dark border border-gray-700 text-gray-400 transition-colors'"
+              >🖐 Manuális</button>
+              <button
+                (click)="scheduleMode = 'scheduled'"
+                [class]="scheduleMode === 'scheduled'
+                  ? 'py-2.5 rounded-lg text-sm font-medium bg-jager-orange/10 border border-jager-orange/40 text-jager-orange'
+                  : 'py-2.5 rounded-lg text-sm font-medium bg-jager-dark border border-gray-700 text-gray-400 transition-colors'"
+              >📅 Időzített</button>
+            </div>
+
+            @if (scheduleMode === 'manual') {
+              <p class="text-sm text-gray-500 text-center py-2">
+                Az esemény a fenti kapcsolóval irányítható kézzel.
+              </p>
+            }
+
+            @if (scheduleMode === 'scheduled') {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-1">Kezdés</label>
+                  <input
+                    type="datetime-local"
+                    [(ngModel)]="eventStartInput"
+                    class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-1">Befejezés</label>
+                  <input
+                    type="datetime-local"
+                    [(ngModel)]="eventEndInput"
+                    class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors text-sm"
+                  />
+                </div>
+              </div>
+              @if (getEventTimeStatus()) {
+                <div class="mt-3 px-4 py-2.5 rounded-lg bg-jager-dark border border-gray-700 text-sm text-gray-300">
+                  {{ getEventTimeStatus() }}
+                </div>
+              }
+            }
+          </div>
+
+          <!-- 3. sor: sorsolási mód -->
+          <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 md:p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xl">🎰</span>
+              <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Sorsolási mód</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-4">
+              <button
+                (click)="settings.drawMode = 'TIMED'"
+                [class]="settings.drawMode === 'TIMED'
+                  ? 'py-3 px-3 rounded-xl text-sm font-semibold bg-jager-orange/10 border border-jager-orange/40 text-jager-orange text-left transition-colors'
+                  : 'py-3 px-3 rounded-xl text-sm font-medium bg-jager-dark border border-gray-700 text-gray-400 text-left transition-colors hover:border-gray-600'"
+              >
+                <div class="text-base mb-1">⏱</div>
+                <div class="font-bold text-xs">Nyerő pillanatok</div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Egyenletes elosztás</div>
+              </button>
+              <button
+                (click)="settings.drawMode = 'PERCENTAGE'"
+                [class]="settings.drawMode === 'PERCENTAGE'
+                  ? 'py-3 px-3 rounded-xl text-sm font-semibold bg-jager-orange/10 border border-jager-orange/40 text-jager-orange text-left transition-colors'
+                  : 'py-3 px-3 rounded-xl text-sm font-medium bg-jager-dark border border-gray-700 text-gray-400 text-left transition-colors hover:border-gray-600'"
+              >
+                <div class="text-base mb-1">⚖️</div>
+                <div class="font-bold text-xs">Készlet-arányos</div>
+                <div class="text-[10px] text-gray-500 mt-0.5">Shot vs merch esélye</div>
+              </button>
+            </div>
+
+            @if (settings.drawMode === 'TIMED') {
+              <div class="bg-jager-dark border border-gray-700 rounded-xl p-3 text-xs text-gray-400 leading-relaxed">
+                <p class="font-semibold text-gray-300 mb-1">⏱ Nyerő pillanatok mód</p>
+                Minden merch itemhez előre generál pillanatokat az esemény idején egyenletesen elosztva.
+                A pillanatok között mindenki shotot kap — így a merch garantáltan kitart a buli végéig.
+                <span class="text-jager-orange font-medium"> Csak időzített módban működik (start/end szükséges).</span>
+              </div>
+            }
+
+            @if (settings.drawMode === 'PERCENTAGE') {
+              <div class="bg-jager-dark border border-gray-700 rounded-xl p-3 text-xs text-gray-400 leading-relaxed">
+                <p class="font-semibold text-gray-300 mb-1">⚖️ Készlet-arányos mód</p>
+                A backend a meglévő készlet arányában sorsol. Mivel shotból általában több van,
+                annak nagyobb az esélye. Ha elfogy a merch, automatikusan csak shot marad.
+                Ha minden elfogy, az esemény automatikusan leáll.
+              </div>
+            }
+          </div>
+
+          <!-- 4. sor: aktív játék -->
+          <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 md:p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-xl">🎮</span>
+              <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Aktív játék</h2>
+            </div>
+            @if (games.length === 0) {
+              <p class="text-sm text-gray-500">Még nincs játék létrehozva. Menj a Játékok fülre!</p>
+            } @else {
+              <div class="flex flex-col gap-2">
+                @for (game of games; track game.id) {
+                  <button
+                    (click)="setActiveGame(game)"
+                    [class]="settings.activeGame?.id === game.id
+                      ? 'flex items-center gap-3 px-4 py-3 rounded-xl bg-jager-orange/10 border border-jager-orange/40 text-left w-full'
+                      : 'flex items-center gap-3 px-4 py-3 rounded-xl bg-jager-dark border border-gray-700 text-left w-full hover:border-gray-600 transition-colors'"
+                  >
+                    <span [class]="settings.activeGame?.id === game.id ? 'w-2 h-2 rounded-full bg-jager-orange flex-shrink-0' : 'w-2 h-2 rounded-full bg-gray-600 flex-shrink-0'"></span>
+                    <div class="flex-1 min-w-0">
+                      <div [class]="settings.activeGame?.id === game.id ? 'text-sm font-semibold text-jager-orange' : 'text-sm font-medium text-gray-300'">{{ game.name }}</div>
+                      <div class="text-xs text-gray-500 truncate">{{ game.frontendComponentName }}</div>
+                    </div>
+                    @if (settings.activeGame?.id === game.id) {
+                      <span class="text-[10px] font-bold text-jager-orange uppercase tracking-widest flex-shrink-0">Aktív</span>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Mentés gomb -->
+          <button
+            (click)="updateSettings()"
+            [disabled]="loading"
+            class="w-full bg-jager-orange hover:bg-orange-600 disabled:opacity-40 text-black font-bold py-3.5 rounded-xl transition-colors tracking-wider uppercase text-sm"
+          >
+            @if (loading) {
+              <svg class="animate-spin h-5 w-5 mx-auto text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
+              </svg>
+            } @else {
+              Beállítások mentése
+            }
+          </button>
+
+        </div>
+      </section>
+    }
+
+    <!-- ===== GAMES ===== -->
+    @if (activeTab === 'games') {
+      <section class="max-w-2xl mx-auto md:mx-0 md:max-w-4xl">
+        <div class="mb-6 md:mb-8">
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Játékok</h1>
+          <p class="text-gray-400 text-sm mt-1">Játékok kezelése és aktiválása.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- Új játék létrehozása -->
+          <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-lg">✚</span>
+              <h2 class="font-bold tracking-wider text-sm uppercase text-jager-orange">Új játék</h2>
+            </div>
+            <div class="space-y-3 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Játék neve</label>
+                <input type="text" [(ngModel)]="newGameName" placeholder="pl. Kapd el a Jägert"
+                  class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light text-base focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors placeholder-gray-600" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Angular komponens neve</label>
+                <input type="text" [(ngModel)]="newGameComponent" placeholder="pl. CatchTheJagerComponent"
+                  class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light text-base focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors placeholder-gray-600 font-mono text-sm" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Leírás (opcionális)</label>
+                <input type="text" [(ngModel)]="newGameDesc" placeholder="Rövid leírás..."
+                  class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light text-base focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors placeholder-gray-600" />
+              </div>
+            </div>
+            <button
+              (click)="createGame()"
+              [disabled]="loading || !newGameName.trim() || !newGameComponent.trim()"
+              class="w-full bg-jager-orange hover:bg-orange-600 disabled:opacity-40 text-black font-bold py-3 rounded-lg transition-colors tracking-wider uppercase text-sm"
+            >
+              @if (loading) { Kérjük várj... } @else { Létrehozás }
+            </button>
+          </div>
+
+          <!-- Játék lista -->
+          @for (game of games; track game.id) {
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 flex flex-col gap-3">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    @if (settings.activeGame?.id === game.id) {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-jager-orange/10 border border-jager-orange/30 text-jager-orange">Aktív</span>
+                    }
+                    @if (!game.active) {
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-gray-500/10 border border-gray-500/20 text-gray-500">Kikapcsolva</span>
+                    }
+                  </div>
+                  <h3 class="text-sm font-semibold text-jager-light">{{ game.name }}</h3>
+                  <p class="text-xs text-gray-500 font-mono mt-0.5 truncate">{{ game.frontendComponentName }}</p>
+                  @if (game.description) {
+                    <p class="text-xs text-gray-400 mt-1">{{ game.description }}</p>
+                  }
+                </div>
+              </div>
+              <div class="flex gap-2 mt-auto">
+                <button
+                  (click)="setActiveGame(game)"
+                  [disabled]="settings.activeGame?.id === game.id"
+                  class="flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider bg-jager-orange/10 border border-jager-orange/30 text-jager-orange disabled:opacity-30 hover:bg-jager-orange/20 transition-colors"
+                >Aktivál</button>
+                <button
+                  (click)="toggleGame(game)"
+                  [class]="game.active
+                    ? 'flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-gray-700 text-gray-400 hover:border-red-500/40 hover:text-red-400 transition-colors'
+                    : 'flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-colors'"
+                >{{ game.active ? 'Kikapcsol' : 'Bekapcsol' }}</button>
+              </div>
+            </div>
+          }
+
+          @if (games.length === 0) {
+            <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-600">
+              <span class="text-4xl mb-3">🎮</span>
+              <p class="text-sm">Még nincs játék létrehozva.</p>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ===== INVENTORY ===== -->
+    @if (activeTab === 'inventory') {
+      <section class="max-w-2xl mx-auto md:mx-0 md:max-w-5xl">
+        <div class="mb-6 md:mb-8">
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Készletkezelés</h1>
+          <p class="text-gray-400 text-sm mt-1">Nyeremények létrehozása és feltöltése.</p>
+        </div>
+
+        <!-- Mobilon 1 oszlop, tableten 2, desktopon 3 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <!-- Új nyeremény -->
+          <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5">
+            <div class="flex items-center gap-3 mb-4">
+              <span class="text-lg">✚</span>
+              <h2 class="font-bold tracking-wider text-sm uppercase text-jager-orange">Új nyeremény</h2>
+            </div>
+
+            <div class="mb-3">
+              <label class="block text-sm font-medium text-gray-300 mb-1">Megnevezés</label>
+              <input
+                type="text"
+                [(ngModel)]="newMerchName"
+                placeholder="pl. Jäger kemcső 2cl"
+                class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors placeholder-gray-600 text-base"
+              />
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-300 mb-1">Típus</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  (click)="newMerchIsLiquid = false"
+                  [class]="!newMerchIsLiquid
+                    ? 'py-3 rounded-lg text-sm font-medium bg-jager-orange/10 border border-jager-orange/40 text-jager-orange transition-colors'
+                    : 'py-3 rounded-lg text-sm font-medium bg-jager-dark border border-gray-700 text-gray-400 transition-colors'"
+                >🎁 Merch</button>
+                <button
+                  (click)="newMerchIsLiquid = true"
+                  [class]="newMerchIsLiquid
+                    ? 'py-3 rounded-lg text-sm font-medium bg-jager-orange/10 border border-jager-orange/40 text-jager-orange transition-colors'
+                    : 'py-3 rounded-lg text-sm font-medium bg-jager-dark border border-gray-700 text-gray-400 transition-colors'"
+                >🍶 Folyadék</button>
+              </div>
+            </div>
+
+            <button
+              (click)="createMerch()"
+              [disabled]="loading || !newMerchName.trim()"
+              class="w-full bg-jager-orange hover:bg-orange-600 disabled:opacity-40 text-black font-bold py-3 rounded-lg transition-colors tracking-wider uppercase text-sm"
+            >
+              @if (loading) { Kérjük várj... } @else { Létrehozás }
+            </button>
+          </div>
+
+          <!-- Inventory items -->
+          @for (item of inventoryItems; track item.id) {
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-5 flex flex-col">
+
+              <!-- Header: badge + név + stock -->
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex-1 min-w-0 pr-3">
+                  @if (item.liquid) {
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-1.5">🍶 Folyadék</span>
+                  } @else {
+                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase bg-purple-500/10 text-purple-400 border border-purple-500/20 mb-1.5">🎁 Merch</span>
+                  }
+                  <h3 class="text-sm font-semibold text-jager-light leading-tight break-words">{{ item.name }}</h3>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <div [class]="item.stock < 10 ? 'text-3xl font-black text-red-400 leading-none' : 'text-3xl font-black text-jager-orange leading-none'">
+                    {{ item.stock }}
+                  </div>
+                  <div class="text-[10px] text-gray-500 uppercase tracking-wide mt-0.5">db</div>
+                </div>
+              </div>
+
+              <!-- Stock bar -->
+              <div class="mb-4">
+                <div class="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    [class]="item.stock < 10 ? 'h-full bg-red-400 rounded-full transition-all' : 'h-full bg-jager-orange rounded-full transition-all'"
+                    [style.width.%]="getStockPercent(item.stock)"
+                  ></div>
+                </div>
+                <span [class]="item.stock < 10 ? 'text-[10px] text-red-400 mt-1 block' : 'text-[10px] text-gray-500 mt-1 block'">
+                  {{ item.stock < 10 ? '⚠ Alacsony készlet' : '✓ Rendben' }}
+                </span>
+              </div>
+
+              <!-- Feltöltés + törlés -->
+              <div class="mt-auto flex flex-col gap-2">
+                <div class="flex gap-2">
+                  <input
+                    type="number"
+                    [(ngModel)]="addStockMap[item.id]"
+                    [placeholder]="item.liquid ? 'liter' : 'db'"
+                    class="flex-1 min-w-0 px-3 py-3 bg-jager-dark border border-gray-700 rounded-lg text-base text-jager-light placeholder-gray-600 focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button
+                    (click)="addStock(item)"
+                    [disabled]="addStockMap[item.id] == null"
+                    class="flex-shrink-0 px-4 py-3 bg-jager-orange/10 hover:bg-jager-orange/20 disabled:opacity-30 border border-jager-orange/30 text-jager-orange text-sm font-bold rounded-lg transition-colors uppercase tracking-wider"
+                  >Feltölt</button>
+                </div>
+                <button
+                  (click)="deleteItem(item)"
+                  class="w-full py-2.5 border border-red-500/20 text-red-400/60 hover:border-red-500/50 hover:text-red-400 text-sm font-medium rounded-lg transition-colors"
+                >Törlés</button>
+              </div>
+
+            </div>
+          }
+
+          @if (inventoryItems.length === 0) {
+            <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-600">
+              <span class="text-4xl mb-3">📦</span>
+              <p class="text-sm">Még nincs nyeremény létrehozva.</p>
+            </div>
+          }
+
+        </div>
+      </section>
+    }
+
+    <!-- ===== USERS ===== -->
+    @if (activeTab === 'users') {
+      <section class="max-w-2xl mx-auto md:mx-0 md:max-w-5xl">
+        <div class="mb-6 md:mb-8">
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Felhasználók</h1>
+          <p class="text-gray-400 text-sm mt-1">Szerepkörök kezelése — összesen {{ users.length }} felhasználó.</p>
+        </div>
+
+        <!-- Mobilon kártya nézet, desktopon táblázat -->
+        <div class="block md:hidden flex flex-col gap-3">
+          @for (user of users; track user.id) {
+            <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-4 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-jager-orange/10 border border-jager-orange/20 flex items-center justify-center text-jager-orange font-bold text-sm flex-shrink-0">
+                {{ user.name?.charAt(0)?.toUpperCase() || '?' }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold text-sm text-jager-light truncate">{{ user.name }}</div>
+                <div class="text-xs text-gray-500 truncate">{{ user.email }}</div>
+              </div>
+              <div class="flex-shrink-0">
+                <select
+                  [value]="user.role"
+                  (change)="changeRole(user, $any($event.target).value)"
+                  class="px-2 py-1.5 bg-jager-dark border border-gray-700 rounded-lg text-xs text-gray-300 focus:outline-none focus:border-jager-orange transition-colors cursor-pointer"
+                >
+                  @for (r of roleOptions; track r) {
+                    <option [value]="r" [selected]="r === user.role">{{ r }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          }
+          @if (users.length === 0) {
+            <div class="flex flex-col items-center justify-center py-16 text-gray-600">
+              <span class="text-4xl mb-3">👥</span>
+              <p class="text-sm">Nincsenek felhasználók.</p>
+            </div>
+          }
+        </div>
+
+        <!-- Desktop táblázat -->
+        <div class="hidden md:block bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-jager-orange/20">
+                <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">ID</th>
+                <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Név</th>
+                <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Email</th>
+                <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Szerepkör</th>
+                <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Módosítás</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users; track user.id) {
+                <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                  <td class="px-5 py-4 text-gray-500 font-mono text-xs">#{{ user.id }}</td>
+                  <td class="px-5 py-4 font-medium text-jager-light">{{ user.name }}</td>
+                  <td class="px-5 py-4 text-gray-400 text-xs">{{ user.email }}</td>
+                  <td class="px-5 py-4">
+                    @if (user.role === 'ADMIN') {
+                      <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase bg-jager-orange/10 border border-jager-orange/30 text-jager-orange">ADMIN</span>
+                    } @else if (user.role === 'PROMOTER') {
+                      <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase bg-blue-500/10 border border-blue-500/20 text-blue-400">PROMOTER</span>
+                    } @else {
+                      <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase bg-white/5 border border-white/10 text-gray-400">USER</span>
+                    }
+                  </td>
+                  <td class="px-5 py-4">
+                    <select
+                      [value]="user.role"
+                      (change)="changeRole(user, $any($event.target).value)"
+                      class="px-3 py-1.5 bg-jager-dark border border-gray-700 rounded-lg text-xs text-gray-300 focus:outline-none focus:border-jager-orange transition-colors cursor-pointer"
+                    >
+                      @for (r of roleOptions; track r) {
+                        <option [value]="r" [selected]="r === user.role">{{ r }}</option>
+                      }
+                    </select>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (users.length === 0) {
+            <div class="flex flex-col items-center justify-center py-20 text-gray-600">
+              <span class="text-4xl mb-3">👥</span>
+              <p class="text-sm">Nincsenek felhasználók.</p>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+  </main>
+</div>

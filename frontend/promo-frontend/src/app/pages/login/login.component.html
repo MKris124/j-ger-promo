@@ -1,7 +1,7 @@
-<div class="min-h-screen flex items-center justify-center p-4">
-  
-  <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 p-8 rounded-2xl shadow-2xl w-full max-w-md">
-    
+<div class="min-h-screen flex items-center justify-center p-3 md:p-4">
+
+  <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md">
+
     <div class="text-center mb-8">
       <h1 class="text-4xl font-extrabold tracking-wider text-jager-orange mb-2">JÄGER PROMO</h1>
       <p class="text-gray-400 text-sm">
@@ -10,69 +10,78 @@
       </p>
     </div>
 
-    @if (errorMessage) {
-      <div class="bg-red-500/10 border border-red-500 text-red-500 text-sm px-4 py-3 rounded-lg mb-6 text-center">
-        {{ errorMessage }}
+    <!-- Esemény betöltés -->
+    @if (eventLoading) {
+      <div class="flex flex-col items-center justify-center py-10 gap-3">
+        <svg class="animate-spin h-8 w-8 text-jager-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
+        </svg>
+        <span class="text-gray-500 text-sm">Esemény ellenőrzése...</span>
       </div>
     }
 
-    <form (ngSubmit)="onSubmit()" class="space-y-4">
-      
-      @if (!isLoginMode) {
+    @if (!eventLoading && !eventActive) {
+      <div class="flex flex-col items-center text-center py-6 gap-4">
+        <div class="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-3xl">
+          🔒
+        </div>
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Keresztnév / Becenév</label>
-          <input 
-            type="text" 
-            name="name" 
-            [(ngModel)]="name" 
-            class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
-            placeholder="Pl. Gergő">
+          <p class="text-jager-light font-bold text-lg mb-1">Az esemény szünetel</p>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            A promóció jelenleg nem aktív.<br>Hamarosan visszatérünk!
+          </p>
+        </div>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-widest">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+          Offline
+        </div>
+      </div>
+    }
+
+    @if (!eventLoading && eventActive) {
+
+      @if (errorMessage) {
+        <div class="bg-red-500/10 border border-red-500 text-red-500 text-sm px-4 py-3 rounded-lg mb-6 text-center">
+          {{ errorMessage }}
         </div>
       }
 
-      <div>
-        <label class="block text-sm font-medium text-gray-300 mb-1">E-mail cím</label>
-        <input 
-          type="email" 
-          name="email" 
-          [(ngModel)]="email" 
-          class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
-          placeholder="te.neved@email.hu">
-      </div>
+      <form (ngSubmit)="onSubmit()" class="space-y-4">
 
-      <div>
-        <label class="block text-sm font-medium text-gray-300 mb-1">Jelszó</label>
-        <div class="relative">
-          <input 
-            [type]="showPassword ? 'text' : 'password'" 
-            name="password" 
-            [(ngModel)]="password" 
-            class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
-            placeholder="••••••••">
-          
-          <button type="button" (click)="togglePasswordVisibility('password')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-jager-orange transition-colors">
-            @if (showPassword) {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
-            } @else {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-            }
-          </button>
-        </div>
-      </div>
+        @if (!isLoginMode) {
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Keresztnév / Becenév</label>
+            <input
+              type="text"
+              name="name"
+              [(ngModel)]="name"
+              class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
+              placeholder="Pl. Gergő">
+          </div>
+        }
 
-      @if (!isLoginMode) {
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-1">Jelszó újra</label>
+          <label class="block text-sm font-medium text-gray-300 mb-1">E-mail cím</label>
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
+            placeholder="te.neved@email.hu">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-1">Jelszó</label>
           <div class="relative">
-            <input 
-              [type]="showPasswordConfirm ? 'text' : 'password'" 
-              name="passwordConfirm" 
-              [(ngModel)]="passwordConfirm" 
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              name="password"
+              [(ngModel)]="password"
               class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
               placeholder="••••••••">
-            
-            <button type="button" (click)="togglePasswordVisibility('confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-jager-orange transition-colors">
-              @if (showPasswordConfirm) {
+            <button type="button" (click)="togglePasswordVisibility('password')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-jager-orange transition-colors">
+              @if (showPassword) {
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
               } @else {
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -80,49 +89,69 @@
             </button>
           </div>
         </div>
-      }
 
-      <button 
-        type="submit" 
-        [disabled]="isLoading"
-        class="mt-4 w-full bg-jager-orange hover:bg-orange-600 text-black font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center">
-        @if (isLoading) {
-          <svg class="animate-spin h-5 w-5 mr-3 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
-            <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
-          </svg>
-          Kérjük várj...
-        } @else {
-          {{ isLoginMode ? 'BELÉPÉS' : 'REGISZTRÁCIÓ' }}
+        @if (!isLoginMode) {
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Jelszó újra</label>
+            <div class="relative">
+              <input
+                [type]="showPasswordConfirm ? 'text' : 'password'"
+                name="passwordConfirm"
+                [(ngModel)]="passwordConfirm"
+                class="w-full bg-jager-dark border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
+                placeholder="••••••••">
+              <button type="button" (click)="togglePasswordVisibility('confirm')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-jager-orange transition-colors">
+                @if (showPasswordConfirm) {
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
+                } @else {
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                }
+              </button>
+            </div>
+          </div>
         }
-      </button>
 
-    </form>
+        <button
+          type="submit"
+          [disabled]="isLoading"
+          class="mt-4 w-full bg-jager-orange hover:bg-orange-600 text-black font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center">
+          @if (isLoading) {
+            <svg class="animate-spin h-5 w-5 mr-3 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
+            </svg>
+            Kérjük várj...
+          } @else {
+            {{ isLoginMode ? 'BELÉPÉS' : 'REGISZTRÁCIÓ' }}
+          }
+        </button>
 
-    <div class="mt-6">
-      <div class="relative">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-700"></div>
+      </form>
+
+      <div class="mt-6">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-700"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-[#121212] text-gray-500">Vagy</span>
+          </div>
         </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-[#121212] text-gray-500">Vagy</span>
+        <div class="flex justify-center mt-4">
+          <asl-google-signin-button type="standard" size="large" [width]="350"></asl-google-signin-button>
         </div>
       </div>
 
-      <div class="flex justify-center">
-        <asl-google-signin-button type="standard" size="large" [width]="350"></asl-google-signin-button>
+      <div class="mt-8 text-center text-sm text-gray-400">
+        @if (isLoginMode) {
+          Nincs még fiókod?
+          <button type="button" (click)="toggleMode()" class="text-jager-orange hover:underline font-bold">Regisztrálj itt!</button>
+        } @else {
+          Már van fiókod?
+          <button type="button" (click)="toggleMode()" class="text-jager-orange hover:underline font-bold">Lépj be itt!</button>
+        }
       </div>
-    </div>
 
-    <div class="mt-8 text-center text-sm text-gray-400">
-      @if (isLoginMode) {
-        Nincs még fiókod? 
-        <button type="button" (click)="toggleMode()" class="text-jager-orange hover:underline font-bold">Regisztrálj itt!</button>
-      } @else {
-        Már van fiókod? 
-        <button type="button" (click)="toggleMode()" class="text-jager-orange hover:underline font-bold">Lépj be itt!</button>
-      }
-    </div>
-
+    }
   </div>
 </div>

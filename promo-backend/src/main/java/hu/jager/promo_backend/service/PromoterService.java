@@ -17,18 +17,28 @@ public class PromoterService {
     private final PrizePocketRepository prizePocketRepo;
     private final UserRepository userRepo;
 
-    @Transactional
-    public PrizePocket redeemPrize(String qrCodeHash, Long promoterId) {
-        // 1. Megkeressük a nyereményt a QR kód alapján
+    // Előnézet beváltás ELŐTT — csak ellenőriz, nem módosít
+    public PrizePocket previewPrize(String qrCodeHash) {
         PrizePocket pocket = prizePocketRepo.findByQrCodeHash(qrCodeHash)
                 .orElseThrow(() -> new IllegalArgumentException("Érvénytelen QR kód!"));
 
-        // 2. Ellenőrizzük, hogy nincs-e már beváltva (nehogy valaki screenshotot mutogasson)
         if (pocket.getStatus() == PrizePocket.Status.REDEEMED) {
             throw new IllegalStateException("Ezt a nyereményt már beváltották!");
         }
 
-        // 3. Promóter azonosítása és a zseb lezárása
+        return pocket;
+    }
+
+    // Tényleges beváltás
+    @Transactional
+    public PrizePocket redeemPrize(String qrCodeHash, Long promoterId) {
+        PrizePocket pocket = prizePocketRepo.findByQrCodeHash(qrCodeHash)
+                .orElseThrow(() -> new IllegalArgumentException("Érvénytelen QR kód!"));
+
+        if (pocket.getStatus() == PrizePocket.Status.REDEEMED) {
+            throw new IllegalStateException("Ezt a nyereményt már beváltották!");
+        }
+
         AppUser promoter = userRepo.findById(promoterId).orElseThrow();
 
         pocket.setStatus(PrizePocket.Status.REDEEMED);

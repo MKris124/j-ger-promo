@@ -18,4 +18,6 @@ public interface PrizePocketRepository extends JpaRepository<PrizePocket, Long> 
 
     // Megszámolja, hány nyereménye van a usernek (hogy limitálhassuk pl. max 2-re)
     long countByUserId(Long userId);
+
+    List<PrizePocket> findByUserId(Long userId);
 }

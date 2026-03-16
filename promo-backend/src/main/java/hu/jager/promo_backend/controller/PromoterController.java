@@ -1,7 +1,7 @@
 package hu.jager.promo_backend.controller;
 
+import hu.jager.promo_backend.dto.PrizePocketDto;
 import hu.jager.promo_backend.dto.RedeemRequest;
-import hu.jager.promo_backend.entity.PrizePocket;
 import hu.jager.promo_backend.service.PromoterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +15,24 @@ public class PromoterController {
 
     private final PromoterService promoterService;
 
-    // QR kód beolvasása és nyeremény kiadása
+    // Előnézet — mutatja a nyereményt beváltás ELŐTT
+    @GetMapping("/preview/{qrCodeHash}")
+    public ResponseEntity<?> previewPrize(@PathVariable String qrCodeHash) {
+        try {
+            return ResponseEntity.ok(PrizePocketDto.from(promoterService.previewPrize(qrCodeHash)));
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // Tényleges beváltás
     @PostMapping("/redeem")
     public ResponseEntity<?> redeemPrize(@RequestBody RedeemRequest request) {
         try {
-            PrizePocket redeemedPocket = promoterService.redeemPrize(request.getQrCodeHash(), request.getPromoterId());
-            return ResponseEntity.ok(redeemedPocket);
+            return ResponseEntity.ok(PrizePocketDto.from(
+                    promoterService.redeemPrize(request.getQrCodeHash(), request.getPromoterId())
+            ));
         } catch (IllegalStateException | IllegalArgumentException e) {
-            // Ha már beváltották, vagy rossz a kód, piros hibaüzenet megy vissza
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

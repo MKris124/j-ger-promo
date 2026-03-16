@@ -17,7 +17,12 @@ public class InventoryService {
     private final InventoryItemRepository inventoryRepo;
     private final AppSettingsRepository settingsRepo;
 
-    // Admin funkció: Raktárkészlet növelése
+    // --- ADMIN: összes item listázása ---
+    public List<InventoryItem> getAllItems() {
+        return inventoryRepo.findAll();
+    }
+
+    // --- ADMIN: Raktárkészlet módosítása (lehet 0 is — nullázáshoz) ---
     @Transactional
     public InventoryItem addStock(Long itemId, int addedQuantity) {
         InventoryItem item = inventoryRepo.findById(itemId)
@@ -25,8 +30,10 @@ public class InventoryService {
 
         AppSettings settings = settingsRepo.findById(1L).orElseThrow();
 
-        // Folyadék matek: Ha ital, felszorozzuk a liter/adag értékkel
-        int actualQuantityToAdd = item.isLiquid() ? addedQuantity * settings.getShotsPerLiter() : addedQuantity;
+        // Folyadék esetén literből adagot számolunk
+        int actualQuantityToAdd = item.isLiquid()
+                ? addedQuantity * settings.getShotsPerLiter()
+                : addedQuantity;
 
         item.setTotalQuantity(item.getTotalQuantity() + actualQuantityToAdd);
         item.setRemainingQuantity(item.getRemainingQuantity() + actualQuantityToAdd);
@@ -34,6 +41,7 @@ public class InventoryService {
         return inventoryRepo.save(item);
     }
 
+    // --- ADMIN: Új nyeremény létrehozása ---
     @Transactional
     public InventoryItem createNewMerch(String name, boolean isLiquid) {
         InventoryItem newItem = new InventoryItem();
@@ -41,11 +49,19 @@ public class InventoryService {
         newItem.setLiquid(isLiquid);
         newItem.setTotalQuantity(0);
         newItem.setRemainingQuantity(0);
-
         return inventoryRepo.save(newItem);
     }
 
-    // Játékos funkció: Visszaadja azokat a tárgyakat, amikből Még Van készleten (A "Busz" játék végéhez)
+    // --- ADMIN: Item törlése ---
+    @Transactional
+    public void deleteItem(Long itemId) {
+        if (!inventoryRepo.existsById(itemId)) {
+            throw new IllegalArgumentException("Nem létező tárgy!");
+        }
+        inventoryRepo.deleteById(itemId);
+    }
+
+    // --- JÁTÉKOS: Elérhető nyeremények (remainingQuantity > 0) ---
     public List<InventoryItem> getAvailablePrizes() {
         return inventoryRepo.findByRemainingQuantityGreaterThan(0);
     }
