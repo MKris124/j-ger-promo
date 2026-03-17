@@ -14,7 +14,7 @@
     <div class="grid grid-cols-3 gap-3 w-full max-w-xs">
   <div class="bg-black/40 border border-jager-orange/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
     <div class="h-10 w-10 mb-2 flex items-center justify-center">
-      <img src="/assets/drop.png" alt="Jäger csepp" class="max-h-full max-w-full" style="filter: drop-shadow(0 2px 6px rgba(243,112,33,0.6)) invert(1) sepia(1) saturate(5) hue-rotate(340deg) brightness(1.1);">
+      <img src="/assets/drop.png" alt="Jäger csepp" class="max-h-full max-w-full" style="filter: drop-shadow(0 0 8px rgba(243,112,33,0.7));">
     </div>
     <div>
       <div class="text-xs text-jager-orange font-bold">+5%</div>
@@ -119,10 +119,10 @@
 @if (state === 'lost') {
   <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center">
     <div class="w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center text-5xl">
-      😅
+      😕
     </div>
     <div>
-      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-red-400 mb-2">Kifolyt az éjszaka!</h2>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-red-400 mb-2">Nem lett tele a pohár. <br>A kör véget ért.</h2>
       <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
         Csak {{ fillPercent }}%-ig sikerült tölteni.<br>
         Próbáld újra — a beváltás nincs limitálva, csak a nyeremény!

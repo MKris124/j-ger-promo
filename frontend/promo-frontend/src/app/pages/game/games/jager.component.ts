@@ -38,11 +38,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private animFrameId: number | null = null;
   private timerInterval: any = null;
 
-  private glassX = 0;
   private glassW = 70;
   private glassH = 90;
+  private glassX = 0;
   private isDragging = false;
-  private dragOffsetX = 0;
 
   private items: FallingItem[] = [];
   private spawnTimer = 0;
@@ -51,7 +50,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
 
   private readonly CANVAS_W = 390;
   private readonly CANVAS_H = 680;
-  
+
   private readonly FILL_PER_DROP = 5;
   private readonly FILL_PER_ICE = 3;
   private readonly FILL_PER_BAD = -15;
@@ -62,7 +61,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private imgDrop = new Image();
   private imagesLoaded = 0;
 
-  // JAVÍTÁS 2: Fix referenciák az eseménykezelőkhöz, hogy le lehessen venni őket
   private boundTouchStart = this.onTouchStart.bind(this);
   private boundTouchMove = this.onTouchMove.bind(this);
   private boundTouchEnd = this.onTouchEnd.bind(this);
@@ -74,10 +72,8 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.imgGlass.src = 'assets/glass.png';
     this.imgIce.src = 'assets/ice.png';
     this.imgBroken.src = 'assets/broken.png';
-    
-    // FONTOS: Ehhez le kell cserélned a drop.png-t egy eleve narancssárga képre!
-    this.imgDrop.src = 'assets/drop.png'; 
-    
+    this.imgDrop.src = 'assets/drop.png';
+
     [this.imgGlass, this.imgIce, this.imgBroken, this.imgDrop]
       .forEach(img => img.onload = () => this.imagesLoaded++);
   }
@@ -96,9 +92,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
 
     setTimeout(() => {
       this.canvas = this.canvasRef.nativeElement;
-      this.ctx = this.canvas.getContext('2d', { alpha: false })!; // Optimalizáció: nem átlátszó canvas
+      this.ctx = this.canvas.getContext('2d', { alpha: false })!;
       this.canvas.width = this.CANVAS_W;
       this.canvas.height = this.CANVAS_H;
+
       this.glassX = this.CANVAS_W / 2 - this.glassW / 2;
       this.setupInputs();
       this.startTimer();
@@ -107,7 +104,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   }
 
   private setupInputs(): void {
-    // Használjuk a bindolt változókat!
     this.canvas.addEventListener('touchstart', this.boundTouchStart, { passive: false });
     this.canvas.addEventListener('touchmove', this.boundTouchMove, { passive: false });
     this.canvas.addEventListener('touchend', this.boundTouchEnd);
@@ -116,36 +112,38 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.canvas.addEventListener('mouseup', this.boundMouseUp);
   }
 
-  // ... [Az összes onTouch és onMouse metódusod marad pont ugyanaz, mint volt] ...
+  // --- ÚJ, KÖZÉPPONTOS POZÍCIÓSZÁMÍTÓ ---
+  private updateGlassPosition(clientX: number): void {
+    const rect = this.canvas.getBoundingClientRect();
+    const pointerX = (clientX - rect.left) * (this.CANVAS_W / rect.width);
+    const targetX = pointerX - (this.glassW / 2); // A pohár közepe legyen az ujjnál
+    this.glassX = Math.max(0, Math.min(this.CANVAS_W - this.glassW, targetX));
+  }
+
   private onTouchStart(e: TouchEvent): void {
     e.preventDefault();
-    const touch = e.touches[0];
-    const rect = this.canvas.getBoundingClientRect();
-    const tx = (touch.clientX - rect.left) * (this.CANVAS_W / rect.width);
     this.isDragging = true;
-    this.dragOffsetX = tx - this.glassX;
+    this.updateGlassPosition(e.touches[0].clientX);
   }
+
   private onTouchMove(e: TouchEvent): void {
     e.preventDefault();
     if (!this.isDragging) return;
-    const touch = e.touches[0];
-    const rect = this.canvas.getBoundingClientRect();
-    const tx = (touch.clientX - rect.left) * (this.CANVAS_W / rect.width);
-    this.glassX = Math.max(0, Math.min(this.CANVAS_W - this.glassW, tx - this.dragOffsetX));
+    this.updateGlassPosition(e.touches[0].clientX);
   }
+
   private onTouchEnd(): void { this.isDragging = false; }
+
   private onMouseDown(e: MouseEvent): void {
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (this.CANVAS_W / rect.width);
     this.isDragging = true;
-    this.dragOffsetX = mx - this.glassX;
+    this.updateGlassPosition(e.clientX);
   }
+
   private onMouseMove(e: MouseEvent): void {
     if (!this.isDragging) return;
-    const rect = this.canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (this.CANVAS_W / rect.width);
-    this.glassX = Math.max(0, Math.min(this.CANVAS_W - this.glassW, mx - this.dragOffsetX));
+    this.updateGlassPosition(e.clientX);
   }
+
   private onMouseUp(): void { this.isDragging = false; }
 
   private startTimer(): void {
@@ -164,7 +162,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.animFrameId = requestAnimationFrame(() => this.gameLoop());
   }
 
-  // ... [Az update() metódus és a spawnItem() marad pont ugyanaz, mint volt] ...
   private update(): void {
     this.frameCount++;
     this.spawnTimer++;
@@ -212,14 +209,19 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private spawnItem(difficulty: number): void {
     const rand = Math.random();
     let type: 'drop' | 'ice' | 'bad';
-    if (rand < 0.42) type = 'drop';
-    else if (rand < 0.62) type = 'ice';
-    else type = 'bad';
+
+    if (rand < 0.60) {
+      type = 'drop';
+    } else if (rand < 0.85) {
+      type = 'ice';
+    } else {
+      type = 'bad';
+    }
 
     this.items.push({
       x: Math.random() * (this.CANVAS_W - 60) + 30,
-      y: -30, 
-      speed: (2.8 + Math.random() * 2.8), 
+      y: -30,
+      speed: (2.8 + Math.random() * 2.8),
       type,
       radius: type === 'ice' ? 24 : type === 'bad' ? 26 : 18,
     });
@@ -230,10 +232,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     const W = this.CANVAS_W;
     const H = this.CANVAS_H;
 
+    // ── 1. HÁTTÉR ÉS RÁCS ───────────────────────────────────────────
     ctx.fillStyle = '#0d0d0d';
     ctx.fillRect(0, 0, W, H);
 
-    // JAVÍTÁS 3: Optimalizált grid rajzolás egyetlen útvonallal (path)
     ctx.strokeStyle = 'rgba(243,112,33,0.05)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -246,34 +248,76 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     const gw = this.glassW;
     const gh = this.glassH;
 
+    // ── 2. ÜRES POHÁR KIRAJZOLÁSA (Mögé) ────────────────────────────
     ctx.save();
-    if (this.fillPercent >= 80) { 
-        ctx.shadowColor = '#F37021'; 
-        ctx.shadowBlur = 15; // Kicsit levettem 20-ról, hogy kíméljem a mobilt
+    if (this.fillPercent >= 80) {
+      ctx.shadowColor = '#F37021';
+      ctx.shadowBlur = 15;
     }
     ctx.drawImage(this.imgGlass, gx - 8, gy - 8, gw + 16, gh + 16);
     ctx.restore();
 
-    const maxFillHeight = gh - 12;
-    const fillH = (this.fillPercent / 100) * maxFillHeight;
+    // ── 3. A 3D FOLYADÉK (PARABOLA BELSŐ FALAKKAL) ──────────────────
+    const cx = gx + gw / 2 + 2;       
+    const bottomY = gy + gh - 18;     
+    const topY = gy + 10;             
     
+    const bottomHalfW = 16.5;           
+    const topHalfW = 21;            
+    
+    const curveOffset = -1.5; 
+    
+    const P0 = bottomHalfW;
+    const P2 = topHalfW;
+    const P1 = (P0 + P2) / 2 + curveOffset; 
+
+    const maxFillHeight = bottomY - topY;
+    const fillH = (this.fillPercent / 100) * maxFillHeight;
+
     if (fillH > 0) {
       ctx.save();
-      // KIVETTEM a globalCompositeOperation='multiply'-t, mert mobilon lelassíthatja a rajzolást
-      ctx.globalAlpha = 0.85; 
-      
-      const grad = ctx.createLinearGradient(0, gy + gh - fillH, 0, gy + gh);
-      grad.addColorStop(0, 'rgba(243,112,33,1)');
-      grad.addColorStop(1, 'rgba(160,60,5,1)');
-      
-      ctx.fillStyle = grad;
+      ctx.globalAlpha = 0.65;
+
+      const liquidTop = bottomY - fillH;
+
       ctx.beginPath();
-      ctx.roundRect(gx + 6, gy + gh - fillH - 4, gw - 12, fillH, [0, 0, 8, 8]);
+      ctx.moveTo(cx - topHalfW, topY); 
+      ctx.lineTo(cx + topHalfW, topY); 
+      ctx.quadraticCurveTo(cx + P1, (topY + bottomY) / 2, cx + bottomHalfW, bottomY);
+      ctx.quadraticCurveTo(cx, bottomY + 8, cx - bottomHalfW, bottomY);
+      ctx.quadraticCurveTo(cx - P1, (topY + bottomY) / 2, cx - topHalfW, topY);
+      ctx.closePath();
+      
+      ctx.clip(); 
+
+      const grad = ctx.createLinearGradient(0, liquidTop, 0, bottomY + 8);
+      grad.addColorStop(0, 'rgba(240, 100, 10, 1)'); 
+      grad.addColorStop(1, 'rgba(20, 5, 0, 1)');    
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - topHalfW - 5, liquidTop - 5, topHalfW * 2 + 10, fillH + 15);
+
+      ctx.globalAlpha = 0.2; 
+      const shineGrad = ctx.createLinearGradient(cx - topHalfW, 0, cx + topHalfW, 0);
+      shineGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      shineGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = shineGrad;
+      ctx.fillRect(cx - topHalfW - 5, liquidTop - 5, topHalfW * 2 + 10, fillH + 15);
+
+      ctx.restore();
+
+      const t = fillH / maxFillHeight; 
+      const currentHalfW = Math.pow(1 - t, 2) * P0 + 2 * (1 - t) * t * P1 + Math.pow(t, 2) * P2;
+
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = 'rgba(255, 170, 60, 0.7)';
+      ctx.beginPath();
+      ctx.ellipse(cx, liquidTop, currentHalfW, 3, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
 
-    // JAVÍTÁS 1: Nehéz CSS filterek cseréje sima Canvas árnyékokra
+    // ── 5. HULLÓ ELEMEK KIRAJZOLÁSA ─────────────────────────────────
     for (const item of this.items) {
       const s = item.radius * 2;
 
@@ -292,18 +336,14 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         ctx.drawImage(this.imgBroken, item.x - s * 0.5, item.y - s * 0.5, s, s);
         
         ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 0; // Árnyék kikapcsolása a szöveg előtt
-
+        ctx.shadowBlur = 0;
         ctx.fillStyle = '#ef4444';
         ctx.font = '900 24px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        // A szövegnél lévő shadow is drága, érdemes lehet kikapcsolni mobilon, de itt maradhat
         ctx.fillText('✕', item.x, item.y);
       }
-      
-      // Visszaállítjuk az árnyékot 0-ra a következő kör előtt
-      ctx.shadowBlur = 0; 
+      ctx.shadowBlur = 0;
     }
   }
 
@@ -320,7 +360,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     if (this.animFrameId) { cancelAnimationFrame(this.animFrameId); this.animFrameId = null; }
     if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
     if (this.canvas) {
-      // Itt is a bindolt referenciákat távolítjuk el!
       this.canvas.removeEventListener('touchstart', this.boundTouchStart);
       this.canvas.removeEventListener('touchmove', this.boundTouchMove);
       this.canvas.removeEventListener('touchend', this.boundTouchEnd);
