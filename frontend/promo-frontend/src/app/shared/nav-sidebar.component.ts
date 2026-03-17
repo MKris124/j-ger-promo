@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environments';
 
 @Component({
   selector: 'app-nav-sidebar',
@@ -58,7 +59,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
 
   private checkEventStatus(): void {
     if (this.role === 'ADMIN' || this.role === 'PROMOTER') return;
-    this.http.get<{ eventActive: boolean }>('http://localhost:8080/api/auth/event-status').subscribe({
+    this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
       next: (res) => { if (!res.eventActive) this.authService.logout(); },
       error: () => {}
     });

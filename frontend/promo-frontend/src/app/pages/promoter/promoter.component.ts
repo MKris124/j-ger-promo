@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { PageHeaderComponent } from '../../shared/page-header.component';
+import { environment } from '../../../environments/environments';
 
 // jsQR-t npm install jsqr paranccsal kell telepíteni
 declare const jsQR: any;
@@ -32,7 +33,7 @@ export class PromoterComponent implements OnInit, OnDestroy {
   private zone = inject(NgZone);
   private router = inject(Router);
 
-  private apiBase = 'http://localhost:8080/api/promoter';
+  private apiBase = `${environment.apiUrl}/api/promoter`;
 
   @ViewChild('videoEl', { static: false }) videoEl!: ElementRef<HTMLVideoElement>;
   @ViewChild('canvasEl', { static: false }) canvasEl!: ElementRef<HTMLCanvasElement>;

@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { CatchTheJagerComponent } from './games/jager.component';
 import { RideTheBusComponent } from './games/ride-the-bus.component';
+import { environment } from '../../../environments/environments';
 
 interface PrizePocket {
   id: number;
@@ -27,7 +28,7 @@ export class GameComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  private apiBase = 'http://localhost:8080/api/game';
+  private apiBase = `${environment.apiUrl}/api/game`;
 
   activeGame: { id: number; name: string; gameKey: string } | null = null;
   gameResult: 'won' | 'lost' | null = null;
@@ -52,7 +53,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   loadActiveGame(): void {
-    this.http.get<any>('http://localhost:8080/api/game/active', { headers: this.getHeaders() }).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/api/game/active`, { headers: this.getHeaders() }).subscribe({
       next: (data) => { this.activeGame = data; },
       error: () => {}
     });

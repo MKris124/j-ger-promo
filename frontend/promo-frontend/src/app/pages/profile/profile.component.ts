@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { PageHeaderComponent } from '../../shared/page-header.component';
+import { environment } from '../../../environments/environments';
 
 interface PrizePocket {
   id: number;
@@ -32,7 +33,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
 
-  private apiBase = 'http://localhost:8080/api/game';
+  private apiBase = `${environment.apiUrl}/api/game`;
 
   userName = localStorage.getItem('userName') || 'Játékos';
   pockets: PrizePocket[] = [];

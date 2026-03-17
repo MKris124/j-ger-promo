@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
+import { environment } from '../../../environments/environments';
 
 @Component({
   selector: 'app-login',
@@ -33,7 +34,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     // Esemény státusz lekérése — publikus endpoint kell hozzá a backenden
-    this.http.get<{ eventActive: boolean }>('http://localhost:8080/api/auth/event-status').subscribe({
+    this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
       next: (res) => {
         this.eventActive = res.eventActive;
         this.eventLoading = false;

@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { GAME_REGISTRY, RegisteredGame } from '../../shared/game-registry';
+import { environment } from '../../../environments/environments';
 
 interface Game {
   id: number;
@@ -57,7 +58,7 @@ export class AdminComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  private apiBase = 'http://localhost:8080/api/admin';
+  private apiBase = `${environment.apiUrl}/api/admin`;
 
   tabs: Tab[] = [
     { key: 'settings',  label: 'Beállítások', shortLabel: 'Beáll.',  icon: '⚙️' },

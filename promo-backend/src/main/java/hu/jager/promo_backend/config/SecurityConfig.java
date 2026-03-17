@@ -49,21 +49,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> csrf
+                        // Use PathRequest for accurate H2 matching
+                        .ignoringRequestMatchers(PathRequest.toH2Console())
+                )
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/admin/event-status").permitAll()
-                        .requestMatchers("/h2-console/**").permitAll()
+                        // Use PathRequest here as well
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/promoter/**").hasAnyAuthority("PROMOTER", "ADMIN")
                         .requestMatchers("/api/game/**").hasAnyAuthority("USER", "PROMOTER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
