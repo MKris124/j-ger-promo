@@ -5,3 +5,36 @@
 body {
   @apply bg-jager-dark text-jager-light font-sans m-0 p-0;
 }
+
+/* =========================================
+   PULL-TO-REFRESH JÄGER THEME (Minimalista)
+========================================= */
+.ptr--ptr {
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* A lehúzható doboz formázása - egy kerek, ikon méretű gombbá alakítjuk */
+.ptr--box {
+  background-color: #0d0d0d !important;
+  color: #F37021 !important; /* Narancssárga ikon */
+  border: 1px solid rgba(243, 112, 33, 0.3) !important;
+  box-shadow: 0 4px 15px rgba(243, 112, 33, 0.4) !important;
+  
+  /* Lekerekítés és méretezés a szöveg nélküli ikonhoz */
+  border-radius: 50% !important;
+  width: 45px !important;
+  height: 45px !important;
+  padding: 0 !important;
+  
+  /* Középre igazítás */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  margin: 0 auto !important;
+}
+
+/* Szöveg konténer teljes eltüntetése a DOM-ból */
+.ptr--text {
+  display: none !important;
+}
