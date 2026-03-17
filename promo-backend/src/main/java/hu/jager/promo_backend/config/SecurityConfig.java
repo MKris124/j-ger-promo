@@ -2,13 +2,11 @@ package hu.jager.promo_backend.config;
 
 import hu.jager.promo_backend.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -55,8 +53,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf
-                        // Use PathRequest for accurate H2 matching
-                        .ignoringRequestMatchers(PathRequest.toH2Console())
+                        .ignoringRequestMatchers("/h2-console/**")
                 )
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session
@@ -64,8 +61,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/admin/event-status").permitAll()
-                        // Use PathRequest here as well
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/promoter/**").hasAnyAuthority("PROMOTER", "ADMIN")
                         .requestMatchers("/api/game/**").hasAnyAuthority("USER", "PROMOTER", "ADMIN")
