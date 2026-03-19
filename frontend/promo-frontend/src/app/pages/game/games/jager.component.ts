@@ -226,62 +226,48 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     const W = this.CANVAS_W;
     const H = this.CANVAS_H;
 
-    // Háttér törlése
-    ctx.fillStyle = '#0d0d0d'; // sötét háttér
+    // 1. Háttér letörlése (Rács rajzolása törölve a sebességért!)
+    ctx.fillStyle = '#0d0d0d';
     ctx.fillRect(0, 0, W, H);
 
-    // Finom rács rajzolása a háttérre
-    ctx.strokeStyle = 'rgba(243,112,33,0.05)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    // X és Y kerekítése tiszta pixelekre (Sub-pixel rendering elkerülése)
+    const gx = Math.floor(this.glassX);
+    const gy = Math.floor(H - 130);
+    const gw = Math.floor(this.glassW);
+    const gh = Math.floor(this.glassH);
 
-    // Pohár pozíció (Y fix)
-    const gx = this.glassX;
-    const gy = H - 130;
-    const gw = this.glassW;
-    const gh = this.glassH;
-
-    // 1. Folyadék szint rajzolása (pohár mögött)
-    const fillH = (this.fillPercent / 100) * (gh - 15); // margin az alján/tetején
+    // 2. Folyadék szint rajzolása (Drága gradiens helyett fix szín)
+    const fillH = Math.floor((this.fillPercent / 100) * (gh - 15));
     if (fillH > 0) {
-      const grad = ctx.createLinearGradient(gx, gy + gh - fillH, gx, gy + gh);
-      grad.addColorStop(0, 'rgba(243,112,33,0.85)'); // Jager narancs
-      grad.addColorStop(1, 'rgba(160,60,5,0.9)');    // Sötétebb alj
-      ctx.fillStyle = grad;
+      ctx.fillStyle = 'rgba(243,112,33,0.95)'; // Tiszta Jäger narancs
       ctx.beginPath();
-      // Lekerekített folyadék alj
       ctx.roundRect(gx + 8, gy + gh - fillH - 2, gw - 16, fillH, [0, 0, 4, 4]);
       ctx.fill();
     }
 
-    // 2. Pohár rajzolása (Kép alapján)
+    // 3. Pohár rajzolása (Biztosítjuk, hogy ne legyen semmilyen shadowBlur)
+    ctx.shadowBlur = 0; 
     ctx.drawImage(this.imgGlass, gx - 8, gy - 8, gw + 16, gh + 16);
 
-    // 3. Esési elemek rajzolása
-    // Esési elemek (MOBIL OPTIMALIZÁLT RENDER)
-    for (const item of this.items) {
-      // Nincs szükség ctx.save() / ctx.restore() / ctx.filter hívásokra!
-      const s = item.radius * 2;
+    // 4. Esési elemek (for...of helyett hagyományos for ciklus picit gyorsabb)
+    for (let i = 0; i < this.items.length; i++) {
+      const item = this.items[i];
+      const s = Math.floor(item.radius * 2);
+      
+      // Koordináták kerekítése!
+      const drawX = Math.floor(item.x - item.radius);
+      const drawY = Math.floor(item.y - item.radius);
 
       if (item.type === 'drop') {
-        // Ha a drop.png eleve narancssárga és áttetsző, csak rajzold ki
-        this.ctx.drawImage(this.imgDrop, item.x - s * 0.5, item.y - s * 0.8, s, s * 1.4);
+        const h = Math.floor(s * 1.4);
+        ctx.drawImage(this.imgDrop, drawX, drawY, s, h);
       } else if (item.type === 'ice') {
-        // Jégkocka
-        this.ctx.drawImage(this.imgIce, item.x - s * 0.5, item.y - s * 0.5, s, s);
+        ctx.drawImage(this.imgIce, drawX, drawY, s, s);
       } else {
-        // Törött pohár
-        this.ctx.drawImage(this.imgBroken, item.x - s * 0.5, item.y - s * 0.5, s, s);
-        
-        // Az X jelet bent tarthatod, vagy ha a képen rajta van, ezt is törölheted:
-        const r = s * 0.3;
-        this.ctx.beginPath();
-        this.ctx.moveTo(item.x - r, item.y - r); this.ctx.lineTo(item.x + r, item.y + r);
-        this.ctx.moveTo(item.x + r, item.y - r); this.ctx.lineTo(item.x - r, item.y + r);
-        this.ctx.stroke();
+        ctx.drawImage(this.imgBroken, drawX, drawY, s, s);
       }
     }
+  
   }
 
   // Játék vége
