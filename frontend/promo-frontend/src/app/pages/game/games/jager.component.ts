@@ -236,18 +236,78 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     const gw = Math.floor(this.glassW);
     const gh = Math.floor(this.glassH);
 
-    // 2. Folyadék szint rajzolása (Drága gradiens helyett fix szín)
-    const fillH = Math.floor((this.fillPercent / 100) * (gh - 15));
-    if (fillH > 0) {
-      ctx.fillStyle = 'rgba(243,112,33,0.95)'; // Tiszta Jäger narancs
-      ctx.beginPath();
-      ctx.roundRect(gx + 8, gy + gh - fillH - 2, gw - 16, fillH, [0, 0, 4, 4]);
-      ctx.fill();
-    }
 
     // 3. Pohár rajzolása (Biztosítjuk, hogy ne legyen semmilyen shadowBlur)
     ctx.shadowBlur = 0; 
     ctx.drawImage(this.imgGlass, gx - 8, gy - 8, gw + 16, gh + 16);
+
+    ctx.save();
+    if (this.fillPercent >= 80) {
+      ctx.shadowColor = '#F37021';
+      ctx.shadowBlur = 15;
+    }
+    ctx.drawImage(this.imgGlass, gx - 8, gy - 8, gw + 16, gh + 16);
+    ctx.restore();
+
+    // ── 3. A 3D FOLYADÉK (PARABOLA BELSŐ FALAKKAL) ──────────────────
+    const cx = gx + gw / 2 + 2;       
+    const bottomY = gy + gh - 18;     
+    const topY = gy + 10;             
+    
+    const bottomHalfW = 16.5;           
+    const topHalfW = 21;            
+    
+    const curveOffset = -1.5; 
+    
+    const P0 = bottomHalfW;
+    const P2 = topHalfW;
+    const P1 = (P0 + P2) / 2 + curveOffset; 
+
+    const maxFillHeight = bottomY - topY;
+    const fillH = (this.fillPercent / 100) * maxFillHeight;
+
+    if (fillH > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.65;
+
+      const liquidTop = bottomY - fillH;
+
+      ctx.beginPath();
+      ctx.moveTo(cx - topHalfW, topY); 
+      ctx.lineTo(cx + topHalfW, topY); 
+      ctx.quadraticCurveTo(cx + P1, (topY + bottomY) / 2, cx + bottomHalfW, bottomY);
+      ctx.quadraticCurveTo(cx, bottomY + 8, cx - bottomHalfW, bottomY);
+      ctx.quadraticCurveTo(cx - P1, (topY + bottomY) / 2, cx - topHalfW, topY);
+      ctx.closePath();
+      
+      ctx.clip(); 
+
+      const grad = ctx.createLinearGradient(0, liquidTop, 0, bottomY + 8);
+      grad.addColorStop(0, 'rgba(240, 100, 10, 1)'); 
+      grad.addColorStop(1, 'rgba(20, 5, 0, 1)');    
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - topHalfW - 5, liquidTop - 5, topHalfW * 2 + 10, fillH + 15);
+
+      ctx.globalAlpha = 0.2; 
+      const shineGrad = ctx.createLinearGradient(cx - topHalfW, 0, cx + topHalfW, 0);
+      shineGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      shineGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = shineGrad;
+      ctx.fillRect(cx - topHalfW - 5, liquidTop - 5, topHalfW * 2 + 10, fillH + 15);
+
+      ctx.restore();
+
+      const t = fillH / maxFillHeight; 
+      const currentHalfW = Math.pow(1 - t, 2) * P0 + 2 * (1 - t) * t * P1 + Math.pow(t, 2) * P2;
+
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = 'rgba(255, 170, 60, 0.7)';
+      ctx.beginPath();
+      ctx.ellipse(cx, liquidTop, currentHalfW, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
 
     // 4. Esési elemek (for...of helyett hagyományos for ciklus picit gyorsabb)
     for (let i = 0; i < this.items.length; i++) {
