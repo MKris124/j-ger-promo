@@ -12,39 +12,36 @@
       </p>
     </div>
     <div class="grid grid-cols-3 gap-3 w-full max-w-xs">
-  <div class="bg-black/40 border border-jager-orange/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
-    <div class="h-10 w-10 mb-2 flex items-center justify-center">
-      <img src="/assets/drop.png" alt="Jäger csepp" class="max-h-full max-w-full" style="filter: drop-shadow(0 0 8px rgba(243,112,33,0.7));">
-    </div>
-    <div>
-      <div class="text-xs text-jager-orange font-bold">+5%</div>
-      <div class="text-[10px] text-gray-400">Jäger csepp</div>
-    </div>
-  </div>
+      <div class="bg-black/40 border border-jager-orange/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
+        <div class="h-10 w-10 mb-2 flex items-center justify-center">
+          <img src="/assets/drop.png" alt="Jäger csepp" class="max-h-full max-w-full">
+        </div>
+        <div>
+          <div class="text-xs text-jager-orange font-bold">+5%</div>
+          <div class="text-[10px] text-gray-400">Jäger csepp</div>
+        </div>
+      </div>
 
-  <div class="bg-black/40 border border-blue-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
-    <div class="h-10 w-10 mb-2 flex items-center justify-center">
-      <img src="/assets/ice.png" alt="Jégkocka" class="max-h-full max-w-full drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]">
-    </div>
-    <div>
-      <div class="text-xs text-blue-300 font-bold">+3%</div>
-      <div class="text-[10px] text-gray-400">Jégkocka</div>
-    </div>
-  </div>
+      <div class="bg-black/40 border border-blue-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
+        <div class="h-10 w-10 mb-2 flex items-center justify-center">
+          <img src="/assets/ice.png" alt="Jégkocka" class="max-h-full max-w-full">
+        </div>
+        <div>
+          <div class="text-xs text-blue-300 font-bold">+3%</div>
+          <div class="text-[10px] text-gray-400">Jégkocka</div>
+        </div>
+      </div>
 
-  <div class="bg-black/40 border border-red-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
-    <div class="h-10 w-10 mb-2 relative flex items-center justify-center">
-      <img src="/assets/broken.png" alt="Törött" class="max-h-full max-w-full opacity-80" style="filter: drop-shadow(0 0 8px rgba(248,113,113,0.8));">
-      <div class="absolute inset-0 flex items-center justify-center text-red-500 font-black text-3xl drop-shadow-md pointer-events-none" style="text-shadow: 0 0 4px #000;">
-        ✕
+      <div class="bg-black/40 border border-red-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
+        <div class="h-10 w-10 mb-2 relative flex items-center justify-center">
+          <img src="/assets/broken.png" alt="Törött" class="max-h-full max-w-full opacity-80">
+          </div>
+        <div>
+          <div class="text-xs text-red-400 font-bold">-15%</div>
+          <div class="text-[10px] text-gray-400">Kerüld!</div>
+        </div>
       </div>
     </div>
-    <div>
-      <div class="text-xs text-red-400 font-bold">-15%</div>
-      <div class="text-[10px] text-gray-400">Kerüld!</div>
-    </div>
-  </div>
-</div>
     <button
       (click)="startGame()"
       class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"

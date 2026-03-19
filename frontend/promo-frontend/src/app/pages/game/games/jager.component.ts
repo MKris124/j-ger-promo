@@ -321,29 +321,14 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     for (const item of this.items) {
       const s = item.radius * 2;
 
+      
       if (item.type === 'drop') {
-        ctx.shadowColor = 'rgba(243,112,33,0.6)';
-        ctx.shadowBlur = 6;
-        ctx.drawImage(this.imgDrop, item.x - s * 0.5, item.y - s * 0.8, s, s * 1.4);
+        this.ctx.drawImage(this.imgDrop, item.x - s * 0.5, item.y - s * 0.8, s, s * 1.4);
       } else if (item.type === 'ice') {
-        ctx.shadowColor = 'rgba(59,130,246,0.5)';
-        ctx.shadowBlur = 8;
-        ctx.drawImage(this.imgIce, item.x - s * 0.5, item.y - s * 0.5, s, s);
+        this.ctx.drawImage(this.imgIce, item.x - s * 0.5, item.y - s * 0.5, s, s);
       } else {
-        ctx.globalAlpha = 0.8;
-        ctx.shadowColor = 'rgba(248,113,113,0.8)';
-        ctx.shadowBlur = 8;
-        ctx.drawImage(this.imgBroken, item.x - s * 0.5, item.y - s * 0.5, s, s);
-        
-        ctx.globalAlpha = 1.0;
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#ef4444';
-        ctx.font = '900 24px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('✕', item.x, item.y);
+        this.ctx.drawImage(this.imgBroken, item.x - s * 0.5, item.y - s * 0.5, s, s);
       }
-      ctx.shadowBlur = 0;
     }
   }
 
