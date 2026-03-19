@@ -250,7 +250,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     ctx.restore();
 
     // ── 3. A 3D FOLYADÉK (PARABOLA BELSŐ FALAKKAL) ──────────────────
-    const cx = gx + gw / 2 + 2;       
+    /*const cx = gx + gw / 2 + 2;       
     const bottomY = gy + gh - 18;     
     const topY = gy + 10;             
     
@@ -307,7 +307,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
       ctx.ellipse(cx, liquidTop, currentHalfW, 3, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-    }
+    }*/
 
     // 4. Esési elemek (for...of helyett hagyományos for ciklus picit gyorsabb)
     for (let i = 0; i < this.items.length; i++) {
