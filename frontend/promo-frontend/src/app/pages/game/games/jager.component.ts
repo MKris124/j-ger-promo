@@ -5,7 +5,9 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+// 1. OBJECT POOLING - Hozzáadtuk az 'active' flag-et
 interface FallingItem {
+  active: boolean;
   x: number;
   y: number;
   speed: number;
@@ -20,7 +22,6 @@ type GameState = 'idle' | 'playing' | 'won' | 'lost';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './catch-the-jager.component.html',
-  // KULCS OPTIMALIZÁCIÓ 1: OnPush, hogy ne fusson le minden frame-nél a CD
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CatchTheJagerComponent implements OnInit, OnDestroy {
@@ -30,7 +31,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   @Output() gameLost = new EventEmitter<void>();
 
   private zone = inject(NgZone);
-  private cdr = inject(ChangeDetectorRef); // A manuális frissítéshez
+  private cdr = inject(ChangeDetectorRef);
 
   state: GameState = 'idle';
   fillPercent = 0;
@@ -41,8 +42,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private ctx!: CanvasRenderingContext2D;
   private animFrameId: number | null = null;
   private timerInterval: any         = null;
-  
-  // KULCS OPTIMALIZÁCIÓ 2: Delta time követéshez
   private lastTime: number = 0;
 
   private glassX          = 0;
@@ -55,7 +54,11 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private cachedScaleX = 1;
   private readonly boundResizeObserver = new ResizeObserver(() => this.updateRect());
 
-  private items:         FallingItem[] = [];
+  // OBJECT POOL: Előre lefoglalunk 40 elemet, így játék közben NINCS memóriafoglalás (nincs lagg)
+  private itemPool: FallingItem[] = Array.from({ length: 40 }, () => ({
+    active: false, x: 0, y: 0, speed: 0, type: 'drop', radius: 0
+  }));
+  
   private spawnTimer     = 0;
   private spawnInterval  = 40;
   private frameCount     = 0;
@@ -80,16 +83,20 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private readonly GH_PADDED  = 106; 
   private readonly SHADOW_PAD = 20;  
 
-  // Használunk fallback-et is, hogy mindenhol működjön
   private glassOffscreen!: OffscreenCanvas | HTMLCanvasElement;
   private glassOffCtx!: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   private glassGlowOffscreen!: OffscreenCanvas | HTMLCanvasElement;
   private glassGlowOffCtx!: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
 
-  private readonly LIQ_W = 60;
-  private readonly LIQ_H = 80;
   private liquidOffscreen!: OffscreenCanvas | HTMLCanvasElement;
   private liquidOffCtx!: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  private readonly LIQ_W = 60;
+  private readonly LIQ_H = 80;
+
+  // PRE-SCALED ITEMS: Itt fogjuk tárolni a már méretre vágott eső tárgyakat
+  private preDropCanvas!: OffscreenCanvas | HTMLCanvasElement;
+  private preIceCanvas!: OffscreenCanvas | HTMLCanvasElement;
+  private preBadCanvas!: OffscreenCanvas | HTMLCanvasElement;
 
   private lastRenderedFill = -1;
 
@@ -132,9 +139,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
       this.bitmapBroken = b;
       this.bitmapDrop   = d;
       this.prerenderGlass();
+      this.prerenderItems(); // Elemek előkészítése
     }).catch(err => {
-      // Kisebb böngészőknél vagy hibánál is rendereljük elő
       this.prerenderGlass(); 
+      this.prerenderItems();
     });
   }
 
@@ -147,7 +155,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.bitmapDrop?.close();
   }
 
-  // Segédfüggvény a biztonságos OffscreenCanvas létrehozáshoz
   private createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
     if (typeof OffscreenCanvas !== 'undefined') {
       return new OffscreenCanvas(width, height);
@@ -159,6 +166,35 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     }
   }
 
+  // AZ ÚJ FUNKCIÓ: Előre átméretezzük a képeket offscreen canvas-ra
+  private prerenderItems(): void {
+    const srcDrop = this.bitmapDrop ?? this.imgDrop;
+    const srcIce = this.bitmapIce ?? this.imgIce;
+    const srcBad = this.bitmapBroken ?? this.imgBroken;
+
+    // Drop
+    const rDrop = 18;
+    const sDrop = rDrop * 2;
+    const hDrop = Math.floor(sDrop * 1.4);
+    this.preDropCanvas = this.createOffscreenCanvas(sDrop, hDrop);
+    const dropCtx = this.preDropCanvas.getContext('2d') as CanvasRenderingContext2D;
+    dropCtx.drawImage(srcDrop, 0, 0, sDrop, hDrop);
+
+    // Ice
+    const rIce = 22;
+    const sIce = rIce * 2;
+    this.preIceCanvas = this.createOffscreenCanvas(sIce, sIce);
+    const iceCtx = this.preIceCanvas.getContext('2d') as CanvasRenderingContext2D;
+    iceCtx.drawImage(srcIce, 0, 0, sIce, sIce);
+
+    // Bad
+    const rBad = 32;
+    const sBad = rBad * 2;
+    this.preBadCanvas = this.createOffscreenCanvas(sBad, sBad);
+    const badCtx = this.preBadCanvas.getContext('2d') as CanvasRenderingContext2D;
+    badCtx.drawImage(srcBad, 0, 0, sBad, sBad);
+  }
+
   private prerenderGlass(): void {
     const W = this.GW_PADDED + this.SHADOW_PAD * 2;
     const H = this.GH_PADDED + this.SHADOW_PAD * 2;
@@ -166,21 +202,16 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.glassOffscreen = this.createOffscreenCanvas(W, H);
     this.glassOffCtx    = this.glassOffscreen.getContext('2d') as any;
     
-    if (this.bitmapGlass || this.imgGlass.complete) {
-      const source = this.bitmapGlass || this.imgGlass;
-      this.glassOffCtx.drawImage(source, this.SHADOW_PAD, this.SHADOW_PAD, this.GW_PADDED, this.GH_PADDED);
-    }
+    const source = this.bitmapGlass || this.imgGlass;
+    this.glassOffCtx.drawImage(source, this.SHADOW_PAD, this.SHADOW_PAD, this.GW_PADDED, this.GH_PADDED);
 
     this.glassGlowOffscreen = this.createOffscreenCanvas(W, H);
     this.glassGlowOffCtx    = this.glassGlowOffscreen.getContext('2d') as any;
     
-    if (this.bitmapGlass || this.imgGlass.complete) {
-      const source = this.bitmapGlass || this.imgGlass;
-      this.glassGlowOffCtx.shadowColor = '#F37021';
-      this.glassGlowOffCtx.shadowBlur  = 15;
-      this.glassGlowOffCtx.drawImage(source, this.SHADOW_PAD, this.SHADOW_PAD, this.GW_PADDED, this.GH_PADDED);
-      this.glassGlowOffCtx.shadowBlur = 0;
-    }
+    this.glassGlowOffCtx.shadowColor = '#F37021';
+    this.glassGlowOffCtx.shadowBlur  = 15;
+    this.glassGlowOffCtx.drawImage(source, this.SHADOW_PAD, this.SHADOW_PAD, this.GW_PADDED, this.GH_PADDED);
+    this.glassGlowOffCtx.shadowBlur = 0;
   }
 
   private prerenderLiquid(): void {
@@ -245,12 +276,14 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.fillPercent   = 0;
     this.timeLeft      = 30;
     this.score         = 0;
-    this.items         = [];
     this.frameCount    = 0;
     this.spawnTimer    = 0;
     this.spawnInterval = 40;
     this.lastRenderedFill = -1;
-    this.lastTime      = 0; // Reset timer
+    this.lastTime      = 0;
+
+    // Minden item inaktiválása (újrahasznosítás az előző játékból)
+    this.itemPool.forEach(item => item.active = false);
 
     setTimeout(() => {
       this.canvas = this.canvasRef.nativeElement;
@@ -270,7 +303,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         this.animFrameId = requestAnimationFrame(this.boundGameLoop);
       });
       
-      this.cdr.markForCheck(); // Sablon frissítése, hogy a "playing" nézet bejöjjön
+      this.cdr.markForCheck();
     }, 50);
   }
 
@@ -279,7 +312,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.cachedScaleX = this.CANVAS_W / this.cachedRect.width;
   }
 
-  // Delta time bevezetése a Loop-ba
   private gameLoop(timestamp: number): void {
     if (this.state !== 'playing') return;
     
@@ -287,20 +319,24 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     const deltaTime = timestamp - this.lastTime;
     this.lastTime = timestamp;
 
-    // Kb 60 FPS-hez igazítjuk a sebességet (1 frame kb 16.6ms)
-    const timeScale = deltaTime / 16.666;
+    // ALT-TAB védelem: Ne engedjünk 50ms-nél nagyobb ugrást egy frame alatt
+    const safeDelta = Math.min(deltaTime, 50);
+    const timeScale = safeDelta / 16.666;
 
     this.update(timeScale);
     this.render();
     
-    this.animFrameId = requestAnimationFrame(this.boundGameLoop);
+    // Biztosan a zónán kívül maradunk
+    this.zone.runOutsideAngular(() => {
+      this.animFrameId = requestAnimationFrame(this.boundGameLoop);
+    });
   }
 
   private startTimer(): void {
     this.timerInterval = setInterval(() => {
       this.zone.run(() => {
         this.timeLeft--;
-        this.cdr.markForCheck(); // Szólunk az Angularnak
+        this.cdr.markForCheck(); 
         if (this.timeLeft <= 0) {
           this.timeLeft = 0;
           this.endGame(false);
@@ -311,7 +347,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
 
   private update(timeScale: number): void {
     this.frameCount++;
-    // A spawn timer is időfüggő lett
     this.spawnTimer += timeScale;
 
     const elapsed    = 30 - this.timeLeft;
@@ -329,39 +364,34 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     let fillDelta  = 0;
     let scoreDelta = 0;
 
-    let i = this.items.length - 1;
-    while (i >= 0) {
-      const item = this.items[i];
-      // A mozgást megszorozzuk a timeScale-lel
+    // Végigmegyünk az előre lefoglalt pool-on
+    for (let i = 0; i < this.itemPool.length; i++) {
+      const item = this.itemPool[i];
+      if (!item.active) continue;
+
       item.y += item.speed * difficulty * timeScale;
 
       const inX = item.x > this.glassX && item.x < this.glassX + this.glassW;
       const inY = item.y + item.radius > glassTop && item.y - item.radius < glassBottom;
 
       if (inX && inY) {
-        this.items[i] = this.items[this.items.length - 1];
-        this.items.pop();
+        item.active = false; // Törlés helyett inaktiválás
         if (item.type === 'drop')     { fillDelta += this.FILL_PER_DROP; scoreDelta++; }
         else if (item.type === 'ice') { fillDelta += this.FILL_PER_ICE;  scoreDelta++; }
         else                          { fillDelta += this.FILL_PER_BAD; }
-        i--;
         continue;
       }
 
       if (item.y > this.CANVAS_H + 20) {
-        this.items[i] = this.items[this.items.length - 1];
-        this.items.pop();
-        i--;
-        continue;
+        item.active = false; // Kiesett a képernyőről, inaktiváljuk
       }
-      i--;
     }
 
     if (fillDelta !== 0 || scoreDelta !== 0) {
       this.zone.run(() => {
         this.fillPercent = Math.max(0, Math.min(100, this.fillPercent + fillDelta));
         this.score      += scoreDelta;
-        this.cdr.markForCheck(); // Csak ezt a komponenst frissítse
+        this.cdr.markForCheck(); 
         if (this.fillPercent >= 100) this.endGame(true);
       });
 
@@ -372,6 +402,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   }
 
   private spawnItem(): void {
+    // Megkeressük az első inaktív elemet a pool-ban (nincs NEW memória lefoglalás!)
+    const item = this.itemPool.find(i => !i.active);
+    if (!item) return;
+
     const rand      = Math.random();
     const badChance = Math.min(0.50, 0.25 + (30 - this.timeLeft) * 0.015);
 
@@ -381,13 +415,14 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     else                                              type = 'drop';
 
     const radius = type === 'bad' ? 32 : type === 'ice' ? 22 : 18;
-    this.items.push({
-      x:     Math.random() * (this.CANVAS_W - radius * 2) + radius,
-      y:     -40,
-      speed: 3.0 + Math.random() * 3.0,
-      type,
-      radius,
-    });
+    
+    // Újrahasznosítjuk az objektumot
+    item.active = true;
+    item.type = type;
+    item.radius = radius;
+    item.x = Math.random() * (this.CANVAS_W - radius * 2) + radius;
+    item.y = -40;
+    item.speed = 3.0 + Math.random() * 3.0;
   }
 
   private render(): void {
@@ -410,22 +445,24 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
 
     if (glassBitmap) {
       ctx.drawImage(glassBitmap, gx - 8 - this.SHADOW_PAD, gy - 8 - this.SHADOW_PAD);
-    } else {
-      ctx.drawImage(this.imgGlass, gx - 8, gy - 8, this.GW_PADDED, this.GH_PADDED);
     }
 
-    for (let i = 0; i < this.items.length; i++) {
-      const item  = this.items[i];
-      const s     = Math.floor(item.radius * 2);
+    // Csak a már aktivált elemeket rendereljük ki
+    for (let i = 0; i < this.itemPool.length; i++) {
+      const item = this.itemPool[i];
+      if (!item.active) continue;
+
       const drawX = Math.floor(item.x - item.radius);
       const drawY = Math.floor(item.y - item.radius);
 
+      // KULCS OPTIMALIZÁCIÓ: Már nincsenek méret paraméterek, csak pozíció.
+      // Sima, gyors kép-áthelyezés a memóriában.
       if (item.type === 'drop') {
-        ctx.drawImage(this.bitmapDrop   ?? this.imgDrop,   drawX, drawY, s, Math.floor(s * 1.4));
+        ctx.drawImage(this.preDropCanvas, drawX, drawY);
       } else if (item.type === 'ice') {
-        ctx.drawImage(this.bitmapIce    ?? this.imgIce,    drawX, drawY, s, s);
+        ctx.drawImage(this.preIceCanvas, drawX, drawY);
       } else {
-        ctx.drawImage(this.bitmapBroken ?? this.imgBroken, drawX, drawY, s, s);
+        ctx.drawImage(this.preBadCanvas, drawX, drawY);
       }
     }
   }
@@ -434,7 +471,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.stopGame();
     this.zone.run(() => {
       this.state = won ? 'won' : 'lost';
-      this.cdr.markForCheck(); // Végeredmény frissítése
+      this.cdr.markForCheck(); 
       if (won) this.gameWon.emit();
       else     this.gameLost.emit();
     });
