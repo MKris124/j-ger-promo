@@ -75,10 +75,12 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private spawnInterval  = 40;
   private frameCount     = 0;
 
-  // ── FPS CAP (30 fps gyenge telefonokon) ───────────────────────────────────
-  private readonly TARGET_FPS      = 60;
-  private readonly FRAME_BUDGET_MS = 1000 / this.TARGET_FPS;
-  private accumulator = 0;
+  // ── ADAPTIVE FPS (60–120, a kijelző refresh rate-jéhez igazítva) ─────────
+  // A tényleges target-et a detektált refresh rate alapján állítjuk be,
+  // de minimum 60, maximum 120 fps közé szorítjuk.
+  private targetFps      = 60;        // detektálás előtti alapértelmezett
+  private frameBudgetMs  = 1000 / 60; // frissül detektálás után
+  private accumulator    = 0;
 
   private readonly CANVAS_W      = 390;
   private readonly CANVAS_H      = 680;
@@ -354,6 +356,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
 
         this.glassX = this.CANVAS_W / 2 - this.glassW / 2;
         this.updateRect();
+        this.detectRefreshRate(); // Refresh rate detektálás — frameBudgetMs frissül
         this.boundResizeObserver.observe(this.canvas);
 
         this.prerenderLiquid();
@@ -368,6 +371,37 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }, 50);
     });
+  }
+
+  // ── REFRESH RATE DETEKTÁLÁS ─────────────────────────────────────────────
+  // Három egymást követő rAF timestamp-ből átlagoljuk a tényleges frame időt,
+  // majd abból levezetjük a refresh rate-et, és 60–120 fps közé klampoljuk.
+  private detectRefreshRate(): void {
+    const samples: number[] = [];
+    let prev = 0;
+
+    const measure = (ts: number) => {
+      if (prev) samples.push(ts - prev);
+      prev = ts;
+
+      if (samples.length < 5) {
+        requestAnimationFrame(measure);
+        return;
+      }
+
+      // Átlagos frame idő -> fps
+      const avg    = samples.reduce((a, b) => a + b, 0) / samples.length;
+      const raw    = Math.round(1000 / avg);
+
+      // 60–120 közé szorítjuk, és a legközelebbi kerek értékre snappelünk
+      // (60, 90, 120 a leggyakoribb kijelző frekvenciák)
+      const snapped = raw >= 100 ? 120 : raw >= 75 ? 90 : 60;
+
+      this.targetFps     = snapped;
+      this.frameBudgetMs = 1000 / snapped;
+    };
+
+    requestAnimationFrame(measure);
   }
 
   private updateRect(): void {
@@ -386,7 +420,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.accumulator += delta;
 
     // Csak akkor update + render, ha elég idő telt el (fps cap)
-    if (this.accumulator >= this.FRAME_BUDGET_MS) {
+    if (this.accumulator >= this.frameBudgetMs) {
       const timeScale = this.accumulator / 16.666;
       this.accumulator = 0;
 
