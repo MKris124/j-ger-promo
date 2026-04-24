@@ -21,7 +21,6 @@
           <div class="text-[10px] text-gray-400">Jäger csepp</div>
         </div>
       </div>
-
       <div class="bg-black/40 border border-blue-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
         <div class="h-10 w-10 mb-2 flex items-center justify-center">
           <img src="/assets/ice.png" alt="Jégkocka" class="max-h-full max-w-full">
@@ -31,7 +30,6 @@
           <div class="text-[10px] text-gray-400">Jégkocka</div>
         </div>
       </div>
-
       <div class="bg-black/40 border border-red-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
         <div class="h-10 w-10 mb-2 relative flex items-center justify-center">
           <img src="/assets/broken.png" alt="Törött" class="max-h-full max-w-full opacity-80">
@@ -44,9 +42,10 @@
     </div>
     <button
       (click)="startGame()"
-      class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
+      [disabled]="!assetsReady"
+      class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 disabled:opacity-50 disabled:cursor-wait text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
     >
-      Játék indítása!
+      {{ assetsReady ? 'Játék indítása!' : 'Betöltés...' }}
     </button>
   </div>
 }
@@ -79,11 +78,21 @@
       </div>
     </div>
 
-    <div class="relative overflow-hidden">
+    <!--
+      KULCS FIX: A wrapper div vágja le a vizuális területet és alkalmazza
+      a transform:scale()-t. A canvas maga MINDIG 390px széles CSS-ben is —
+      így a böngészőnek frame-enként NEM kell újraskáláznia a tartalmat.
+      A transform-origin: top center biztosítja hogy felülről középre skálázzon.
+    -->
+    <div
+      class="relative overflow-hidden w-full"
+      [style.height.px]="680 * canvasScale"
+    >
       <canvas
         #gameCanvas
-        class="w-full touch-none block"
-        style="max-height: 65vh; object-fit: contain;"
+        class="touch-none block"
+        style="width: 390px; transform-origin: top left;"
+        [style.transform]="'scale(' + canvasScale + ')'"
       ></canvas>
     </div>
 

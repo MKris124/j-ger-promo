@@ -37,6 +37,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   timeLeft     = 30;
   score        = 0;
   assetsReady  = false; // A "Start" gomb csak akkor aktív, ha ez true
+  canvasScale  = 1;     // CSS transform scale — a wrapper div alkalmazza
 
   // A játék csak ezt a Promise-t várja meg — soha nem indul nyers képekkel
   private assetsReadyPromise!: Promise<void>;
@@ -370,8 +371,20 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   }
 
   private updateRect(): void {
+    // A canvas CSS mérete MINDIG egyenlő a belső felbontással (390px).
+    // A szülő div transform:scale()-lel kicsinyít — így a böngészőnek
+    // NEM kell frame-enként újraskálázni a canvas tartalmát.
+    const parentW = this.canvas.parentElement?.clientWidth ?? this.CANVAS_W;
+    this.canvasScale  = Math.min(1, parentW / this.CANVAS_W);
+
+    // A cachedRect és cachedScaleX az input koordináta-transzformhoz kell.
+    // Mivel a canvas CSS px-ben 390 wide, de transform:scale visually kisebb,
+    // a getBoundingClientRect() a vizuális méretet adja vissza —
+    // ezért a scaleX-et a CANVAS_W / rect.width képlettel számoljuk.
     this.cachedRect   = this.canvas.getBoundingClientRect();
     this.cachedScaleX = this.CANVAS_W / this.cachedRect.width;
+
+    this.zone.run(() => this.cdr.markForCheck());
   }
 
   // ── GAME LOOP ────────────────────────────────────────────────────────────
