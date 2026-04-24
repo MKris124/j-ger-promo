@@ -38,7 +38,8 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:*",
                 "http://192.168.*.*",
-                "http://192.168.*.*:*"
+                "http://192.168.*.*:*",
+                "https://jager-sbm-game.hu"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
