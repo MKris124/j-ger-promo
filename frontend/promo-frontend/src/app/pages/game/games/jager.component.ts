@@ -75,12 +75,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private spawnInterval  = 40;
   private frameCount     = 0;
 
-  // ── ADAPTIVE FPS (60–120, a kijelző refresh rate-jéhez igazítva) ─────────
-  // A tényleges target-et a detektált refresh rate alapján állítjuk be,
-  // de minimum 60, maximum 120 fps közé szorítjuk.
-  private targetFps      = 60;        // detektálás előtti alapértelmezett
-  private frameBudgetMs  = 1000 / 60; // frissül detektálás után
-  private accumulator    = 0;
+  // ── FPS: rAF natívan fut a kijelző Hz-én, nincs throttle ────────────────
+  // A deltaTime-ot normalizáljuk 60fps-re, így a játéksebesség
+  // független a refresh rate-től (60/90/120Hz mind ugyanolyan gyors)
+  private readonly BASE_FRAME_MS = 1000 / 60; // 16.666ms referencia
 
   private readonly CANVAS_W      = 390;
   private readonly CANVAS_H      = 680;
@@ -321,7 +319,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.liquidDirty   = true;
     this.bgRendered    = false;
     this.lastTime      = 0;
-    this.accumulator   = 0;
 
     // Pool reset + freeList újraépítése
     this.freeList = [];
@@ -356,7 +353,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
 
         this.glassX = this.CANVAS_W / 2 - this.glassW / 2;
         this.updateRect();
-        this.detectRefreshRate(); // Refresh rate detektálás — frameBudgetMs frissül
         this.boundResizeObserver.observe(this.canvas);
 
         this.prerenderLiquid();
@@ -373,66 +369,34 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── REFRESH RATE DETEKTÁLÁS ─────────────────────────────────────────────
-  // Három egymást követő rAF timestamp-ből átlagoljuk a tényleges frame időt,
-  // majd abból levezetjük a refresh rate-et, és 60–120 fps közé klampoljuk.
-  private detectRefreshRate(): void {
-    const samples: number[] = [];
-    let prev = 0;
-
-    const measure = (ts: number) => {
-      if (prev) samples.push(ts - prev);
-      prev = ts;
-
-      if (samples.length < 5) {
-        requestAnimationFrame(measure);
-        return;
-      }
-
-      // Átlagos frame idő -> fps
-      const avg    = samples.reduce((a, b) => a + b, 0) / samples.length;
-      const raw    = Math.round(1000 / avg);
-
-      // 60–120 közé szorítjuk, és a legközelebbi kerek értékre snappelünk
-      // (60, 90, 120 a leggyakoribb kijelző frekvenciák)
-      const snapped = raw >= 100 ? 120 : raw >= 75 ? 90 : 60;
-
-      this.targetFps     = snapped;
-      this.frameBudgetMs = 1000 / snapped;
-    };
-
-    requestAnimationFrame(measure);
-  }
-
   private updateRect(): void {
     this.cachedRect   = this.canvas.getBoundingClientRect();
     this.cachedScaleX = this.CANVAS_W / this.cachedRect.width;
   }
 
-  // ── GAME LOOP (fps cap + accumulator) ────────────────────────────────────
+  // ── GAME LOOP ────────────────────────────────────────────────────────────
+  // Nincs throttle — minden rAF frame-en rajzolunk.
+  // A timeScale a deltaTime-ot normalizálja 60fps-re, így a játéksebesség
+  // teljesen független a kijelző Hz-étől.
   private gameLoop(timestamp: number): void {
     if (this.state !== 'playing') return;
 
     if (!this.lastTime) this.lastTime = timestamp;
-    const delta = Math.min(timestamp - this.lastTime, 50);
-    this.lastTime = timestamp;
+    // Alt-tab védelem: max 50ms ugrás egy frame alatt
+    const delta     = Math.min(timestamp - this.lastTime, 50);
+    this.lastTime   = timestamp;
 
-    this.accumulator += delta;
+    // timeScale: 1.0 = 60fps, 0.5 = 120fps, 2.0 = 30fps
+    // A fizika és spawn logika ettől függetlenül helyes sebességgel fut
+    const timeScale = delta / this.BASE_FRAME_MS;
 
-    // Csak akkor update + render, ha elég idő telt el (fps cap)
-    if (this.accumulator >= this.frameBudgetMs) {
-      const timeScale = this.accumulator / 16.666;
-      this.accumulator = 0;
+    this.update(timeScale);
 
-      this.update(timeScale);
-
-      // Liquid csak akkor rendereljük újra, ha kell
-      if (this.liquidDirty) {
-        this.prerenderLiquid();
-      }
-
-      this.render();
+    if (this.liquidDirty) {
+      this.prerenderLiquid();
     }
+
+    this.render();
 
     this.zone.runOutsideAngular(() => {
       this.animFrameId = requestAnimationFrame(this.boundGameLoop);
