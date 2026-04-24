@@ -84,16 +84,23 @@
       így a böngészőnek frame-enként NEM kell újraskáláznia a tartalmat.
       A transform-origin: top center biztosítja hogy felülről középre skálázzon.
     -->
-    <div
-      class="relative overflow-hidden w-full"
-      [style.height.px]="680 * canvasScale"
-    >
-      <canvas
-        #gameCanvas
-        class="touch-none block"
-        style="width: 390px; transform-origin: top left;"
-        [style.transform]="'scale(' + canvasScale + ')'"
-      ></canvas>
+    <!--
+      A wrapper max-width: 320px + auto margin => nem teljes szélesség.
+      A canvasScale a 320px-es canvas-t skálázza a szülő szélességéhez.
+    -->
+    <div class="flex justify-center w-full">
+      <div
+        class="relative overflow-hidden"
+        style="max-width: 320px; width: 100%;"
+        [style.height.px]="680 * canvasScale"
+      >
+        <canvas
+          #gameCanvas
+          class="touch-none block"
+          style="width: 320px; transform-origin: top left;"
+          [style.transform]="'scale(' + canvasScale + ')'"
+        ></canvas>
+      </div>
     </div>
 
     <p class="text-center text-xs text-gray-600 py-2">Húzd a poharat balra-jobbra</p>

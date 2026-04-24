@@ -73,7 +73,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private freeList: number[] = Array.from({ length: 40 }, (_, i) => i);
 
   private spawnTimer     = 0;
-  private spawnInterval  = 40;
+  private spawnInterval  = 28;
   private frameCount     = 0;
 
   // ── FPS: rAF natívan fut a kijelző Hz-én, nincs throttle ────────────────
@@ -81,7 +81,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   // független a refresh rate-től (60/90/120Hz mind ugyanolyan gyors)
   private readonly BASE_FRAME_MS = 1000 / 60; // 16.666ms referencia
 
-  private readonly CANVAS_W      = 390;
+  private readonly CANVAS_W      = 320;
   private readonly CANVAS_H      = 680;
   private readonly FILL_PER_DROP =  7;
   private readonly FILL_PER_ICE  =  4;
@@ -315,7 +315,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.score         = 0;
     this.frameCount    = 0;
     this.spawnTimer    = 0;
-    this.spawnInterval = 40;
+    this.spawnInterval = 28;
     this.lastRenderedFill = -1;
     this.liquidDirty   = true;
     this.bgRendered    = false;
@@ -434,11 +434,11 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.spawnTimer += timeScale;
 
     const elapsed    = 30 - this.timeLeft;
-    const difficulty = 1 + elapsed * 0.05;
+    const difficulty = 1 + elapsed * 0.08;
 
     if (this.spawnTimer >= this.spawnInterval) {
       this.spawnTimer    = 0;
-      this.spawnInterval = Math.max(12, 35 - elapsed * 2);
+      this.spawnInterval = Math.max(7, 26 - elapsed * 2);
       this.spawnItem();
     }
 
@@ -501,7 +501,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     const item = this.itemPool[idx];
 
     const rand      = Math.random();
-    const badChance = Math.min(0.50, 0.25 + (30 - this.timeLeft) * 0.015);
+    const badChance = Math.min(0.65, 0.20 + (30 - this.timeLeft) * 0.022);
 
     let type: 'drop' | 'ice' | 'bad';
     if (rand < badChance)                              type = 'bad';
@@ -515,7 +515,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     item.radius = radius;
     item.x      = Math.random() * (this.CANVAS_W - radius * 2) + radius;
     item.y      = -40;
-    item.speed  = 3.0 + Math.random() * 3.0;
+    item.speed  = 4.5 + Math.random() * 3.5;
   }
 
   // ── RENDER: háttér canvas-ból másolunk, nem rajzoljuk újra ────────────────
