@@ -35,7 +35,7 @@
       <div class="bg-black/40 border border-red-500/20 rounded-xl p-3 text-center flex flex-col items-center justify-between">
         <div class="h-10 w-10 mb-2 relative flex items-center justify-center">
           <img src="/assets/broken.png" alt="Törött" class="max-h-full max-w-full opacity-80">
-          </div>
+        </div>
         <div>
           <div class="text-xs text-red-400 font-bold">-15%</div>
           <div class="text-[10px] text-gray-400">Kerüld!</div>
@@ -63,9 +63,10 @@
         </div>
         <div class="h-2 bg-gray-800 rounded-full overflow-hidden">
           <div
-            class="h-full rounded-full transition-all duration-150"
+            class="h-full rounded-full transition-transform duration-150 origin-left"
             [class]="fillPercent >= 80 ? 'bg-jager-orange' : 'bg-jager-orange/60'"
-            [style.width.%]="fillPercent"
+            style="width: 100%;"
+            [style.transform]="'scaleX(' + (fillPercent / 100) + ')'"
           ></div>
         </div>
       </div>
