@@ -33,9 +33,13 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private cdr  = inject(ChangeDetectorRef);
 
   state: GameState = 'idle';
-  fillPercent = 0;
-  timeLeft    = 30;
-  score       = 0;
+  fillPercent  = 0;
+  timeLeft     = 30;
+  score        = 0;
+  assetsReady  = false; // A "Start" gomb csak akkor aktív, ha ez true
+
+  // A játék csak ezt a Promise-t várja meg — soha nem indul nyers képekkel
+  private assetsReadyPromise!: Promise<void>;
 
   private canvas!: HTMLCanvasElement;
   private ctx!: CanvasRenderingContext2D;
@@ -148,7 +152,8 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         else img.onload = make;
       });
 
-    Promise.all([
+    // assetsReadyPromise: startGame() ezt várja meg — soha nem indul nyers képekkel
+    this.assetsReadyPromise = Promise.all([
       toBitmap(this.imgGlass),
       toBitmap(this.imgIce),
       toBitmap(this.imgBroken),
@@ -161,8 +166,15 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
       this.prerenderGlass();
       this.prerenderItems();
     }).catch(() => {
+      // Fallback nyers képekkel, ha createImageBitmap nem elérhető
       this.prerenderGlass();
       this.prerenderItems();
+    }).then(() => {
+      // Minden prerender kész -> Start gomb engedélyezése
+      this.zone.run(() => {
+        this.assetsReady = true;
+        this.cdr.markForCheck();
+      });
     });
   }
 
@@ -316,43 +328,46 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
       this.freeList.push(i);
     }
 
-    setTimeout(() => {
-      this.canvas = this.canvasRef.nativeElement;
-      this.ctx    = this.canvas.getContext('2d', { alpha: false })!;
-      this.canvas.width  = this.CANVAS_W;
-      this.canvas.height = this.CANVAS_H;
+    // KULCS: Megvárjuk az assetsReadyPromise-t, mielőtt bármi rajzolás elkezdődne.
+    // setTimeout helyett Promise-chain: garantáltan minden prerender kész mire a loop elindul.
+    this.assetsReadyPromise.then(() => {
+      setTimeout(() => {
+        this.canvas = this.canvasRef.nativeElement;
+        this.ctx    = this.canvas.getContext('2d', { alpha: false })!;
+        this.canvas.width  = this.CANVAS_W;
+        this.canvas.height = this.CANVAS_H;
 
-      // imageRendering hint — mobilon gyorsabb compositing
-      this.canvas.style.imageRendering = 'pixelated';
+        // imageRendering hint — mobilon gyorsabb compositing
+        this.canvas.style.imageRendering = 'pixelated';
 
-      // Háttér canvas létrehozása és pozicionálása
-      if (!this.bgCanvas) {
-        this.bgCanvas      = document.createElement('canvas');
-        this.bgCanvas.width  = this.CANVAS_W;
-        this.bgCanvas.height = this.CANVAS_H;
-        this.bgCtx = this.bgCanvas.getContext('2d', { alpha: false })!;
-        // A bgCanvas-t a játék-canvas mögé helyezzük (CSS z-index)
-        this.bgCanvas.style.cssText = this.canvas.style.cssText;
-        this.bgCanvas.style.position = 'absolute';
-        this.bgCanvas.style.zIndex   = '-1';
-        this.canvas.parentElement?.insertBefore(this.bgCanvas, this.canvas);
-      }
+        // Háttér canvas létrehozása és pozicionálása
+        if (!this.bgCanvas) {
+          this.bgCanvas        = document.createElement('canvas');
+          this.bgCanvas.width  = this.CANVAS_W;
+          this.bgCanvas.height = this.CANVAS_H;
+          this.bgCtx = this.bgCanvas.getContext('2d', { alpha: false })!;
+          this.bgCanvas.style.cssText  = this.canvas.style.cssText;
+          this.bgCanvas.style.position = 'absolute';
+          this.bgCanvas.style.zIndex   = '-1';
+          this.canvas.parentElement?.insertBefore(this.bgCanvas, this.canvas);
+        }
 
-      this.glassX = this.CANVAS_W / 2 - this.glassW / 2;
-      this.updateRect();
-      this.boundResizeObserver.observe(this.canvas);
+        this.glassX = this.CANVAS_W / 2 - this.glassW / 2;
+        this.updateRect();
+        this.boundResizeObserver.observe(this.canvas);
 
-      this.prerenderLiquid();
-      this.renderBackground();
-      this.setupInputs();
-      this.startTimer();
+        this.prerenderLiquid();
+        this.renderBackground();
+        this.setupInputs();
+        this.startTimer();
 
-      this.zone.runOutsideAngular(() => {
-        this.animFrameId = requestAnimationFrame(this.boundGameLoop);
-      });
+        this.zone.runOutsideAngular(() => {
+          this.animFrameId = requestAnimationFrame(this.boundGameLoop);
+        });
 
-      this.cdr.markForCheck();
-    }, 50);
+        this.cdr.markForCheck();
+      }, 50);
+    });
   }
 
   private updateRect(): void {
