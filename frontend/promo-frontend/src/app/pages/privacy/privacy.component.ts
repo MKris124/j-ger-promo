@@ -11,7 +11,7 @@ import { PageHeaderComponent } from '../../shared/page-header.component';
 })
 export class PrivacyComponent {
   private router = inject(Router);
-  lastUpdated = '2025. január 1.';
+  lastUpdated = '2026. április 26.';
 
   goBack(): void {
     this.router.navigate(['/']);
