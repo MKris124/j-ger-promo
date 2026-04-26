@@ -1,87 +1,91 @@
 <button
   (click)="toggle()"
-  class="flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-lg border border-jager-orange/30 bg-black/40 cursor-pointer shrink-0 hover:bg-black/60 transition-colors duration-300"
+  class="flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-lg border border-jager-green-light bg-jager-dark/80 cursor-pointer shrink-0 hover:border-jager-amber/50 hover:bg-jager-green transition-colors duration-300 shadow-md"
 >
-  <span class="block w-5 h-0.5 transform-gpu transition-all duration-300 ease-out" [ngClass]="isOpen ? 'bg-jager-orange rotate-45 translate-y-[8px]' : 'bg-gray-400'"></span>
-  <span class="block w-5 h-0.5 transform-gpu transition-all duration-300 ease-out" [ngClass]="isOpen ? 'bg-jager-orange opacity-0' : 'bg-gray-400'"></span>
-  <span class="block w-5 h-0.5 transform-gpu transition-all duration-300 ease-out" [ngClass]="isOpen ? 'bg-jager-orange -rotate-45 -translate-y-[8px]' : 'bg-gray-400'"></span>
+  <span class="block w-5 h-0.5 transform-gpu transition-all duration-300 ease-out" [ngClass]="isOpen ? 'bg-jager-amber rotate-45 translate-y-[8px]' : 'bg-gray-400'"></span>
+  <span class="block w-5 h-0.5 transform-gpu transition-all duration-300 ease-out" [ngClass]="isOpen ? 'bg-jager-amber opacity-0' : 'bg-gray-400'"></span>
+  <span class="block w-5 h-0.5 transform-gpu transition-all duration-300 ease-out" [ngClass]="isOpen ? 'bg-jager-amber -rotate-45 -translate-y-[8px]' : 'bg-gray-400'"></span>
 </button>
 
 <div
   [ngClass]="isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
-  class="fixed inset-0 bg-black/75 z-[9998] transition-opacity duration-300 ease-out backdrop-blur-sm will-change-opacity transform-gpu"
+  class="fixed inset-0 bg-[#060B08]/80 z-[9998] transition-opacity duration-300 ease-out backdrop-blur-sm will-change-opacity transform-gpu"
   (click)="close()"
 ></div>
 
 <div
   (click)="onSidebarClick()"
   [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
-  class="fixed top-0 left-0 w-[280px] h-[100dvh] z-[9999] bg-[#0a0a0a]/95 backdrop-blur-2xl border-r border-jager-orange/15 flex flex-col overflow-hidden transition-transform duration-300 ease-out transform-gpu will-change-transform shadow-[10px_0_30px_rgba(0,0,0,0.5)]"
+  class="fixed top-0 left-0 w-[280px] h-[100dvh] z-[9999] bg-gradient-to-b from-[#060B08] to-[#112217] border-r border-jager-green-light flex flex-col overflow-hidden transition-transform duration-300 ease-out transform-gpu will-change-transform shadow-[10px_0_40px_rgba(0,0,0,0.8)]"
 >
-  <div class="flex items-center px-5 py-4 border-b border-white/5 shrink-0 bg-white/[0.02]">
+  
+  <div class="flex items-center px-5 py-5 border-b border-jager-green-light/40 shrink-0 bg-black/20">
     <div class="flex items-center gap-3 flex-1">
       <img src="/assets/stag.png" 
-     class="w-8 h-8 shrink-0 invert sepia saturate-[5] hue-rotate-[340deg] brightness-110 drop-shadow-[0_0_5px_rgba(243,112,33,0.5)] transition-transform duration-700 hover:rotate-[360deg] cursor-pointer active:scale-90 transform-gpu">      <span class="text-jager-orange font-extrabold tracking-[0.15em] text-xs">JÄGERMEISTER</span>
+           class="w-9 h-9 shrink-0 invert sepia saturate-[5] hue-rotate-[340deg] brightness-110 drop-shadow-[0_0_8px_rgba(243,112,33,0.4)] transition-transform duration-700 hover:rotate-[360deg] cursor-pointer active:scale-90 transform-gpu">      
+      <span class="font-['Oswald'] text-jager-orange font-black tracking-widest text-lg uppercase drop-shadow-md mt-1">JÄGERMEISTER</span>
     </div>
   </div>
 
-  <nav class="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
+  <nav class="flex-1 p-4 flex flex-col gap-1.5 overflow-y-auto">
+    
     @if (isAdminPage) {
-      <div class="px-2 pt-2 pb-1 text-gray-500 text-[10px] font-bold tracking-[0.12em] uppercase">Aloldalak</div>
+      <div class="px-2 pt-2 pb-1 text-jager-amber text-[10px] font-black tracking-[0.2em] uppercase opacity-70">Aloldalak</div>
       @for (tab of adminTabs; track tab.key) {
         <button
           (click)="setSubTab(tab.key)"
           [ngClass]="activeSubTab === tab.key
-            ? 'flex items-center gap-3 p-3 rounded-xl bg-jager-orange/10 border border-jager-orange/30 text-jager-orange font-bold text-sm w-full text-left cursor-default shadow-inner'
-            : 'flex items-center gap-3 p-3 rounded-xl bg-transparent border border-transparent text-gray-400 font-medium text-sm w-full text-left cursor-pointer hover:bg-white/5 hover:text-gray-200 transition-colors duration-200'"
+            ? 'flex items-center gap-3 p-3 rounded-xl bg-jager-orange/10 border border-jager-orange/40 text-jager-orange font-bold text-sm w-full text-left cursor-default shadow-[inset_0_0_10px_rgba(243,112,33,0.1)]'
+            : 'flex items-center gap-3 p-3 rounded-xl bg-transparent border border-transparent text-gray-400 font-medium text-sm w-full text-left cursor-pointer hover:bg-jager-green-light hover:text-gray-200 transition-colors duration-200'"
         >
           <span class="text-lg w-6 text-center shrink-0">{{ tab.icon }}</span>
-          <span class="flex-1">{{ tab.label }}</span>
+          <span class="flex-1 font-['Oswald'] tracking-wide">{{ tab.label }}</span>
           @if (activeSubTab === tab.key) {
-            <span class="w-1.5 h-1.5 rounded-full bg-jager-orange shrink-0 shadow-[0_0_5px_rgba(243,112,33,0.5)]"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-jager-orange shrink-0 shadow-[0_0_8px_rgba(243,112,33,0.8)]"></span>
           }
         </button>
       }
-      <div class="h-px bg-white/5 my-2 mx-2"></div>
-      <div class="px-2 pt-1 pb-1 text-gray-500 text-[10px] font-bold tracking-[0.12em] uppercase">Navigáció</div>
+      <div class="h-px bg-jager-green-light/40 my-3 mx-2"></div>
+      <div class="px-2 pt-1 pb-1 text-jager-amber text-[10px] font-black tracking-[0.2em] uppercase opacity-70">Navigáció</div>
     }
 
     @for (item of allNavItems; track item.path) {
       <button
         (click)="item.isActive ? null : navigate(item.path)"
         [ngClass]="item.isActive
-          ? 'flex items-center gap-3 p-3 rounded-xl bg-jager-orange/10 border border-jager-orange/20 text-jager-orange font-bold text-sm w-full text-left cursor-default shadow-inner'
-          : 'flex items-center gap-3 p-3 rounded-xl bg-transparent border border-transparent text-gray-400 font-medium text-sm w-full text-left cursor-pointer hover:bg-white/5 hover:text-gray-200 transition-colors duration-200'"
+          ? 'flex items-center gap-3 p-3 rounded-xl bg-jager-orange/10 border border-jager-orange/40 text-jager-orange font-bold text-sm w-full text-left cursor-default shadow-[inset_0_0_10px_rgba(243,112,33,0.1)]'
+          : 'flex items-center gap-3 p-3 rounded-xl bg-transparent border border-transparent text-gray-400 font-medium text-sm w-full text-left cursor-pointer hover:bg-jager-green-light hover:text-gray-200 transition-colors duration-200'"
       >
         <span class="text-lg w-6 text-center shrink-0">{{ item.icon }}</span>
-        <span class="flex-1">{{ item.label }}</span>
+        <span class="flex-1 font-['Oswald'] tracking-wide">{{ item.label }}</span>
         @if (item.isActive) {
-          <span class="w-1.5 h-1.5 rounded-full bg-jager-orange shrink-0 shadow-[0_0_5px_rgba(243,112,33,0.5)]"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-jager-orange shrink-0 shadow-[0_0_8px_rgba(243,112,33,0.8)]"></span>
         }
       </button>
     }
   </nav>
 
-  <div class="p-3 border-t border-white/5 shrink-0 bg-black/20">
+  <div class="p-4 border-t border-jager-green-light/40 shrink-0 bg-black/40">
+    
     <button
       (click)="openProfile()"
-      class="flex items-center gap-3 w-full p-2.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer mb-2 text-left transition-colors duration-200 group"
+      class="flex items-center gap-3 w-full p-3 rounded-xl border border-jager-green-light/50 bg-jager-green-light/20 hover:bg-jager-green-light cursor-pointer mb-3 text-left transition-colors duration-200 group shadow-md"
     >
-      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-jager-orange/20 to-transparent border border-jager-orange/30 flex items-center justify-center text-jager-orange font-bold text-sm shrink-0">
+      <div class="w-10 h-10 rounded-full bg-jager-dark border-2 border-jager-amber/60 flex items-center justify-center text-jager-amber font-black text-base shrink-0 shadow-[0_0_10px_rgba(198,108,35,0.3)]">
         {{ userName?.charAt(0)?.toUpperCase() || '?' }}
       </div>
       <div class="flex-1 min-w-0">
-        <div class="text-sm font-bold text-gray-200 truncate">{{ userName }}</div>
+        <div class="text-sm font-['Oswald'] tracking-widest text-jager-light truncate">{{ userName }}</div>
         @if (role !== 'USER') {
-          <div [ngClass]="role === 'ADMIN' ? 'text-jager-orange' : 'text-blue-400'" class="text-[10px] font-black uppercase tracking-wider mt-0.5">{{ role }}</div>
+          <div [ngClass]="role === 'ADMIN' ? 'text-jager-orange' : 'text-blue-400'" class="text-[9px] font-black uppercase tracking-[0.2em] mt-0.5">{{ role }}</div>
         }
       </div>
-      <span class="text-gray-500 text-lg shrink-0 mr-1 transform-gpu transition-transform duration-200 group-hover:translate-x-1">›</span>
+      <span class="text-gray-500 text-xl shrink-0 mr-1 transform-gpu transition-transform duration-200 group-hover:translate-x-1">›</span>
     </button>
 
     <button
       (click)="logout()"
-      class="flex items-center justify-center gap-2.5 w-full p-3 rounded-xl border border-white/5 bg-transparent hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 text-gray-400 text-sm font-bold cursor-pointer transition-colors duration-200"
+      class="flex items-center justify-center gap-2.5 w-full p-3.5 rounded-xl border border-red-900/30 bg-transparent hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/40 text-gray-400 text-xs font-black tracking-widest uppercase cursor-pointer transition-all duration-200"
     >
       <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

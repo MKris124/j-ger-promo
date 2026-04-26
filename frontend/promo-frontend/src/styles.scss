@@ -21,15 +21,16 @@ body {
 /* --- KÖZÖS KOMPONENSEK (Jäger Kártya) --- */
 @layer components {
   .jager-card {
-    /* Fekete helyett áttetsző palackzöld alap */
-    @apply bg-jager-green/60 backdrop-blur-xl border border-jager-green-light/60 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.5)] transform-gpu transition-all duration-300;
-    background-image: linear-gradient(135deg, rgba(26, 51, 35, 0.4) 0%, rgba(6, 11, 8, 0.8) 100%);
+    /* Kisebb blur (md) és hardware gyorsított GPU renderelés (will-change) */
+    @apply bg-jager-green/80 backdrop-blur-md border border-jager-green-light/60 rounded-2xl shadow-lg transition-colors duration-300;
+    background-image: linear-gradient(135deg, rgba(26, 51, 35, 0.7) 0%, rgba(6, 11, 8, 0.95) 100%);
+    /* Ez mondja meg a böngészőnek, hogy ne számolja újra az effekteket görgetéskor! */
+    will-change: transform, opacity;
   }
   
   .jager-card:hover {
-    /* Vad narancs helyett elegáns borostyán/zöldes keret és ragyogás */
     @apply border-jager-amber/40;
-    box-shadow: 0 10px 40px -10px rgba(198, 108, 35, 0.2);
+    box-shadow: 0 8px 30px -10px rgba(198, 108, 35, 0.2);
   }
 }
 
