@@ -74,16 +74,34 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private readonly imgDrop   = new Image();
 
   ngOnInit(): void {
-    this.imgGlass.src  = 'assets/glass.png';
-    this.imgIce.src    = 'assets/ice.png';
-    this.imgBroken.src = 'assets/broken.png';
-    this.imgDrop.src   = 'assets/drop.png';
+    // 1. JAVÍTÁS: Abszolút útvonalak (/), hogy a /game aloldalon is megtalálja a fájlokat
+    this.imgGlass.src  = '/assets/glass.png';
+    this.imgIce.src    = '/assets/ice.png';
+    this.imgBroken.src = '/assets/broken.png';
+    this.imgDrop.src   = '/assets/drop.png';
 
     const toBitmap = (img: HTMLImageElement): Promise<ImageBitmap> =>
-      new Promise(resolve => {
-        const make = () => createImageBitmap(img).then(resolve);
-        if (img.complete && img.naturalWidth > 0) make();
-        else img.onload = make;
+      new Promise((resolve, reject) => {
+        const make = () => {
+          createImageBitmap(img)
+            .then(resolve)
+            .catch(err => {
+              console.error('Hiba a kép konvertálásakor:', img.src, err);
+              reject(err);
+            });
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+          make();
+        } else {
+          img.onload = make;
+          
+          // 2. JAVÍTÁS: Ha a kép hiányzik (pl. elírás vagy 404), ne fagyjon le örökre az oldal!
+          img.onerror = () => {
+            console.error('Kritikus hiba: Nem található a játékelem:', img.src);
+            reject(new Error(`Failed to load image: ${img.src}`));
+          };
+        }
       });
 
     this.assetsReadyPromise = Promise.all([
@@ -103,6 +121,9 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         this.assetsReady = true;
         this.cdr.markForCheck();
       });
+    }).catch(error => {
+      // Ha bármelyik kép hiányzik, legalább a konzolban látni fogjuk az okot!
+      console.error('A játék indítása meghiúsult a hiányzó fájlok miatt:', error);
     });
   }
 
