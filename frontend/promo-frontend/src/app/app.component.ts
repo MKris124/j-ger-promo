@@ -19,9 +19,9 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      // Nem akarjuk elmenteni a login oldalt "utolsóként látogatottnak"
-      if (!event.urlAfterRedirects.includes('/login')) {
-        localStorage.setItem('lastVisitedRoute', event.urlAfterRedirects);
+      const url = event.urlAfterRedirects;
+      if (url !== '/' && !url.includes('/login') && !url.includes('/privacy')) {
+        localStorage.setItem('lastVisitedRoute', url);
       }
     });
   }

@@ -43,11 +43,19 @@ export class LoginComponent implements OnInit {
   secretClickCount = 0;
 
   ngOnInit() {
-    if (localStorage.getItem('token')) {
-      // Megnézzük, elmentettük-e korábban, hogy hol járt. Ha nem, a /game az alapértelmezett.
-      const lastRoute = localStorage.getItem('lastVisitedRoute') || '/game';
-      this.router.navigate([lastRoute]);
-      return; // Megállítjuk a Login oldal további betöltését!
+    const token = localStorage.getItem('token');
+  
+    if (token) {
+      const lastRoute = localStorage.getItem('lastVisitedRoute');
+      
+      // Ellenőrizzük, hogy a mentett útvonal létezik-e és nem csak egy sima /
+      if (lastRoute && lastRoute !== '/' && lastRoute !== '/login') {
+        this.router.navigate([lastRoute]);
+      } else {
+        // Ha nincs mentett route, vagy az csak egy /, akkor irány a főoldal
+        this.router.navigate(['/game']);
+      }
+      return; // Fontos, hogy megállítsuk a futást!
     }
     // 1. Age Gate ellenőrzés betöltéskor
     if (!sessionStorage.getItem('ageVerified')) {
