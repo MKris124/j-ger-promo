@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class AddStockRequest {
-    private int addedQuantity;
+    private double addedQuantity;
 }

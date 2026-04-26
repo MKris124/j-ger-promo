@@ -320,6 +320,10 @@ export class AdminComponent implements OnInit {
       });
   }
 
+  setQuickStock(item: InventoryItem, value: number): void {
+    this.addStockMap[item.id] = value;
+  }
+
   // --- ÚJ: Készlet levonása manuálisan ---
   subtractStock(item: InventoryItem): void {
     const qty = this.addStockMap[item.id];

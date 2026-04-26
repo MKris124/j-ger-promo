@@ -25,21 +25,20 @@ public class InventoryService {
 
     // --- ADMIN: Raktárkészlet módosítása (Feltöltés ÉS Levonás) ---
     @Transactional
-    public InventoryItem addStock(Long itemId, int addedQuantity) {
+    public InventoryItem addStock(Long itemId, double addedQuantity) {
         InventoryItem item = inventoryRepo.findById(itemId)
                 .orElseThrow(() -> new IllegalArgumentException("Nem létező tárgy!"));
 
         AppSettings settings = settingsRepo.findById(1L).orElseThrow();
 
-        // Folyadék esetén literből adagot számolunk
+        // Folyadék esetén literből adagot számolunk, és KEREKÍTJÜK (Math.round)
         int actualQuantityToAdd = item.isLiquid()
-                ? addedQuantity * settings.getShotsPerLiter()
-                : addedQuantity;
+                ? (int) Math.round(addedQuantity * settings.getShotsPerLiter())
+                : (int) Math.round(addedQuantity); // Merchnél is kerekítünk, ha véletlen tört jönne
 
         int newRemaining = item.getRemainingQuantity() + actualQuantityToAdd;
         int newTotal = item.getTotalQuantity() + actualQuantityToAdd;
 
-        // Biztosítás, hogy ne vigyük be mínuszba a készletet
         item.setRemainingQuantity(Math.max(0, newRemaining));
         item.setTotalQuantity(Math.max(0, newTotal));
 

@@ -1,165 +1,164 @@
-<div class="min-h-screen bg-jager-dark text-jager-light flex flex-col">
+<div class="min-h-screen bg-transparent text-jager-light flex flex-col relative">
 
-  <app-page-header title="PROMOTER" subtitle="Jäger Promo"></app-page-header>
+  <app-page-header title="PROMOTER" currentTab="Jägermeister SBM Game"></app-page-header>
 
-  <!-- CONTENT -->
   <div class="flex-1 flex flex-col items-center justify-center p-4">
 
-    <!-- ===== SCANNING STATE ===== -->
     @if (state === 'scanning') {
-      <div class="w-full max-w-sm flex flex-col items-center gap-5">
+      <div class="w-full max-w-sm flex flex-col items-center gap-6 animate-[ptrPulse_0.3s_ease-out]">
 
         <div class="text-center">
-          <h1 class="text-2xl font-extrabold tracking-wider uppercase text-jager-light">QR Beolvasás</h1>
-          <p class="text-gray-400 text-sm mt-1">Tartsd a kamerát a játékos QR kódja elé</p>
+          <h1 class="text-3xl font-['Oswald'] font-black tracking-widest uppercase text-jager-orange mb-1 drop-shadow-md">QR Beolvasás</h1>
+          <p class="text-jager-amber text-[10px] font-bold tracking-[0.2em] uppercase opacity-80">Tartsd a kamerát a játékos kódja elé</p>
         </div>
 
-        <!-- Kamera nézet -->
-        <div class="relative w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden border-2 border-jager-orange/30 bg-black">
+        <div class="relative w-full max-w-[320px] aspect-square rounded-2xl overflow-hidden bg-jager-dark border-2 border-jager-green-light shadow-[0_15px_40px_rgba(0,0,0,0.6),0_0_30px_rgba(243,112,33,0.1)] transform-gpu">
           <video #videoEl
-            class="absolute inset-0 w-full h-full object-cover"
+            class="absolute inset-0 w-full h-full object-cover opacity-90"
             autoplay
             playsinline
             muted
           ></video>
           <canvas #canvasEl class="hidden"></canvas>
 
-          <!-- Scanner overlay — sarokkeretek -->
           <div class="absolute inset-0 pointer-events-none">
-            <!-- Homályos keret a sarkokon kívül -->
-            <div class="absolute inset-0 bg-black/30"></div>
-            <!-- Scan zóna -->
-            <div class="absolute inset-8 border-0">
-              <!-- 4 sarok -->
-              <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-jager-orange rounded-tl-lg"></div>
-              <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-jager-orange rounded-tr-lg"></div>
-              <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-jager-orange rounded-bl-lg"></div>
-              <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-jager-orange rounded-br-lg"></div>
-              <!-- Scan vonal animáció -->
-              <div class="absolute left-0 right-0 h-0.5 bg-jager-orange/70 scan-line"></div>
+            <div class="absolute inset-0 bg-jager-dark/40 backdrop-blur-[2px]"></div>
+            
+            <div class="absolute inset-8 border-0 shadow-[0_0_0_999px_rgba(6,11,8,0.5)] rounded-xl">
+              <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-jager-orange rounded-tl-xl shadow-[inset_2px_2px_8px_rgba(243,112,33,0.2)]"></div>
+              <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-jager-orange rounded-tr-xl shadow-[inset_-2px_2px_8px_rgba(243,112,33,0.2)]"></div>
+              <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-jager-orange rounded-bl-xl shadow-[inset_2px_-2px_8px_rgba(243,112,33,0.2)]"></div>
+              <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-jager-orange rounded-br-xl shadow-[inset_-2px_-2px_8px_rgba(243,112,33,0.2)]"></div>
+              
+              <div class="absolute left-0 right-0 h-[2px] bg-jager-orange scan-line shadow-[0_0_15px_3px_rgba(243,112,33,0.6)]"></div>
             </div>
           </div>
         </div>
 
-        <p class="text-xs text-gray-600 text-center">A kamera automatikusan felismeri a QR kódot</p>
+        <div class="px-4 py-2 rounded-lg bg-jager-green-light/30 border border-jager-green-light/50 backdrop-blur-md">
+          <p class="text-[11px] font-bold tracking-widest text-gray-400 text-center uppercase">A kamera automatikusan felismeri</p>
+        </div>
       </div>
     }
 
-    <!-- ===== LOADING STATE ===== -->
     @if (state === 'loading') {
       <div class="flex flex-col items-center gap-4">
-        <svg class="animate-spin h-12 w-12 text-jager-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <svg class="animate-spin h-12 w-12 text-jager-orange drop-shadow-[0_0_15px_rgba(243,112,33,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle>
           <path d="M12 2a10 10 0 0 1 10 10" stroke-width="3" stroke-linecap="round"></path>
         </svg>
-        <p class="text-gray-400 text-sm">Nyeremény ellenőrzése...</p>
+        <p class="text-jager-amber text-xs font-black tracking-[0.2em] uppercase animate-pulse">Ellenőrzés...</p>
       </div>
     }
 
-    <!-- ===== PREVIEW STATE ===== -->
     @if (state === 'preview' && pocket) {
-      <div class="w-full max-w-sm flex flex-col gap-4">
+      <div class="w-full max-w-sm flex flex-col gap-5 animate-[ptrPulse_0.3s_ease-out]">
 
-        <div class="text-center mb-2">
-          <p class="text-gray-400 text-sm uppercase tracking-widest text-xs font-semibold">Beolvasva — nyeremény</p>
+        <div class="text-center">
+          <p class="text-gray-400 text-[10px] uppercase tracking-[0.3em] font-black mb-1">Beolvasva</p>
         </div>
 
-        <!-- Nyeremény kártya -->
-        <div class="bg-black/50 backdrop-blur-md border border-jager-orange/30 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
-          <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-5xl">
+        <div class="jager-card p-8 flex flex-col items-center gap-4 text-center relative overflow-hidden">
+          <img src="/assets/stag.png" class="absolute w-32 h-32 opacity-[0.03] grayscale -right-4 -bottom-4 pointer-events-none">
+          
+          <div class="w-24 h-24 rounded-full bg-jager-dark border-2 border-jager-orange/60 flex items-center justify-center text-5xl shadow-[inset_0_0_20px_rgba(243,112,33,0.2),0_0_30px_rgba(243,112,33,0.3)] relative z-10">
             {{ getPrizeIcon() }}
           </div>
-          <div>
-            <h2 class="text-2xl font-extrabold text-jager-light tracking-wide">{{ getPrizeName() }}</h2>
-            @if (pocket.inventoryItem?.liquid) {
-              <p class="text-sm text-blue-400 mt-1">Folyadék nyeremény</p>
-            } @else if (pocket.inventoryItem) {
-              <p class="text-sm text-purple-400 mt-1">Merch nyeremény</p>
-            } @else {
-              <p class="text-sm text-jager-orange mt-1">Shot nyeremény</p>
-            }
+          
+          <div class="relative z-10 w-full">
+            <h2 class="text-3xl font-['Oswald'] font-black text-jager-light tracking-widest uppercase drop-shadow-md break-words">{{ getPrizeName() }}</h2>
+            
+            <div class="mt-3 inline-block px-3 py-1 rounded-md bg-black/40 border border-white/5">
+              @if (pocket.inventoryItem?.liquid) {
+                <p class="text-[10px] font-black tracking-widest uppercase text-blue-400">🍶 Folyadék nyeremény</p>
+              } @else if (pocket.inventoryItem) {
+                <p class="text-[10px] font-black tracking-widest uppercase text-purple-400">🎁 Merch nyeremény</p>
+              } @else {
+                <p class="text-[10px] font-black tracking-widest uppercase text-jager-orange">🥃 Shot nyeremény</p>
+              }
+            </div>
+            
             @if (pocket.userName) {
-              <p class="text-xs text-gray-500 mt-2">👤 {{ pocket.userName }}</p>
+              <div class="mt-4 pt-4 border-t border-jager-green-light/40">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Játékos neve</p>
+                <p class="text-sm font-bold text-gray-300">{{ pocket.userName }}</p>
+              </div>
             }
           </div>
         </div>
 
-        <!-- BEVÁLT gomb -->
-        <button
-          (click)="redeem()"
-          [disabled]="redeeming"
-          class="w-full py-5 bg-jager-orange hover:bg-orange-500 disabled:opacity-50 text-black font-extrabold text-xl rounded-2xl transition-colors tracking-widest uppercase shadow-lg shadow-jager-orange/20 flex items-center justify-center gap-3"
-        >
-          @if (redeeming) {
-            <svg class="animate-spin h-6 w-6 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" stroke-width="3" stroke-opacity="0.25"></circle>
-              <path d="M12 2a10 10 0 0 1 10 10" stroke-width="3" stroke-linecap="round"></path>
-            </svg>
-            Feldolgozás...
-          } @else {
-            <span>✓</span>
-            <span>Beváltom</span>
-          }
-        </button>
+        <div class="flex flex-col gap-3 mt-2">
+          <button
+            (click)="redeem()"
+            [disabled]="redeeming"
+            class="w-full py-4 bg-jager-orange hover:bg-orange-500 disabled:opacity-50 text-black font-black text-lg rounded-xl transition-all tracking-widest uppercase shadow-[0_0_20px_rgba(243,112,33,0.3)] hover:shadow-[0_0_35px_rgba(243,112,33,0.5)] active:scale-95 transform-gpu flex items-center justify-center gap-3"
+          >
+            @if (redeeming) {
+              <svg class="animate-spin h-5 w-5 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path></svg>
+              Feldolgozás...
+            } @else {
+              ✓ Beváltom
+            }
+          </button>
 
-        <!-- Mégsem -->
-        <button
-          (click)="resetScanner()"
-          class="w-full py-3 border border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300 font-medium rounded-xl text-sm transition-colors"
-        >
-          Mégsem — visszatérés
-        </button>
+          <button
+            (click)="resetScanner()"
+            class="w-full py-3 bg-transparent border border-white/10 hover:bg-white/5 text-gray-400 font-bold uppercase tracking-widest text-xs rounded-xl transition-colors active:bg-white/10"
+          >
+            Mégsem — visszatérés
+          </button>
+        </div>
 
       </div>
     }
 
-    <!-- ===== SUCCESS STATE ===== -->
     @if (state === 'success' && pocket) {
-      <div class="w-full max-w-sm flex flex-col items-center gap-5 text-center">
+      <div class="w-full max-w-sm flex flex-col gap-5 animate-[ptrPulse_0.3s_ease-out]">
+        
+        <div class="jager-card p-8 flex flex-col items-center text-center gap-4 border-green-500/30">
+          <div class="w-20 h-20 rounded-full bg-green-500/10 border-2 border-green-500/50 flex items-center justify-center text-4xl shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+            ✅
+          </div>
 
-        <!-- Success ikon -->
-        <div class="w-24 h-24 rounded-full bg-green-500/10 border-2 border-green-500/40 flex items-center justify-center text-5xl">
-          ✅
+          <div>
+            <h2 class="text-3xl font-['Oswald'] font-black text-green-400 tracking-widest uppercase drop-shadow-md">Beváltva!</h2>
+            <p class="text-gray-400 text-sm mt-3 leading-relaxed">
+              <span class="text-jager-light font-bold">{{ getPrizeName() }}</span><br>sikeresen átadva.
+            </p>
+          </div>
+
+          <div class="w-full mt-2 bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-green-400/80">
+            A nyeremény lezárva és levonva a készletből.
+          </div>
         </div>
 
-        <div>
-          <h2 class="text-2xl font-extrabold text-green-400 tracking-wide uppercase">Beváltva!</h2>
-          <p class="text-gray-400 text-sm mt-2">
-            <span class="text-jager-light font-semibold">{{ getPrizeName() }}</span> sikeresen átadva.
-          </p>
-        </div>
-
-        <div class="bg-black/50 border border-green-500/20 rounded-xl px-5 py-3 text-xs text-gray-500">
-          A nyeremény lezárva és levonva a készletből.
-        </div>
-
-        <!-- Következő beolvasás -->
         <button
           (click)="resetScanner()"
-          class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
+          class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-black text-lg rounded-xl transition-all tracking-widest uppercase shadow-[0_0_20px_rgba(243,112,33,0.3)] active:scale-95 transform-gpu"
         >
-          Következő →
+          Következő olvasása →
         </button>
 
       </div>
     }
 
-    <!-- ===== ERROR STATE ===== -->
     @if (state === 'error') {
-      <div class="w-full max-w-sm flex flex-col items-center gap-5 text-center">
+      <div class="w-full max-w-sm flex flex-col gap-5 animate-[ptrPulse_0.3s_ease-out]">
 
-        <div class="w-20 h-20 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center text-4xl">
-          ❌
-        </div>
+        <div class="jager-card p-8 flex flex-col items-center text-center gap-4 border-red-500/30">
+          <div class="w-20 h-20 rounded-full bg-red-500/10 border-2 border-red-500/50 flex items-center justify-center text-4xl shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+            ❌
+          </div>
 
-        <div>
-          <h2 class="text-xl font-extrabold text-red-400 uppercase tracking-wide">Hiba</h2>
-          <p class="text-gray-400 text-sm mt-2 leading-relaxed">{{ errorMessage }}</p>
+          <div>
+            <h2 class="text-3xl font-['Oswald'] font-black text-red-400 tracking-widest uppercase drop-shadow-md">Hiba</h2>
+            <p class="text-gray-300 text-sm mt-3 leading-relaxed font-medium">{{ errorMessage }}</p>
+          </div>
         </div>
 
         <button
           (click)="resetScanner()"
-          class="w-full py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase"
+          class="w-full py-4 bg-transparent border-2 border-jager-orange text-jager-orange hover:bg-jager-orange hover:text-black font-black text-lg rounded-xl transition-colors tracking-widest uppercase active:scale-95 transform-gpu"
         >
           Újra próbálom
         </button>
@@ -168,18 +167,19 @@
     }
 
   </div>
-
 </div>
 
 <style>
+/* Animáció a scannelő vonalhoz */
 .scan-line {
-  animation: scan 2s linear infinite;
+  animation: scan 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   top: 0;
 }
 
 @keyframes scan {
-  0%   { top: 0%; opacity: 1; }
-  90%  { top: 100%; opacity: 1; }
+  0%   { top: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
   100% { top: 100%; opacity: 0; }
 }
 </style>
