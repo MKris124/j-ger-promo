@@ -9,6 +9,7 @@ import { promoterGuard } from './pages/promoter/promoter.guard';
 import { gameGuard } from './pages/game/game.guard';
 
 import { PrivacyComponent } from './pages/privacy/privacy.component';
+import { FaqComponent } from './pages/faq/faq.components';
 
 export const routes: Routes = [
   { path: '',        component: LoginComponent },
@@ -17,5 +18,6 @@ export const routes: Routes = [
   { path: 'admin',   component: AdminComponent,   canActivate: [adminGuard] },
   { path: 'promoter',component: PromoterComponent,canActivate: [promoterGuard] },
   { path: 'privacy', component: PrivacyComponent },
+  { path: 'faq', component: FaqComponent },
   { path: '**', redirectTo: '' }
 ];

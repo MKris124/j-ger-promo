@@ -129,6 +129,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
       { path: '/profile',  label: 'Profilom',       icon: '👤', roles: ['USER'] },
       { path: '/promoter', label: 'Promoter nézet', icon: '🔍', roles: ['PROMOTER', 'ADMIN'] },
       { path: '/admin',    label: 'Admin panel',    icon: '⚙️', roles: ['ADMIN'] },
+      { path: '/faq', label: 'GYIK', icon: '❓', roles: ['USER', 'PROMOTER', 'ADMIN'] }
     ];
     return items
       .filter(item => item.roles.includes(this.role))
