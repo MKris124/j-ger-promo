@@ -1,102 +1,91 @@
-<!-- Hamburger gomb -->
 <button
   (click)="toggle()"
-  style="display:flex;flex-direction:column;justify-content:center;align-items:center;width:40px;height:40px;gap:6px;border-radius:8px;border:1px solid rgba(243,112,33,0.3);background:rgba(0,0,0,0.4);cursor:pointer;flex-shrink:0;"
+  class="flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-lg border border-jager-orange/30 bg-black/40 cursor-pointer shrink-0 hover:bg-black/60 transition-colors"
 >
-  <span [style]="isOpen ? 'display:block;width:20px;height:2px;background:#F37021;transform:rotate(45deg) translate(3px,3px);transition:all 0.25s ease' : 'display:block;width:20px;height:2px;background:#9ca3af;transition:all 0.25s ease'"></span>
-  <span [style]="isOpen ? 'display:block;width:20px;height:2px;background:#F37021;opacity:0;transition:all 0.25s ease' : 'display:block;width:20px;height:2px;background:#9ca3af;transition:all 0.25s ease'"></span>
-  <span [style]="isOpen ? 'display:block;width:20px;height:2px;background:#F37021;transform:rotate(-45deg) translate(3px,-3px);transition:all 0.25s ease' : 'display:block;width:20px;height:2px;background:#9ca3af;transition:all 0.25s ease'"></span>
+  <span class="block w-5 h-0.5 transition-all duration-300 ease-in-out" [ngClass]="isOpen ? 'bg-jager-orange rotate-45 translate-y-[8px]' : 'bg-gray-400'"></span>
+  <span class="block w-5 h-0.5 transition-all duration-300 ease-in-out" [ngClass]="isOpen ? 'bg-jager-orange opacity-0' : 'bg-gray-400'"></span>
+  <span class="block w-5 h-0.5 transition-all duration-300 ease-in-out" [ngClass]="isOpen ? 'bg-jager-orange -rotate-45 -translate-y-[8px]' : 'bg-gray-400'"></span>
 </button>
 
-<!-- Overlay + panel — mindig renderelve, CSS transition mozgatja -->
-<!-- Overlay -->
 <div
-  [style]="isOpen
-    ? 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:9998;opacity:1;transition:opacity 0.28s ease;pointer-events:auto;'
-    : 'position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:9998;opacity:0;transition:opacity 0.28s ease;pointer-events:none;'"
+  [ngClass]="isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'"
+  class="fixed inset-0 bg-black/75 z-[9998] transition-opacity duration-300 backdrop-blur-sm"
   (click)="close()"
 ></div>
 
-<!-- Sidebar panel -->
 <div
   (click)="onSidebarClick()"
-  [style]="isOpen
-    ? 'position:fixed;top:0;left:0;width:280px;height:100dvh;z-index:9999;background:#0a0a0a;border-right:1px solid rgba(243,112,33,0.15);display:flex;flex-direction:column;overflow:hidden;transform:translateX(0);transition:transform 0.28s cubic-bezier(0.32,0,0,1);'
-    : 'position:fixed;top:0;left:0;width:280px;height:100dvh;z-index:9999;background:#0a0a0a;border-right:1px solid rgba(243,112,33,0.15);display:flex;flex-direction:column;overflow:hidden;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.32,0,0,1);'"
+  [ngClass]="isOpen ? 'translate-x-0' : '-translate-x-full'"
+  class="fixed top-0 left-0 w-[280px] h-[100dvh] z-[9999] bg-[#0a0a0a]/95 backdrop-blur-2xl border-r border-jager-orange/15 flex flex-col overflow-hidden transition-transform duration-300 shadow-[10px_0_30px_rgba(0,0,0,0.5)]"
 >
-  <!-- Header -->
-  <div style="display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:10px;flex:1;">
-      <img src="/assets/stag.png" style="width:32px;height:32px;flex-shrink:0;filter:invert(1) sepia(1) saturate(5) hue-rotate(340deg) brightness(1.1);">
-      <span style="color:#F37021;font-weight:800;letter-spacing:0.15em;font-size:12px;">JÄGERMEISTER</span>
+  <div class="flex items-center px-5 py-4 border-b border-white/5 shrink-0 bg-white/[0.02]">
+    <div class="flex items-center gap-3 flex-1">
+      <img src="/assets/stag.png" class="w-8 h-8 shrink-0 invert sepia saturate-[5] hue-rotate-[340deg] brightness-110 drop-shadow-[0_0_5px_rgba(243,112,33,0.5)]">
+      <span class="text-jager-orange font-extrabold tracking-[0.15em] text-xs">JÄGERMEISTER</span>
     </div>
   </div>
 
-  <!-- Nav -->
-  <nav style="flex:1;padding:8px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;">
+  <nav class="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
 
-    <!-- ADMIN aloldalak -->
     @if (isAdminPage) {
-      <div style="padding:8px 8px 4px;color:#4b5563;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">Aloldalak</div>
+      <div class="px-2 pt-2 pb-1 text-gray-500 text-[10px] font-bold tracking-[0.12em] uppercase">Aloldalak</div>
       @for (tab of adminTabs; track tab.key) {
         <button
           (click)="setSubTab(tab.key)"
-          [style]="activeSubTab === tab.key
-            ? 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(243,112,33,0.1);border:1px solid rgba(243,112,33,0.25);color:#F37021;font-weight:600;font-size:14px;width:100%;text-align:left;cursor:pointer;'
-            : 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:transparent;border:1px solid transparent;color:#9ca3af;font-weight:500;font-size:14px;width:100%;text-align:left;cursor:pointer;'"
+          [ngClass]="activeSubTab === tab.key
+            ? 'flex items-center gap-3 p-3 rounded-xl bg-jager-orange/10 border border-jager-orange/30 text-jager-orange font-bold text-sm w-full text-left cursor-default shadow-inner'
+            : 'flex items-center gap-3 p-3 rounded-xl bg-transparent border border-transparent text-gray-400 font-medium text-sm w-full text-left cursor-pointer hover:bg-white/5 hover:text-gray-200 transition-colors'"
         >
-          <span style="font-size:16px;width:22px;text-align:center;flex-shrink:0;">{{ tab.icon }}</span>
-          <span style="flex:1;">{{ tab.label }}</span>
+          <span class="text-lg w-6 text-center shrink-0">{{ tab.icon }}</span>
+          <span class="flex-1">{{ tab.label }}</span>
           @if (activeSubTab === tab.key) {
-            <span style="width:5px;height:5px;border-radius:50%;background:#F37021;flex-shrink:0;"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-jager-orange shrink-0 shadow-[0_0_5px_rgba(243,112,33,0.5)]"></span>
           }
         </button>
       }
-      <div style="height:1px;background:rgba(255,255,255,0.05);margin:6px 6px;"></div>
-      <div style="padding:4px 8px 4px;color:#4b5563;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">Navigáció</div>
+      <div class="h-px bg-white/5 my-2 mx-2"></div>
+      <div class="px-2 pt-1 pb-1 text-gray-500 text-[10px] font-bold tracking-[0.12em] uppercase">Navigáció</div>
     }
 
-    <!-- Nav itemek — aktív oldal kiemelve, többiek kattinthatók -->
     @for (item of allNavItems; track item.path) {
       <button
         (click)="item.isActive ? null : navigate(item.path)"
-        [style]="item.isActive
-          ? 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:rgba(243,112,33,0.08);border:1px solid rgba(243,112,33,0.2);color:#F37021;font-weight:600;font-size:14px;width:100%;text-align:left;cursor:default;'
-          : 'display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:transparent;border:1px solid transparent;color:#9ca3af;font-weight:500;font-size:14px;width:100%;text-align:left;cursor:pointer;'"
+        [ngClass]="item.isActive
+          ? 'flex items-center gap-3 p-3 rounded-xl bg-jager-orange/10 border border-jager-orange/20 text-jager-orange font-bold text-sm w-full text-left cursor-default shadow-inner'
+          : 'flex items-center gap-3 p-3 rounded-xl bg-transparent border border-transparent text-gray-400 font-medium text-sm w-full text-left cursor-pointer hover:bg-white/5 hover:text-gray-200 transition-colors'"
       >
-        <span style="font-size:16px;width:22px;text-align:center;flex-shrink:0;">{{ item.icon }}</span>
-        <span style="flex:1;">{{ item.label }}</span>
+        <span class="text-lg w-6 text-center shrink-0">{{ item.icon }}</span>
+        <span class="flex-1">{{ item.label }}</span>
         @if (item.isActive) {
-          <span style="width:5px;height:5px;border-radius:50%;background:#F37021;flex-shrink:0;"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-jager-orange shrink-0 shadow-[0_0_5px_rgba(243,112,33,0.5)]"></span>
         }
       </button>
     }
 
   </nav>
 
-  <!-- Footer -->
-  <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+  <div class="p-3 border-t border-white/5 shrink-0 bg-black/20">
     <button
       (click)="openProfile()"
-      style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.07);background:transparent;cursor:pointer;margin-bottom:8px;text-align:left;"
+      class="flex items-center gap-3 w-full p-2.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] cursor-pointer mb-2 text-left transition-colors"
     >
-      <div style="width:30px;height:30px;border-radius:50%;background:rgba(243,112,33,0.1);border:1px solid rgba(243,112,33,0.2);display:flex;align-items:center;justify-content:center;color:#F37021;font-weight:700;font-size:12px;flex-shrink:0;">
+      <div class="w-9 h-9 rounded-full bg-gradient-to-br from-jager-orange/20 to-transparent border border-jager-orange/30 flex items-center justify-center text-jager-orange font-bold text-sm shrink-0">
         {{ userName?.charAt(0)?.toUpperCase() || '?' }}
       </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:500;color:#f5f5f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ userName }}</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm font-bold text-gray-200 truncate">{{ userName }}</div>
         @if (role !== 'USER') {
-          <div [style]="role === 'ADMIN' ? 'font-size:10px;font-weight:700;text-transform:uppercase;color:#F37021;' : 'font-size:10px;font-weight:700;text-transform:uppercase;color:#60a5fa;'">{{ role }}</div>
+          <div [ngClass]="role === 'ADMIN' ? 'text-jager-orange' : 'text-blue-400'" class="text-[10px] font-black uppercase tracking-wider mt-0.5">{{ role }}</div>
         }
       </div>
-      <span style="color:#4b5563;font-size:14px;flex-shrink:0;">›</span>
+      <span class="text-gray-500 text-lg shrink-0 mr-1 transition-transform group-hover:translate-x-1">›</span>
     </button>
 
     <button
       (click)="logout()"
-      style="width:100%;padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#6b7280;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;"
+      class="flex items-center justify-center gap-2 w-full p-3 rounded-xl border border-white/5 bg-transparent hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 text-gray-400 text-sm font-bold cursor-pointer transition-colors"
     >
-      <span>⏻</span> Kilépés
+      <span class="text-lg">⏻</span> Kilépés
     </button>
   </div>
 </div>
