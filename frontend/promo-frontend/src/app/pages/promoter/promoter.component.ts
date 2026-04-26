@@ -45,6 +45,7 @@ export class PromoterComponent implements OnInit, OnDestroy {
   private stream:          MediaStream | null = null;
   private animFrameId:     number | null      = null;
   private lastScannedHash  = '';
+  private lastScanTime     = 0;
 
   ngOnInit(): void {
     this.loadJsQR().then(() => this.startCamera());
@@ -167,30 +168,49 @@ export class PromoterComponent implements OnInit, OnDestroy {
     this.stream = null;
   }
 
-  private scanLoop(): void {
+  private scanLoop(currentTime: number = performance.now()): void {
+    if (this.state !== 'scanning') return;
+
+    // 1. Kérjük a következő képkockát
+    this.animFrameId = requestAnimationFrame((time) => this.scanLoop(time));
+
+    // 2. THROTTLING: Ne égessük szét a CPU-t! Csak minden 200. ezredmásodpercben (5 FPS) olvasunk.
+    if (currentTime - this.lastScanTime < 200) return;
+    this.lastScanTime = currentTime;
+
     const video  = this.videoEl?.nativeElement;
     const canvas = this.canvasEl?.nativeElement;
-    if (!video || !canvas || this.state !== 'scanning') return;
+    if (!video || !canvas) return;
 
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width  = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx       = canvas.getContext('2d')!;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      // 'attemptBoth': megpróbálja normál és invertált QR kódokkal is
-      // Lassabb mint a dontInvert, de sokkal megbízhatóbb
-      const code      = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'attemptBoth'
+      
+      // 3. DOWNSCALING: A videó HD, de a QR olvasónak elég egy pici kép (max 600px).
+      // Kiszámoljuk az arányokat, hogy ne torzuljon a kép
+      const scale = Math.min(600 / video.videoWidth, 600 / video.videoHeight, 1);
+      const scaledWidth = video.videoWidth * scale;
+      const scaledHeight = video.videoHeight * scale;
+
+      canvas.width  = scaledWidth;
+      canvas.height = scaledHeight;
+
+      // 4. willReadFrequently: Brutálisan felgyorsítja az adatkinyerést a memóriából
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+      
+      // Rárajzoljuk a HD videót a pici vászonra (a böngésző hardveresen kicsinyít)
+      ctx.drawImage(video, 0, 0, scaledWidth, scaledHeight);
+      
+      const imageData = ctx.getImageData(0, 0, scaledWidth, scaledHeight);
+      
+      // 5. JSQR: Az 'attemptBoth' borzasztóan lassú, vedd ki, a dontInvert villámgyors!
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'
       });
+
       if (code?.data && code.data.trim() !== this.lastScannedHash) {
         this.lastScannedHash = code.data.trim();
         this.zone.run(() => this.onQrDetected(code.data.trim()));
-        return;
       }
     }
-
-    this.animFrameId = requestAnimationFrame(() => this.scanLoop());
   }
 
   private onQrDetected(hash: string): void {
