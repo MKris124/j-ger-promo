@@ -44,18 +44,26 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     const token = localStorage.getItem('token');
-  
+    const role = localStorage.getItem('role'); // ADMIN, PROMOTER vagy USER
+    
     if (token) {
       const lastRoute = localStorage.getItem('lastVisitedRoute');
       
-      // Ellenőrizzük, hogy a mentett útvonal létezik-e és nem csak egy sima /
+      // 1. Ha van elmentett korábbi útvonal, oda küldjük vissza
       if (lastRoute && lastRoute !== '/' && lastRoute !== '/login') {
         this.router.navigate([lastRoute]);
-      } else {
-        // Ha nincs mentett route, vagy az csak egy /, akkor irány a főoldal
-        this.router.navigate(['/game']);
+      } 
+      // 2. Ha nincs elmentett út, akkor szerepkör szerint döntünk az alapértelmezett kezdőlapról
+      else {
+        if (role === 'ADMIN' || role === 'PROMOTER') {
+          // Az Adminok és Promoterek az Admin felületen kezdenek
+          this.router.navigate(['/admin']);
+        } else {
+          // A sima játékosok a játék oldalon kezdenek
+          this.router.navigate(['/game']);
+        }
       }
-      return; // Fontos, hogy megállítsuk a futást!
+      return;
     }
     // 1. Age Gate ellenőrzés betöltéskor
     if (!sessionStorage.getItem('ageVerified')) {
