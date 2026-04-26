@@ -44,33 +44,24 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role'); // ADMIN, PROMOTER vagy USER
-    
+    const role = localStorage.getItem('userRole');
+
     if (token) {
       const lastRoute = localStorage.getItem('lastVisitedRoute');
-      
-      // 1. Ha van elmentett korábbi útvonal, oda küldjük vissza
+
       if (lastRoute && lastRoute !== '/' && lastRoute !== '/login') {
-        this.router.navigate([lastRoute]);
-      } 
-      // 2. Ha nincs elmentett út, akkor szerepkör szerint döntünk az alapértelmezett kezdőlapról
-      else {
-        if (role === 'ADMIN' || role === 'PROMOTER') {
-          // Az Adminok és Promoterek az Admin felületen kezdenek
-          this.router.navigate(['/admin']);
-        } else {
-          // A sima játékosok a játék oldalon kezdenek
-          this.router.navigate(['/game']);
-        }
+        this.router.navigateByUrl(lastRoute).catch(() => {
+          this.redirectToDefault(role);
+        });
+      } else {
+        this.redirectToDefault(role);
       }
       return;
     }
-    // 1. Age Gate ellenőrzés betöltéskor
     if (!sessionStorage.getItem('ageVerified')) {
       this.showAgeGate = true;
     }
 
-    // 2. Esemény státusz lekérése a backendről
     this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
       next: (res) => {
         this.eventActive = res.eventActive;
@@ -108,6 +99,14 @@ export class LoginComponent implements OnInit {
       }
     });
   }
+
+  private redirectToDefault(role: string | null) {
+  if (role === 'ADMIN' || role === 'PROMOTER') {
+    this.router.navigate(['/admin']);
+  } else {
+    this.router.navigate(['/game']);
+  }
+}
 
   // --- AGE GATE LOGIKA ---
   verifyAge(isAdult: boolean): void {

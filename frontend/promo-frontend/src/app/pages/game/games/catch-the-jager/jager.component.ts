@@ -1,5 +1,5 @@
 import {
-  Component, OnInit, OnDestroy, ElementRef,
+  Component, OnInit, AfterViewInit, OnDestroy, ElementRef,
   ViewChild, inject, Output, EventEmitter, NgZone,
   ChangeDetectionStrategy, ChangeDetectorRef
 } from '@angular/core';
@@ -14,7 +14,7 @@ type GameState = 'idle' | 'playing' | 'won' | 'lost';
   templateUrl: './catch-the-jager.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CatchTheJagerComponent implements OnInit, OnDestroy {
+export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('gameCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
   @Output() gameWon  = new EventEmitter<void>();
@@ -74,34 +74,22 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private readonly imgDrop   = new Image();
 
   ngOnInit(): void {
-    // 1. JAVÍTÁS: Abszolút útvonalak (/), hogy a /game aloldalon is megtalálja a fájlokat
-    this.imgGlass.src  = '/assets/glass.png';
-    this.imgIce.src    = '/assets/ice.png';
-    this.imgBroken.src = '/assets/broken.png';
-    this.imgDrop.src   = '/assets/drop.png';
+    // Csak src beállítás — a böngésző elkezdi a letöltést azonnal.
+    // A bitmap konverzió ngAfterViewInit-ben fut, ahol a nézet már stabil.
+    this.imgGlass.src  = 'assets/glass.png';
+    this.imgIce.src    = 'assets/ice.png';
+    this.imgBroken.src = 'assets/broken.png';
+    this.imgDrop.src   = 'assets/drop.png';
+    // Placeholder hogy startGame() ne törjön ha valaki nagyon gyorsan kattint
+    this.assetsReadyPromise = Promise.resolve();
+  }
 
+  ngAfterViewInit(): void {
     const toBitmap = (img: HTMLImageElement): Promise<ImageBitmap> =>
-      new Promise((resolve, reject) => {
-        const make = () => {
-          createImageBitmap(img)
-            .then(resolve)
-            .catch(err => {
-              console.error('Hiba a kép konvertálásakor:', img.src, err);
-              reject(err);
-            });
-        };
-
-        if (img.complete && img.naturalWidth > 0) {
-          make();
-        } else {
-          img.onload = make;
-          
-          // 2. JAVÍTÁS: Ha a kép hiányzik (pl. elírás vagy 404), ne fagyjon le örökre az oldal!
-          img.onerror = () => {
-            console.error('Kritikus hiba: Nem található a játékelem:', img.src);
-            reject(new Error(`Failed to load image: ${img.src}`));
-          };
-        }
+      new Promise(resolve => {
+        const make = () => createImageBitmap(img).then(resolve);
+        if (img.complete && img.naturalWidth > 0) make();
+        else img.onload = make;
       });
 
     this.assetsReadyPromise = Promise.all([
@@ -117,14 +105,11 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
       this.bitmapIce   = ice;
       this.bitmapBad   = bad;
     }).then(() => {
+      // ngAfterViewInit után vagyunk — a nézet stabil, markForCheck garantáltan hat
       this.zone.run(() => {
-        setTimeout(() => {
-          this.assetsReady = true;
-          this.cdr.detectChanges();
-        }, 0);
+        this.assetsReady = true;
+        this.cdr.markForCheck();
       });
-    }).catch(error => {
-      console.error('A játék indítása meghiúsult a hiányzó fájlok miatt:', error);
     });
   }
 
