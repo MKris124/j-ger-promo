@@ -27,10 +27,10 @@ type ScanState = 'scanning' | 'loading' | 'preview' | 'success' | 'error';
   templateUrl: './promoter.component.html',
 })
 export class PromoterComponent implements OnInit, OnDestroy {
-  private http = inject(HttpClient);
+  private http        = inject(HttpClient);
   private authService = inject(AuthService);
-  private zone = inject(NgZone);
-  private router = inject(Router);
+  private zone        = inject(NgZone);
+  private router      = inject(Router);
 
   private apiBase = `${environment.apiUrl}/api/promoter`;
 
@@ -40,10 +40,10 @@ export class PromoterComponent implements OnInit, OnDestroy {
   state: ScanState = 'scanning';
   pocket: PrizePocket | null = null;
   errorMessage = '';
-  redeeming = false;
+  redeeming    = false;
 
-  private stream: MediaStream | null = null;
-  private animFrameId: number | null      = null;
+  private stream:          MediaStream | null = null;
+  private animFrameId:     number | null      = null;
   private lastScannedHash  = '';
 
   ngOnInit(): void {
@@ -57,8 +57,8 @@ export class PromoterComponent implements OnInit, OnDestroy {
   private loadJsQR(): Promise<void> {
     return new Promise((resolve) => {
       if (typeof jsQR !== 'undefined') { resolve(); return; }
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+      const script  = document.createElement('script');
+      script.src    = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
       script.onload = () => resolve();
       document.head.appendChild(script);
     });
@@ -178,8 +178,10 @@ export class PromoterComponent implements OnInit, OnDestroy {
       const ctx       = canvas.getContext('2d')!;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // 'attemptBoth': megpróbálja normál és invertált QR kódokkal is
+      // Lassabb mint a dontInvert, de sokkal megbízhatóbb
       const code      = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert'
+        inversionAttempts: 'attemptBoth'
       });
       if (code?.data && code.data.trim() !== this.lastScannedHash) {
         this.lastScannedHash = code.data.trim();
