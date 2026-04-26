@@ -4,8 +4,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { PageHeaderComponent } from '../../shared/page-header.component';
-import { CatchTheJagerComponent } from './games/jager.component';
-import { RideTheBusComponent } from './games/ride-the-bus.component';
+import { CatchTheJagerComponent } from './games/catch-the-jager/jager.component';
+import { RideTheBusComponent } from './games/ride-the-bus/ride-the-bus.component';
 import { environment } from '../../../environments/environments';
 
 interface PrizePocket {

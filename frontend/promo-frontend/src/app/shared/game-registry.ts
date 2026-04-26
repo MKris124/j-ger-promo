@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
-import { CatchTheJagerComponent } from '../pages/game/games/jager.component';
-import { RideTheBusComponent } from '../pages/game/games/ride-the-bus.component';
+import { CatchTheJagerComponent } from '../pages/game/games/catch-the-jager/jager.component';
+import { RideTheBusComponent } from '../pages/game/games/ride-the-bus/ride-the-bus.component';
 
 export interface RegisteredGame {
   id: string;           // egyedi kulcs — ez kerül az adatbázisba gameKey-ként

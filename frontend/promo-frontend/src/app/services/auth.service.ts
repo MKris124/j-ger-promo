@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs';
-import { Router } from '@angular/router';
+import { tap, BehaviorSubject } from 'rxjs';
+import { Router, ActivatedRoute } from '@angular/router';
 import { environment } from '../../environments/environments';
 
 @Injectable({
@@ -10,7 +10,12 @@ import { environment } from '../../environments/environments';
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private apiUrl = `${environment.apiUrl}/api/auth`;
+
+  // Reaktív állapot a menü/egyéb komponensek gyors frissítéséhez
+  private loggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
+  public isLoggedIn$ = this.loggedInSubject.asObservable();
 
   login(credentials: any) {
     return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
@@ -36,12 +41,29 @@ export class AuthService {
     if (response.name) localStorage.setItem('userName', response.name);
     if (response.id)   localStorage.setItem('userId', response.id.toString());
 
-    // Role alapján irányítjuk a megfelelő oldalra
-    switch (response.role) {
-      case 'ADMIN':    this.router.navigate(['/admin']);    break;
-      case 'PROMOTER': this.router.navigate(['/promoter']); break;
-      default:         this.router.navigate(['/game']);     break;
+    // Beállítjuk a reaktív állapotot "belépett"-re
+    this.loggedInSubject.next(true);
+
+    // Kinyerjük a Guard által átadott URL-t (ha volt)
+    const returnUrl = this.route.snapshot.queryParams['returnUrl'] || this.getReturnUrlFromWindow();
+
+    if (returnUrl) {
+      // Ha tudjuk hova akart menni (pl. F5 után megszakadt a session, vagy megosztottak neki egy linket), oda rakjuk!
+      this.router.navigateByUrl(returnUrl);
+    } else {
+      // Ha simán magától lépett be a főoldalról, akkor a role alapján irányítjuk
+      switch (response.role) {
+        case 'ADMIN':    this.router.navigate(['/admin']);    break;
+        case 'PROMOTER': this.router.navigate(['/promoter']); break;
+        default:         this.router.navigate(['/game']);     break;
+      }
     }
+  }
+
+  // Fallback metódus, ha a login oldalon közvetlenül landol a router frissítés előtt
+  private getReturnUrlFromWindow(): string | null {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('returnUrl');
   }
 
   logout() {
@@ -49,6 +71,8 @@ export class AuthService {
     localStorage.removeItem('role');
     localStorage.removeItem('userName');
     localStorage.removeItem('userId');
+    
+    this.loggedInSubject.next(false);
     this.router.navigate(['/']);
   }
 
@@ -65,6 +89,10 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
+    return this.hasToken();
+  }
+
+  private hasToken(): boolean {
     return !!localStorage.getItem('token');
   }
 }
