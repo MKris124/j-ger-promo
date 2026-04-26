@@ -94,24 +94,28 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
 
     this.assetsReadyPromise = Promise.all([
       toBitmap(this.imgGlass),
-      toBitmap(this.imgGlass), // glow — worker rakja rá a shadow effektet
       toBitmap(this.imgDrop),
       toBitmap(this.imgIce),
       toBitmap(this.imgBroken),
-    ]).then(([glass, glow, drop, ice, bad]) => {
+    ]).then(([glass, drop, ice, bad]) => {
       this.bitmapGlass = glass;
-      this.bitmapGlow  = glow;
       this.bitmapDrop  = drop;
       this.bitmapIce   = ice;
       this.bitmapBad   = bad;
+      // glow ugyanaz mint glass — createImageBitmap-et kétszer hívjuk
+      // hogy két független transferable objektumot kapjunk
+      return createImageBitmap(this.imgGlass);
+    }).then(glow => {
+      this.bitmapGlow = glow;
     }).then(() => {
-      // detectChanges() — szinkron, azonnal frissíti az @if blokkot is.
-      // markForCheck() csak "kéri" a frissítést a következő CD ciklusban,
-      // ami OnPush + @if embedded view kombinációnál nem garantált.
-      this.zone.run(() => {
+      // setTimeout makrotask: az Angular NgZone garantáltan elkapja,
+      // szemben a Promise microtask-kal amit ngAfterViewInit-ben
+      // a zóna néha kihagyhat. zone.run() sem kell — a setTimeout
+      // már a patched zone-on belül fut.
+      setTimeout(() => {
         this.assetsReady = true;
         this.cdr.detectChanges();
-      });
+      }, 0);
     });
   }
 
