@@ -371,16 +371,19 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   }
 
   private updateRect(): void {
-    // A canvas CSS mérete MINDIG egyenlő a belső felbontással (390px).
-    // A szülő div transform:scale()-lel kicsinyít — így a böngészőnek
-    // NEM kell frame-enként újraskálázni a canvas tartalmát.
-    const parentW = this.canvas.parentElement?.clientWidth ?? this.CANVAS_W;
-    this.canvasScale  = Math.min(1, parentW / this.CANVAS_W);
+    // A canvasScale-t MINDKÉT dimenzióra korlátozzuk:
+    // - vízszintesen: ne legyen szélesebb a szülőnél
+    // - függőlegesen: ne lógjon ki a viewport alól (a HUD ~56px-et foglal)
+    const HUD_HEIGHT  = 56; // px — a fejléc sáv magassága
+    const HINT_HEIGHT = 28; // px — "Húzd a poharat" szöveg
+    const parentW     = this.canvas.parentElement?.clientWidth  ?? this.CANVAS_W;
+    const availableH  = (window.innerHeight - HUD_HEIGHT - HINT_HEIGHT);
 
-    // A cachedRect és cachedScaleX az input koordináta-transzformhoz kell.
-    // Mivel a canvas CSS px-ben 390 wide, de transform:scale visually kisebb,
-    // a getBoundingClientRect() a vizuális méretet adja vissza —
-    // ezért a scaleX-et a CANVAS_W / rect.width képlettel számoljuk.
+    const scaleByW = parentW     / this.CANVAS_W;
+    const scaleByH = availableH  / this.CANVAS_H;
+
+    this.canvasScale = Math.min(1, scaleByW, scaleByH);
+
     this.cachedRect   = this.canvas.getBoundingClientRect();
     this.cachedScaleX = this.CANVAS_W / this.cachedRect.width;
 

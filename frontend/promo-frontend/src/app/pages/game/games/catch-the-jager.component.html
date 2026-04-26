@@ -51,8 +51,8 @@
 }
 
 @if (state === 'playing') {
-  <div class="flex flex-col">
-    <div class="flex items-center justify-between px-4 py-3 bg-black/60">
+  <div class="flex flex-col" style="overflow: hidden; touch-action: none;">
+    <div class="flex items-center justify-between px-4 py-3 bg-black/60" style="height: 56px; flex-shrink: 0;">
       <div class="flex-1 mr-4">
         <div class="flex items-center justify-between mb-1">
           <span class="text-xs text-gray-400 uppercase tracking-wider">Pohár</span>
@@ -78,17 +78,7 @@
       </div>
     </div>
 
-    <!--
-      KULCS FIX: A wrapper div vágja le a vizuális területet és alkalmazza
-      a transform:scale()-t. A canvas maga MINDIG 390px széles CSS-ben is —
-      így a böngészőnek frame-enként NEM kell újraskáláznia a tartalmat.
-      A transform-origin: top center biztosítja hogy felülről középre skálázzon.
-    -->
-    <!--
-      A wrapper max-width: 320px + auto margin => nem teljes szélesség.
-      A canvasScale a 320px-es canvas-t skálázza a szülő szélességéhez.
-    -->
-    <div class="flex justify-center w-full">
+    <div class="flex justify-center items-start w-full" style="flex: 1 1 auto; overflow: hidden;">
       <div
         class="relative overflow-hidden"
         style="max-width: 320px; width: 100%;"
@@ -103,7 +93,7 @@
       </div>
     </div>
 
-    <p class="text-center text-xs text-gray-600 py-2">Húzd a poharat balra-jobbra</p>
+    <p class="text-center text-xs text-gray-600 py-2" style="height: 28px; flex-shrink: 0;">Húzd a poharat balra-jobbra</p>
   </div>
 }
 
