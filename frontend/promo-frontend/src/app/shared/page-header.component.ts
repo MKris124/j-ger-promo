@@ -42,7 +42,7 @@ import { NavSidebarComponent } from './nav-sidebar.component';
   `,
 })
 export class PageHeaderComponent {
-  @Input() title = 'JÄGER PROMO';
+  @Input() title = 'Jägermeister SBM Game';
   @Input() currentTab = '';
   
   @Input() showMenu = true; 
