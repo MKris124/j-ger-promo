@@ -105,10 +105,12 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
       this.bitmapIce   = ice;
       this.bitmapBad   = bad;
     }).then(() => {
-      // ngAfterViewInit után vagyunk — a nézet stabil, markForCheck garantáltan hat
+      // detectChanges() — szinkron, azonnal frissíti az @if blokkot is.
+      // markForCheck() csak "kéri" a frissítést a következő CD ciklusban,
+      // ami OnPush + @if embedded view kombinációnál nem garantált.
       this.zone.run(() => {
         this.assetsReady = true;
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       });
     });
   }
