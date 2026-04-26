@@ -67,34 +67,47 @@ export class PromoterComponent implements OnInit, OnDestroy {
 
   private async startCamera() {
     try {
-      // 1. iOS trükk: Először kérnünk kell egy sima engedélyt, 
-      // különben az Apple titkosítja a kamerák neveit (üres stringeket ad vissza).
+      // 1. "Vak" stream indítása az engedélykéréshez és a nevek dekódolásához
       const initialStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       
-      // 2. Lekérjük a telefonhoz csatlakoztatott összes eszközt
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       
       let optimalDeviceId: string | null = null;
 
-      // 3. Megpróbáljuk megtalálni a tökéletes fő kamerát
       if (videoDevices.length > 0) {
-        // Kiválogatjuk a hátsó kamerákat név alapján
-        const rearCameras = videoDevices.filter(d => 
-          d.label.toLowerCase().includes('back') || 
-          d.label.toLowerCase().includes('rear')
-        );
+        // Okos OS detektálás (iPhone / iPad / Mac detektálása)
+        const isApple = /iPhone|iPad|Macintosh/i.test(navigator.userAgent) && 
+                        ('ontouchstart' in window || navigator.maxTouchPoints > 2);
 
-        if (rearCameras.length > 0) {
-          // Keresünk egy olyat, aminek a nevében NINCS benne, hogy ultra, tele, vagy 0.5
-          const mainCamera = rearCameras.find(d => 
-            !d.label.toLowerCase().includes('ultra') && 
-            !d.label.toLowerCase().includes('tele') &&
-            !d.label.toLowerCase().includes('macro')
+        if (isApple) {
+          // ====== APPLE LOGIKA ======
+          // A leírás alapján az Apple-nél a nyelvek miatt nem kereshetünk szavakra.
+          // Viszont a 2. videó bemenet (index: 1) mindig a hátsó kamera!
+          if (videoDevices.length > 1) {
+            optimalDeviceId = videoDevices[1].deviceId;
+          } else {
+            optimalDeviceId = videoDevices[0].deviceId;
+          }
+        } else {
+          // ====== ANDROID LOGIKA ======
+          // Itt a nevek fixen tartalmazzák a 'back' vagy 'rear' szót
+          const backCameras = videoDevices.filter(d => 
+            d.label.toLowerCase().includes('back') || 
+            d.label.toLowerCase().includes('rear')
           );
-          
-          // Ha megtaláltuk a fő kamerát, használjuk azt, ha nem, marad az első hátsó
-          optimalDeviceId = mainCamera ? mainCamera.deviceId : rearCameras[0].deviceId;
+
+          if (backCameras.length > 0) {
+            const mainCamera0 = backCameras.find(d => d.label.includes('0'));
+            
+            const fallbackCamera = backCameras.find(d => 
+              !d.label.toLowerCase().includes('ultra') && 
+              !d.label.toLowerCase().includes('tele') &&
+              !d.label.toLowerCase().includes('wide')
+            );
+
+            optimalDeviceId = mainCamera0 ? mainCamera0.deviceId : (fallbackCamera ? fallbackCamera.deviceId : backCameras[0].deviceId);
+          }
         }
       }
 
@@ -104,14 +117,14 @@ export class PromoterComponent implements OnInit, OnDestroy {
         video: optimalDeviceId 
           ? { 
               deviceId: { exact: optimalDeviceId },
-              width: { ideal: 1280, max: 1920 },
-              height: { ideal: 720, max: 1080 },
+              width: { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720 },
               advanced: [{ focusMode: 'continuous' } as any]
             } 
           : { 
               facingMode: 'environment',
-              width: { ideal: 1280, max: 1920 },
-              height: { ideal: 720, max: 1080 }
+              width: { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720 }
             } 
       };
 
