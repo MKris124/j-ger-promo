@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router'; // Router hozzáadva
 import { AuthService } from '../../services/auth.service';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { GAME_REGISTRY, RegisteredGame } from '../../shared/game-registry';
@@ -56,8 +56,10 @@ interface Tab {
 export class AdminComponent implements OnInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  private router = inject(Router);
-
+  private route = inject(ActivatedRoute);
+  private router = inject(Router); // Router injektálása az URL frissítéshez
+  
+  activeSubTab: string = 'dashboard';
   private apiBase = `${environment.apiUrl}/api/admin`;
 
   tabs: Tab[] = [
@@ -110,9 +112,24 @@ export class AdminComponent implements OnInit {
     this.loadGames();
     this.loadInventory();
     this.loadUsers();
-    // Sidebar admin tab váltás figyelése
+
+    // 1. URL paraméter figyelése (oldalfrissítés esetén ez állítja be a jó fület)
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'] as any;
+      }
+    });
+
+    // 2. Sidebar admin tab váltás figyelése és az URL csendes frissítése
     window.addEventListener('adminTabChange', (e: any) => {
       this.activeTab = e.detail;
+      
+      // Frissítjük az URL-t, hogy ha a user most nyom egy F5-öt, jó helyen maradjon
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { tab: this.activeTab },
+        queryParamsHandling: 'merge' // megtartja a többi paramétert (pl. returnUrl)
+      });
     });
   }
 

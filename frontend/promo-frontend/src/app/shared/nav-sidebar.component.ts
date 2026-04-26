@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router'; // <-- ActivatedRoute hozzáadva
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environments';
@@ -14,6 +14,7 @@ import { environment } from '../../environments/environments';
 export class NavSidebarComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute); // <-- Route injektálása az URL frissítéshez
   private http = inject(HttpClient);
 
   @Output() profileClicked = new EventEmitter<void>();
@@ -49,6 +50,13 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
     this.pollInterval = setInterval(() => this.checkEventStatus(), 30000);
     window.addEventListener('adminTabChange', (e: any) => {
       this.activeSubTab = e.detail;
+    });
+
+    // Ha az oldal betöltődik F5-tel, a sidebar is vegye fel a helyes aktív fület az URL-ből
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeSubTab = params['tab'];
+      }
     });
   }
 
@@ -87,10 +95,20 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
     this.close();
   }
 
-  setSubTab(key: string): void {
-    this.activeSubTab = key;
-    this.tabChanged.emit(key);
-    window.dispatchEvent(new CustomEvent('adminTabChange', { detail: key }));
+  setSubTab(tabKey: string) {
+    this.activeSubTab = tabKey;
+    
+    // 1. Frissítjük az URL query paraméterét
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: tabKey },
+      queryParamsHandling: 'merge' // Megtartja a többi paramétert
+    });
+    
+    // 2. Szólunk az AdminComponent-nek (mivel az window eseményt figyel), hogy váltson fület
+    window.dispatchEvent(new CustomEvent('adminTabChange', { detail: tabKey }));
+
+    // 3. Ha mobilon vagyunk, zárjuk be a sidebart a kattintás után, hogy látszódjon is a tartalom
     this.close();
   }
 
@@ -116,7 +134,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
       .filter(item => item.roles.includes(this.role))
       .map(item => ({
         ...item,
-        isActive: this.router.url.startsWith(item.path)
+        isActive: this.router.url.split('?')[0] === item.path // URL paraméterek (pl. ?tab=X) levágása az egyezéshez
       }));
   }
 

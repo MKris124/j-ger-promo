@@ -19,28 +19,82 @@ body {
 }
 
 /* =========================================
-   PULL-TO-REFRESH JÄGER THEME (Minimalista)
+   PULL-TO-REFRESH JÄGER THEME (Animált & Prémium)
 ========================================= */
 .ptr--ptr {
   box-shadow: none !important;
   background-color: transparent !important;
 }
 
+/* A fő lehúzható doboz */
 .ptr--box {
-  background-color: #0d0d0d !important;
+  /* Jäger-zöld glassmorphism alap */
+  background-color: rgba(20, 37, 26, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  
   color: #F37021 !important;
-  border: 1px solid rgba(243, 112, 33, 0.3) !important;
-  box-shadow: 0 4px 15px rgba(243, 112, 33, 0.4) !important;
+  border: 1px solid rgba(243, 112, 33, 0.5) !important;
+  box-shadow: 0 0 15px rgba(243, 112, 33, 0.3) !important;
+  
   border-radius: 50% !important;
-  width: 45px !important;
-  height: 45px !important;
+  width: 48px !important;
+  height: 48px !important;
   padding: 0 !important;
+  
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
   margin: 0 auto !important;
+  
+  /* GPU gyorsítás a sima mozgáshoz */
+  transform: translate3d(0,0,0);
+  will-change: transform, box-shadow;
+  
+  /* Finom lélegző/pulzáló animáció megjelenéskor */
+  animation: ptrPulse 1.5s infinite alternate ease-in-out;
 }
 
+/* Szöveg eltüntetése */
 .ptr--text {
   display: none !important;
+}
+
+/* Az ikon (nyíl) alapállapota */
+.ptr--icon {
+  font-size: 22px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transition: transform 0.3s ease-out !important;
+  transform: translate3d(0,0,0);
+}
+
+/* Amikor a frissítés folyamatban van, pörgessük az ikont! */
+.ptr--ptr.ptr--refreshing .ptr--icon {
+  animation: ptrSpin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+/* --- ANIMÁCIÓK (Keyframes) --- */
+
+/* Ragyogás és méret pulzálása */
+@keyframes ptrPulse {
+  0% { 
+    box-shadow: 0 0 10px rgba(243, 112, 33, 0.2); 
+    transform: scale(0.95); 
+  }
+  100% { 
+    box-shadow: 0 0 25px rgba(243, 112, 33, 0.6); 
+    transform: scale(1.05); 
+  }
+}
+
+/* Simított pörgés (60 FPS) */
+@keyframes ptrSpin {
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
 }
