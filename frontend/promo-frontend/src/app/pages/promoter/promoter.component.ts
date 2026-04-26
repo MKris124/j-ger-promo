@@ -65,23 +65,61 @@ export class PromoterComponent implements OnInit, OnDestroy {
     });
   }
 
-  private async startCamera(): Promise<void> {
+  private async startCamera() {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      setTimeout(() => {
-        if (this.videoEl?.nativeElement) {
-          this.videoEl.nativeElement.srcObject = this.stream;
-          this.videoEl.nativeElement.play();
-          this.scanLoop();
+      // 1. iOS trükk: Először kérnünk kell egy sima engedélyt, 
+      // különben az Apple titkosítja a kamerák neveit (üres stringeket ad vissza).
+      const initialStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      
+      // 2. Lekérjük a telefonhoz csatlakoztatott összes eszközt
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      
+      let optimalDeviceId: string | null = null;
+
+      // 3. Megpróbáljuk megtalálni a tökéletes fő kamerát
+      if (videoDevices.length > 0) {
+        // Kiválogatjuk a hátsó kamerákat név alapján
+        const rearCameras = videoDevices.filter(d => 
+          d.label.toLowerCase().includes('back') || 
+          d.label.toLowerCase().includes('rear')
+        );
+
+        if (rearCameras.length > 0) {
+          // Keresünk egy olyat, aminek a nevében NINCS benne, hogy ultra, tele, vagy 0.5
+          const mainCamera = rearCameras.find(d => 
+            !d.label.toLowerCase().includes('ultra') && 
+            !d.label.toLowerCase().includes('tele') &&
+            !d.label.toLowerCase().includes('macro')
+          );
+          
+          // Ha megtaláltuk a fő kamerát, használjuk azt, ha nem, marad az első hátsó
+          optimalDeviceId = mainCamera ? mainCamera.deviceId : rearCameras[0].deviceId;
         }
-      }, 200);
-    } catch {
-      this.zone.run(() => {
-        this.state = 'error';
-        this.errorMessage = 'Kamera hozzáférés megtagadva. Engedélyezd a böngésző beállításokban!';
-      });
+      }
+
+      // 4. Leállítjuk a kezdeti "teszt" streamet, hogy ne foglalja a memóriát
+      initialStream.getTracks().forEach(track => track.stop());
+
+      // 5. Elindítjuk a VÉGLEGES streamet a tökéletes kamerával
+      const constraints: MediaStreamConstraints = {
+        video: optimalDeviceId 
+          ? { deviceId: { exact: optimalDeviceId } } 
+          : { facingMode: 'environment' } // Fallback, ha valamiért nem sikerülne az azonosítás
+      };
+
+      const finalStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // videoEl a @ViewChild('videoEl') változód! Ezt írd át arra, ahogy nálad hívják, ha eltér.
+      this.videoEl.nativeElement.srcObject = finalStream;
+      
+      // Innentől folytatódik az eredeti kódod (pl. requestAnimationFrame)
+      // this.scanQRCode(); vagy ami nálad volt...
+
+    } catch (error) {
+      console.error("Hiba a kamera indításakor:", error);
+      this.errorMessage = 'Nem sikerült hozzáférni a kamerához. Ellenőrizd a jogosultságokat!';
+      this.state = 'error';
     }
   }
 
