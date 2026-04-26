@@ -1,17 +1,17 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
-export const gameGuard: CanActivateFn = () => {
+export const gameGuard: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const router = inject(Router);
   const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
 
   if (!token) {
-    router.navigate(['/']);
+    // Ha nincs belépve, visszadobjuk a loginra, de ELMENTJÜK a query paraméterbe, hogy hova akart menni!
+    router.navigate(['/'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 
-  // Mindenki beléphet a /game-be aki be van jelentkezve
+  // Mindenki beléphet a védett oldalakra, aki be van jelentkezve
   // (ADMIN, PROMOTER, USER egyaránt)
   return true;
 };
