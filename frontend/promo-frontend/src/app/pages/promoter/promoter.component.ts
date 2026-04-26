@@ -98,23 +98,27 @@ export class PromoterComponent implements OnInit, OnDestroy {
         }
       }
 
-      // 4. Leállítjuk a kezdeti "teszt" streamet, hogy ne foglalja a memóriát
       initialStream.getTracks().forEach(track => track.stop());
 
-      // 5. Elindítjuk a VÉGLEGES streamet a tökéletes kamerával
       const constraints: MediaStreamConstraints = {
         video: optimalDeviceId 
-          ? { deviceId: { exact: optimalDeviceId } } 
-          : { facingMode: 'environment' } // Fallback, ha valamiért nem sikerülne az azonosítás
+          ? { 
+              deviceId: { exact: optimalDeviceId },
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 },
+              advanced: [{ focusMode: 'continuous' } as any]
+            } 
+          : { 
+              facingMode: 'environment',
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 }
+            } 
       };
 
       const finalStream = await navigator.mediaDevices.getUserMedia(constraints);
       
-      // videoEl a @ViewChild('videoEl') változód! Ezt írd át arra, ahogy nálad hívják, ha eltér.
       this.videoEl.nativeElement.srcObject = finalStream;
-      
-      // Innentől folytatódik az eredeti kódod (pl. requestAnimationFrame)
-      // this.scanQRCode(); vagy ami nálad volt...
+    
 
     } catch (error) {
       console.error("Hiba a kamera indításakor:", error);
