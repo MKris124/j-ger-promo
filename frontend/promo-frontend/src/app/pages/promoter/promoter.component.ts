@@ -6,7 +6,6 @@ import { Router } from '@angular/router';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { environment } from '../../../environments/environments';
 
-// jsQR-t npm install jsqr paranccsal kell telepíteni
 declare const jsQR: any;
 
 interface PrizePocket {
@@ -35,7 +34,7 @@ export class PromoterComponent implements OnInit, OnDestroy {
 
   private apiBase = `${environment.apiUrl}/api/promoter`;
 
-  @ViewChild('videoEl', { static: false }) videoEl!: ElementRef<HTMLVideoElement>;
+  @ViewChild('videoEl',  { static: false }) videoEl!:  ElementRef<HTMLVideoElement>;
   @ViewChild('canvasEl', { static: false }) canvasEl!: ElementRef<HTMLCanvasElement>;
 
   state: ScanState = 'scanning';
@@ -44,8 +43,8 @@ export class PromoterComponent implements OnInit, OnDestroy {
   redeeming = false;
 
   private stream: MediaStream | null = null;
-  private animFrameId: number | null = null;
-  private lastScannedHash = '';
+  private animFrameId: number | null      = null;
+  private lastScannedHash  = '';
 
   ngOnInit(): void {
     this.loadJsQR().then(() => this.startCamera());
@@ -65,99 +64,121 @@ export class PromoterComponent implements OnInit, OnDestroy {
     });
   }
 
-  private async startCamera() {
+  private async startCamera(): Promise<void> {
     try {
-      // 1. "Vak" stream indítása az engedélykéréshez és a nevek dekódolásához
-      const initialStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter(device => device.kind === 'videoinput');
-      
+      // 1. Engedélykérés + device lista
+      const tempStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      tempStream.getTracks().forEach(t => t.stop());
+
+      const devices      = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+
       let optimalDeviceId: string | null = null;
 
       if (videoDevices.length > 0) {
-        // Okos OS detektálás (iPhone / iPad / Mac detektálása)
-        const isApple = /iPhone|iPad|Macintosh/i.test(navigator.userAgent) && 
+        const isApple = /iPhone|iPad|Macintosh/i.test(navigator.userAgent) &&
                         ('ontouchstart' in window || navigator.maxTouchPoints > 2);
 
         if (isApple) {
-          // ====== APPLE LOGIKA ======
-          // A leírás alapján az Apple-nél a nyelvek miatt nem kereshetünk szavakra.
-          // Viszont a 2. videó bemenet (index: 1) mindig a hátsó kamera!
-          if (videoDevices.length > 1) {
-            optimalDeviceId = videoDevices[1].deviceId;
-          } else {
-            optimalDeviceId = videoDevices[0].deviceId;
-          }
+          optimalDeviceId = videoDevices.length > 1
+            ? videoDevices[1].deviceId
+            : videoDevices[0].deviceId;
         } else {
-          // ====== ANDROID LOGIKA ======
-          // Itt a nevek fixen tartalmazzák a 'back' vagy 'rear' szót
-          const backCameras = videoDevices.filter(d => 
-            d.label.toLowerCase().includes('back') || 
+          const backCameras = videoDevices.filter(d =>
+            d.label.toLowerCase().includes('back') ||
             d.label.toLowerCase().includes('rear')
           );
-
           if (backCameras.length > 0) {
-            const mainCamera0 = backCameras.find(d => d.label.includes('0'));
-            
-            const fallbackCamera = backCameras.find(d => 
-              !d.label.toLowerCase().includes('ultra') && 
-              !d.label.toLowerCase().includes('tele') &&
-              !d.label.toLowerCase().includes('wide')
-            );
-
-            optimalDeviceId = mainCamera0 ? mainCamera0.deviceId : (fallbackCamera ? fallbackCamera.deviceId : backCameras[0].deviceId);
+            const main = backCameras.find(d => d.label.includes('0')) ??
+                         backCameras.find(d =>
+                           !d.label.toLowerCase().includes('ultra') &&
+                           !d.label.toLowerCase().includes('tele') &&
+                           !d.label.toLowerCase().includes('wide')
+                         ) ??
+                         backCameras[0];
+            optimalDeviceId = main.deviceId;
           }
         }
       }
 
-      initialStream.getTracks().forEach(track => track.stop());
-
+      // 2. Stream indítása
       const constraints: MediaStreamConstraints = {
-        video: optimalDeviceId 
-          ? { 
+        video: optimalDeviceId
+          ? {
               deviceId: { exact: optimalDeviceId },
-              width: { ideal: 1920, min: 1280 },
-              height: { ideal: 1080, min: 720 },
-              advanced: [{ focusMode: 'continuous' } as any]
-            } 
-          : { 
+              width:  { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720  },
+            }
+          : {
               facingMode: 'environment',
-              width: { ideal: 1920, min: 1280 },
-              height: { ideal: 1080, min: 720 }
-            } 
+              width:  { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720  },
+            }
       };
 
-      const finalStream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      this.videoEl.nativeElement.srcObject = finalStream;
-    
+      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // 3. Fókusz beállítása a track-en közvetlenül — constraints-ben
+      //    az advanced/focusMode nem minden böngészőben működik,
+      //    applyConstraints() megbízhatóbb
+      const track = this.stream.getVideoTracks()[0];
+      if (track) {
+        const capabilities = track.getCapabilities() as any;
+        if (capabilities?.focusMode?.includes('continuous')) {
+          await (track as any).applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+        }
+      }
+
+      // 4. Video elem bekötése és lejátszás
+      const video       = this.videoEl.nativeElement;
+      video.srcObject   = this.stream;
+      video.playsInline = true; // iOS kötelező
+      video.muted       = true;
+      await video.play();
+
+      // 5. Várunk amíg a kamera stabilan éles képet ad
+      //    'loadeddata' event után még 800ms-t adunk a fókusznak
+      await new Promise<void>(resolve => {
+        if (video.readyState >= 2) { resolve(); return; }
+        video.addEventListener('loadeddata', () => resolve(), { once: true });
+      });
+
+      // Fókuszidő: hagyunk időt az autofókusznak hogy éles képet adjon
+      // mielőtt a scan loop elkezd képet elemezni
+      await new Promise(r => setTimeout(r, 800));
+
+      this.scanLoop();
 
     } catch (error) {
-      console.error("Hiba a kamera indításakor:", error);
-      this.errorMessage = 'Nem sikerült hozzáférni a kamerához. Ellenőrizd a jogosultságokat!';
-      this.state = 'error';
+      console.error('Kamera hiba:', error);
+      this.zone.run(() => {
+        this.state        = 'error';
+        this.errorMessage = 'Nem sikerült hozzáférni a kamerához. Ellenőrizd a jogosultságokat!';
+      });
     }
   }
 
   private stopCamera(): void {
-    if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+    if (this.animFrameId !== null) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
     this.stream?.getTracks().forEach(t => t.stop());
     this.stream = null;
   }
 
   private scanLoop(): void {
-    const video = this.videoEl?.nativeElement;
+    const video  = this.videoEl?.nativeElement;
     const canvas = this.canvasEl?.nativeElement;
     if (!video || !canvas || this.state !== 'scanning') return;
 
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.width = video.videoWidth;
+      canvas.width  = video.videoWidth;
       canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d')!;
+      const ctx       = canvas.getContext('2d')!;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      const code      = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: 'dontInvert'
       });
       if (code?.data && code.data.trim() !== this.lastScannedHash) {
@@ -166,6 +187,7 @@ export class PromoterComponent implements OnInit, OnDestroy {
         return;
       }
     }
+
     this.animFrameId = requestAnimationFrame(() => this.scanLoop());
   }
 
@@ -175,37 +197,39 @@ export class PromoterComponent implements OnInit, OnDestroy {
     this.http.get<PrizePocket>(`${this.apiBase}/preview/${hash}`, { headers: this.getHeaders() }).subscribe({
       next: (data) => {
         if (data.status === 'REDEEMED') {
-          this.state = 'error';
+          this.state        = 'error';
           this.errorMessage = 'Ezt a nyereményt már beváltották!';
           return;
         }
         this.pocket = data;
-        this.state = 'preview';
+        this.state  = 'preview';
       },
-      error: (err) => { this.state = 'error'; this.errorMessage = err.error || 'Érvénytelen vagy már beváltott QR kód!'; }
+      error: (err) => {
+        this.state        = 'error';
+        this.errorMessage = err.error || 'Érvénytelen vagy már beváltott QR kód!';
+      }
     });
   }
 
   redeem(): void {
     if (!this.pocket || this.redeeming) return;
-    this.redeeming = true;
-    const promoterId = parseInt(localStorage.getItem('userId') || '0', 10);
-    this.http.post<PrizePocket>(`${this.apiBase}/redeem`,
+    this.redeeming    = true;
+    const promoterId  = parseInt(localStorage.getItem('userId') || '0', 10);
+    this.http.post<PrizePocket>(
+      `${this.apiBase}/redeem`,
       { qrCodeHash: this.pocket.qrCodeHash, promoterId },
       { headers: this.getHeaders() }
     ).subscribe({
-      next: (data) => { this.pocket = data; this.redeeming = false; this.state = 'success'; },
-      error: (err) => { this.redeeming = false; this.state = 'error'; this.errorMessage = err.error || 'Beváltás sikertelen!'; }
+      next:  (data) => { this.pocket = data; this.redeeming = false; this.state = 'success'; },
+      error: (err)  => { this.redeeming = false; this.state = 'error'; this.errorMessage = err.error || 'Beváltás sikertelen!'; }
     });
   }
 
   resetScanner(): void {
-    this.pocket = null;
+    this.pocket       = null;
     this.errorMessage = '';
-    this.redeeming = false;
-    this.state = 'scanning';
-    // lastScannedHash-t csak a kamera újraindulása UTÁN töröljük
-    // hogy ne kapja el azonnal ugyanazt a kódot
+    this.redeeming    = false;
+    this.state        = 'scanning';
     setTimeout(() => {
       this.loadJsQR().then(() => this.startCamera());
       setTimeout(() => { this.lastScannedHash = ''; }, 1500);
@@ -214,7 +238,7 @@ export class PromoterComponent implements OnInit, OnDestroy {
 
   role = localStorage.getItem('role') || 'PROMOTER';
 
-  logout(): void { this.authService.logout(); }
+  logout(): void          { this.authService.logout(); }
   goTo(path: string): void { this.router.navigate([path]); }
 
   getPrizeName(): string {
