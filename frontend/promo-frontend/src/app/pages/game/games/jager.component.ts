@@ -48,11 +48,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private timerInterval: any         = null;
   private lastTime: number = 0;
 
-  // ── KÉTLAYERES CANVAS ─────────────────────────────────────────────────────
-  // A statikus hátteret egyszer rajzoljuk, a játék-canvas fölé rétegezzük.
-  private bgCanvas!: HTMLCanvasElement;
-  private bgCtx!: CanvasRenderingContext2D;
-  private bgRendered = false;
+
 
   private glassX          = 0;
   private readonly glassW = 70;
@@ -119,6 +115,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   // Csak akkor rajzoljuk újra, ha legalább 1%-ot változott a töltöttség.
   private lastRenderedFill  = -1;
   private liquidDirty       = false;
+  private scheduledCdTick  = false; // score/fill CD batch-elése — csak timer tick-nél frissít
   private readonly LIQUID_REDRAW_THRESHOLD = 1;
 
   private readonly CX_REL        = 35 + 2;
@@ -298,15 +295,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.liquidDirty      = false;
   }
 
-  // ── STATIKUS HÁTTÉR egyszeri rajzolása ────────────────────────────────────
-  private renderBackground(): void {
-    if (this.bgRendered) return;
-    const ctx = this.bgCtx;
-    ctx.fillStyle = '#0d0d0d';
-    ctx.fillRect(0, 0, this.CANVAS_W, this.CANVAS_H);
-    // Ide kerülhet bármilyen statikus dekoráció (rácsok, gradiens stb.)
-    this.bgRendered = true;
-  }
+
 
   startGame(): void {
     this.state         = 'playing';
@@ -318,7 +307,6 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.spawnInterval = 28;
     this.lastRenderedFill = -1;
     this.liquidDirty   = true;
-    this.bgRendered    = false;
     this.lastTime      = 0;
 
     // Pool reset + freeList újraépítése
@@ -340,24 +328,11 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         // imageRendering hint — mobilon gyorsabb compositing
         this.canvas.style.imageRendering = 'pixelated';
 
-        // Háttér canvas létrehozása és pozicionálása
-        if (!this.bgCanvas) {
-          this.bgCanvas        = document.createElement('canvas');
-          this.bgCanvas.width  = this.CANVAS_W;
-          this.bgCanvas.height = this.CANVAS_H;
-          this.bgCtx = this.bgCanvas.getContext('2d', { alpha: false })!;
-          this.bgCanvas.style.cssText  = this.canvas.style.cssText;
-          this.bgCanvas.style.position = 'absolute';
-          this.bgCanvas.style.zIndex   = '-1';
-          this.canvas.parentElement?.insertBefore(this.bgCanvas, this.canvas);
-        }
-
         this.glassX = this.CANVAS_W / 2 - this.glassW / 2;
         this.updateRect();
         this.boundResizeObserver.observe(this.canvas);
 
         this.prerenderLiquid();
-        this.renderBackground();
         this.setupInputs();
         this.startTimer();
 
@@ -387,7 +362,7 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.cachedRect   = this.canvas.getBoundingClientRect();
     this.cachedScaleX = this.CANVAS_W / this.cachedRect.width;
 
-    this.zone.run(() => this.cdr.markForCheck());
+    // canvasScale változás a timer-CD ciklusban frissül — külön zone.run nem kell
   }
 
   // ── GAME LOOP ────────────────────────────────────────────────────────────
@@ -423,6 +398,11 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
     this.timerInterval = setInterval(() => {
       this.zone.run(() => {
         this.timeLeft--;
+        // Ha az update() közben volt score/fill változás, most frissítjük a UI-t
+        // Ez egyetlen CD ciklust jelent másodpercenként a játék-logikából
+        if (this.scheduledCdTick) {
+          this.scheduledCdTick = false;
+        }
         this.cdr.markForCheck();
         if (this.timeLeft <= 0) {
           this.timeLeft = 0;
@@ -488,11 +468,13 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
         this.liquidDirty = true;
       }
 
-      // Zone.run csak a score/fill UI frissítéshez — NEM triggerel prerenderLiquid-ot
-      this.zone.run(() => {
-        this.cdr.markForCheck();
-        if (this.fillPercent >= 100) this.endGame(true);
-      });
+      // Nem hívunk zone.run()-t minden elkapásnál — a scheduledCdTick flag
+      // gondoskodik róla hogy a következő setInterval tick-nél frissüljön a UI.
+      // Ez megszünteti a frame loop közepén keletkező szinkron CD-t.
+      this.scheduledCdTick = true;
+      if (this.fillPercent >= 100) {
+        this.endGame(true);
+      }
     }
   }
 
@@ -525,8 +507,10 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
   private render(): void {
     const ctx = this.ctx;
 
-    // Háttér: egyszerű blit a statikus bgCanvas-ból (sokkal gyorsabb mint fillRect + drawImage)
-    ctx.drawImage(this.bgCanvas, 0, 0);
+    // alpha:false context: fillRect gyorsabb mint drawImage(bgCanvas) —
+    // a GPU-nak nem kell textúra-kompozitálást végezni
+    ctx.fillStyle = '#0d0d0d';
+    ctx.fillRect(0, 0, this.CANVAS_W, this.CANVAS_H);
 
     const gx = Math.floor(this.glassX);
     const gy = Math.floor(this.CANVAS_H - 130);
