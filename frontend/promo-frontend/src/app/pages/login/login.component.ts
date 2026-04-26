@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { SocialAuthService, GoogleSigninButtonModule } from '@abacritt/angularx-social-login';
 import { environment } from '../../../environments/environments';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,7 @@ export class LoginComponent implements OnInit {
   private authService = inject(AuthService);
   private socialAuthService = inject(SocialAuthService);
   private http = inject(HttpClient);
+  private router = inject(Router);
 
   // Alap állapotok
   isLoginMode = true;
@@ -41,6 +43,12 @@ export class LoginComponent implements OnInit {
   secretClickCount = 0;
 
   ngOnInit() {
+    if (localStorage.getItem('token')) {
+      // Megnézzük, elmentettük-e korábban, hogy hol járt. Ha nem, a /game az alapértelmezett.
+      const lastRoute = localStorage.getItem('lastVisitedRoute') || '/game';
+      this.router.navigate([lastRoute]);
+      return; // Megállítjuk a Login oldal további betöltését!
+    }
     // 1. Age Gate ellenőrzés betöltéskor
     if (!sessionStorage.getItem('ageVerified')) {
       this.showAgeGate = true;
