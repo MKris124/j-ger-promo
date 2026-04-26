@@ -98,3 +98,33 @@ body {
     transform: rotate(360deg); 
   }
 }
+
+@layer components {
+  .jager-card {
+    @apply bg-black/40 backdrop-blur-xl border border-jager-green/40 rounded-2xl shadow-[0_15px_40px_rgba(0,0,0,0.6)] transform-gpu transition-all duration-300;
+    /* Finom zöldes átmenet a mélységért */
+    background-image: linear-gradient(135deg, rgba(20, 37, 26, 0.4) 0%, rgba(15, 15, 15, 0.8) 100%);
+  }
+  
+  .jager-card:hover {
+    @apply border-jager-orange/40;
+    box-shadow: 0 10px 40px -10px rgba(243, 112, 33, 0.25);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 15, 15, 0.8); 
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(243, 112, 33, 0.3); /* Halvány narancs */
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(243, 112, 33, 0.8); /* Aktív narancs */
+}

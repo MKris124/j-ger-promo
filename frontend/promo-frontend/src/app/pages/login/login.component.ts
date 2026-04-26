@@ -18,6 +18,7 @@ export class LoginComponent implements OnInit {
   private socialAuthService = inject(SocialAuthService);
   private http = inject(HttpClient);
 
+  // Alap állapotok
   isLoginMode = true;
   name = '';
   email = '';
@@ -28,27 +29,43 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
 
-  // Esemény státusz — default false, amíg nem töltöttük be
+  // Esemény státusz
   eventActive = false;
   eventLoading = true;
 
+  // Age Gate (18+)
+  showAgeGate = false;
+
+  // Titkos Személyzeti Belépés (Secret Tap)
+  isStaffOverride = false;
+  secretClickCount = 0;
+
   ngOnInit() {
-    // Esemény státusz lekérése — publikus endpoint kell hozzá a backenden
+    // 1. Age Gate ellenőrzés betöltéskor
+    if (!sessionStorage.getItem('ageVerified')) {
+      this.showAgeGate = true;
+    }
+
+    // 2. Esemény státusz lekérése a backendről
     this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
       next: (res) => {
         this.eventActive = res.eventActive;
         this.eventLoading = false;
       },
       error: () => {
-        // Ha nem elérhető az endpoint, optimistán engedjük be
         this.eventActive = true;
         this.eventLoading = false;
       }
     });
 
+    // 3. Google Social Auth figyelése
     this.socialAuthService.authState.subscribe((user) => {
+      // Ne engedjük a Google automatikus belépést, amíg a korhatár panel kint van
+      if (this.showAgeGate) return;
+
       if (user && user.idToken) {
-        if (!this.eventActive) {
+        // Ha le van lőve az esemény ÉS nincs titkos override, blokkoljuk a Google-t is
+        if (!this.eventActive && !this.isStaffOverride) {
           this.errorMessage = 'Az esemény jelenleg szünetel. Hamarosan visszatérünk!';
           return;
         }
@@ -68,6 +85,32 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  // --- AGE GATE LOGIKA ---
+  verifyAge(isAdult: boolean): void {
+    if (isAdult) {
+      sessionStorage.setItem('ageVerified', 'true');
+      this.showAgeGate = false;
+    } else {
+      // Ha nem elmúlt 18, irány a hivatalos Jäger oldal
+      window.location.href = 'https://www.jagermeister.com';
+    }
+  }
+
+  // --- TITKOS KATTINTÁS (EASTER EGG) LOGIKA ---
+  onSecretClick() {
+    this.secretClickCount++;
+    if (this.secretClickCount >= 5) {
+      this.enableStaffOverride();
+      this.secretClickCount = 0;
+    }
+  }
+
+  enableStaffOverride() {
+    this.isStaffOverride = true;
+    this.isLoginMode = true; // Fixen belépés módba váltunk
+    this.errorMessage = '';
+  }
+
   toggleMode() {
     this.isLoginMode = !this.isLoginMode;
     this.errorMessage = '';
@@ -83,7 +126,8 @@ export class LoginComponent implements OnInit {
   onSubmit() {
     this.errorMessage = '';
 
-    if (!this.eventActive) {
+    // Belépés blokkolása, ha nem aktív az esemény ÉS nincs titkos override
+    if (!this.eventActive && !this.isStaffOverride) {
       this.errorMessage = 'Az esemény jelenleg szünetel. Hamarosan visszatérünk!';
       return;
     }
@@ -92,6 +136,7 @@ export class LoginComponent implements OnInit {
       this.errorMessage = 'Kérlek tölts ki minden kötelező mezőt!';
       return;
     }
+
     if (!this.isLoginMode) {
       if (!this.name) {
         this.errorMessage = 'Kérlek add meg a nevedet!';

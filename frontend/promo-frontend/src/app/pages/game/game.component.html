@@ -1,43 +1,65 @@
-<div class="min-h-screen flex flex-col bg-jager-dark text-jager-light">
+<div class="min-h-screen flex flex-col bg-transparent text-jager-light">
 
   <app-page-header title="JÄGER PROMO" currentTab="Játék" (profileClicked)="goToProfile()">
     @if (availableCount > 0) {
       <button
         (click)="goToProfile()"
-        style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;background:rgba(243,112,33,0.1);border:1px solid rgba(243,112,33,0.3);color:#F37021;font-size:11px;font-weight:700;flex-shrink:0;"
-      >🎁 {{ availableCount }}</button>
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-jager-orange border border-jager-orange/50 text-black text-[11px] font-black uppercase tracking-wider shrink-0 shadow-[0_0_15px_rgba(243,112,33,0.4)] animate-pulse cursor-pointer hover:bg-orange-500 transition-colors"
+      >
+        🎁 {{ availableCount }} BEVÁLTHATÓ
+      </button>
     }
   </app-page-header>
 
   <div class="flex-1 overflow-y-auto">
 
-    <!-- Nyeremény overlay — nyerés után -->
     @if (gameResult === 'won' && lastPrize) {
-      <div class="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/80 backdrop-blur-sm">
-        <div class="bg-[#111] border border-jager-orange/30 rounded-2xl p-6 w-full max-w-sm flex flex-col items-center gap-4 text-center mb-4">
-          <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange flex items-center justify-center text-5xl">
+      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0a0a0a]/95 backdrop-blur-2xl">
+        <div class="bg-black/60 border border-jager-green/50 p-8 md:p-10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] w-full max-w-sm text-center transform-gpu animate-[ptrPulse_0.5s_ease-out]">
+          
+          <div class="w-24 h-24 rounded-full bg-black/80 border-2 border-jager-orange flex items-center justify-center text-5xl mx-auto mb-6 shadow-[inset_0_0_20px_rgba(243,112,33,0.2),0_0_30px_rgba(243,112,33,0.5)]">
             {{ getPrizeIcon(lastPrize) }}
           </div>
+          
           <div>
-            <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Nyereményed</p>
-            <h3 class="text-xl font-extrabold text-jager-light">{{ getPrizeName(lastPrize) }}</h3>
-            <p class="text-xs text-gray-500 mt-1">Bekerült a kártyádra — váltsd be a promoternél!</p>
+            <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-2">Gratulálunk, nyertél!</p>
+            <h3 class="text-3xl font-['Oswald'] font-black uppercase tracking-widest text-jager-orange drop-shadow-md">
+              {{ getPrizeName(lastPrize) }}
+            </h3>
+            <p class="text-xs text-gray-400 font-medium tracking-wide mt-3 leading-relaxed">
+              Bekerült a digitális kártyádra.<br>Keresd a promotert és váltsd be!
+            </p>
           </div>
+          
           <button
             (click)="clearGameResult(); goToProfile()"
-            class="w-full py-3 bg-jager-orange text-black font-extrabold rounded-xl uppercase tracking-wider text-sm"
-          >Megnézem a kártyám →</button>
-          <button (click)="clearGameResult()" class="text-xs text-gray-600 hover:text-gray-400">Bezárás</button>
+            class="w-full mt-8 py-4 bg-jager-orange hover:bg-orange-500 text-black font-black rounded-xl uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(243,112,33,0.3)] hover:shadow-[0_0_35px_rgba(243,112,33,0.5)] transform-gpu active:scale-95 transition-all"
+          >
+            Megnézem a kártyám →
+          </button>
+          
+          <button 
+            (click)="clearGameResult()" 
+            class="mt-5 text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest transition-colors">
+            Vissza a játékhoz
+          </button>
         </div>
       </div>
     }
 
-    <!-- Nincs aktív játék -->
     @if (!activeGame) {
-      <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center gap-4">
-        <div class="text-5xl mb-2">⏳</div>
-        <h2 class="text-xl font-extrabold tracking-wider uppercase text-jager-light">Játék hamarosan</h2>
-        <p class="text-gray-400 text-sm max-w-xs">Az admin még nem aktivált játékot. Hamarosan indul!</p>
+      <div class="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
+        <div class="w-24 h-24 bg-black/40 border border-jager-green/50 rounded-3xl flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(20,37,26,0.8)] relative overflow-hidden">
+          <img src="/assets/stag.png" class="absolute w-12 h-12 opacity-10 grayscale">
+          <span class="text-4xl relative z-10 animate-bounce">⏳</span>
+        </div>
+        
+        <h2 class="text-3xl font-['Oswald'] font-black tracking-widest uppercase text-gray-500 drop-shadow-md">
+          Játék Hamarosan
+        </h2>
+        <p class="text-sm font-medium tracking-wide text-gray-600 max-w-xs mt-3 leading-relaxed">
+          Az esemény házigazdája hamarosan elindítja a következő kört.<br>Készülj!
+        </p>
       </div>
     }
 
