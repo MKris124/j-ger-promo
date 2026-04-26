@@ -118,11 +118,12 @@ export class CatchTheJagerComponent implements OnInit, OnDestroy {
       this.bitmapBad   = bad;
     }).then(() => {
       this.zone.run(() => {
-        this.assetsReady = true;
-        this.cdr.markForCheck();
+        setTimeout(() => {
+          this.assetsReady = true;
+          this.cdr.detectChanges();
+        }, 0);
       });
     }).catch(error => {
-      // Ha bármelyik kép hiányzik, legalább a konzolban látni fogjuk az okot!
       console.error('A játék indítása meghiúsult a hiányzó fájlok miatt:', error);
     });
   }
