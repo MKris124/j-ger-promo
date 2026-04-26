@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router, ActivatedRoute } from '@angular/router'; // Router hozzáadva
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { PageHeaderComponent } from '../../shared/page-header.component';
 import { GAME_REGISTRY, RegisteredGame } from '../../shared/game-registry';
@@ -11,7 +11,7 @@ import { environment } from '../../../environments/environments';
 interface Game {
   id: number;
   name: string;
-  gameKey: string;        // pl. "catch-the-jager"
+  gameKey: string;
   description: string;
   active: boolean;
 }
@@ -56,10 +56,9 @@ interface Tab {
 export class AdminComponent implements OnInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private router = inject(Router); // Router injektálása az URL frissítéshez
-  
-  activeSubTab: string = 'dashboard';
+
   private apiBase = `${environment.apiUrl}/api/admin`;
 
   tabs: Tab[] = [
@@ -73,29 +72,25 @@ export class AdminComponent implements OnInit {
   loading = false;
   toast: { message: string; type: 'success' | 'error' } | null = null;
 
-  // --- Settings ---
   settings: AppSettings = { id: 1, eventActive: false, shotsPerLiter: 0, activeGame: null, eventStart: null, eventEnd: null, drawMode: 'TIMED' };
   shotsPerLiterInput = 0;
-  // Időzítés mód: 'manual' vagy 'scheduled'
+  
   get scheduleMode(): 'manual' | 'scheduled' { return this._scheduleMode; }
   set scheduleMode(val: 'manual' | 'scheduled') {
     this._scheduleMode = val;
-    // Manuális módban TIMED nem elérhető → automatikusan PERCENTAGE-re vált
     if (val === 'manual' && this.settings.drawMode === 'TIMED') {
       this.settings.drawMode = 'PERCENTAGE';
     }
   }
   private _scheduleMode: 'manual' | 'scheduled' = 'manual';
-  eventStartInput = '';   // datetime-local input value: "2026-05-10T22:00"
+  eventStartInput = ''; 
   eventEndInput = '';
 
-  // --- Games ---
   games: Game[] = [];
   newGameName = '';
   newGameComponent = '';
   newGameDesc = '';
 
-  // Games - inline component szerkesztés
   editingComponentGameId: number | null = null;
   editingComponentValue = '';
   inventoryItems: InventoryItem[] = [];
@@ -103,9 +98,11 @@ export class AdminComponent implements OnInit {
   newMerchIsLiquid = false;
   addStockMap: { [key: number]: number } = {};
 
-  // --- Users ---
   users: AppUser[] = [];
   roleOptions = ['USER', 'PROMOTER', 'ADMIN'];
+  
+  // --- ÚJ: Felhasználó Keresőmező ---
+  userSearchTerm: string = '';
 
   ngOnInit(): void {
     this.loadSettings();
@@ -113,22 +110,18 @@ export class AdminComponent implements OnInit {
     this.loadInventory();
     this.loadUsers();
 
-    // 1. URL paraméter figyelése (oldalfrissítés esetén ez állítja be a jó fület)
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeTab = params['tab'] as any;
       }
     });
 
-    // 2. Sidebar admin tab váltás figyelése és az URL csendes frissítése
     window.addEventListener('adminTabChange', (e: any) => {
       this.activeTab = e.detail;
-      
-      // Frissítjük az URL-t, hogy ha a user most nyom egy F5-öt, jó helyen maradjon
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { tab: this.activeTab },
-        queryParamsHandling: 'merge' // megtartja a többi paramétert (pl. returnUrl)
+        queryParamsHandling: 'merge'
       });
     });
   }
@@ -139,7 +132,6 @@ export class AdminComponent implements OnInit {
   }
 
   // =================== SETTINGS ===================
-
   loadSettings(): void {
     this.http.get<AppSettings>(`${this.apiBase}/settings`, { headers: this.getHeaders() }).subscribe({
       next: (data) => {
@@ -147,7 +139,6 @@ export class AdminComponent implements OnInit {
         this.shotsPerLiterInput = data.shotsPerLiter;
         if (data.eventStart && data.eventEnd) {
           this.scheduleMode = 'scheduled';
-          // Backend ISO-t datetime-local formátumra vágja (első 16 karakter: "2026-05-10T22:00")
           this.eventStartInput = data.eventStart.substring(0, 16);
           this.eventEndInput = data.eventEnd.substring(0, 16);
         } else {
@@ -168,7 +159,7 @@ export class AdminComponent implements OnInit {
     };
 
     if (this.scheduleMode === 'scheduled' && this.eventStartInput && this.eventEndInput) {
-      body.eventStart = this.eventStartInput + ':00'; // LocalDateTime formátum
+      body.eventStart = this.eventStartInput + ':00';
       body.eventEnd = this.eventEndInput + ':00';
     } else {
       body.eventStart = null;
@@ -214,7 +205,6 @@ export class AdminComponent implements OnInit {
   }
 
   // =================== GAMES ===================
-
   loadGames(): void {
     this.http.get<Game[]>(`${this.apiBase}/games`, { headers: this.getHeaders() }).subscribe({
       next: (data) => (this.games = data),
@@ -255,7 +245,6 @@ export class AdminComponent implements OnInit {
     this.updateSettings();
   }
 
-  // Game registry segédmetódusok
   getGameByKey(key: string): Game | undefined {
     return this.games.find(g => g.gameKey === key);
   }
@@ -293,7 +282,6 @@ export class AdminComponent implements OnInit {
   }
 
   // =================== INVENTORY ===================
-
   loadInventory(): void {
     this.http.get<InventoryItem[]>(`${this.apiBase}/inventory`, { headers: this.getHeaders() }).subscribe({
       next: (data) => (this.inventoryItems = data),
@@ -319,27 +307,45 @@ export class AdminComponent implements OnInit {
 
   addStock(item: InventoryItem): void {
     const qty = this.addStockMap[item.id];
-    if (qty == null) return;
+    if (qty == null || qty <= 0) return;
     this.http.post<InventoryItem>(`${this.apiBase}/inventory/${item.id}/add`, { addedQuantity: qty }, { headers: this.getHeaders() })
       .subscribe({
         next: (updated) => {
           const idx = this.inventoryItems.findIndex((i) => i.id === updated.id);
           if (idx !== -1) this.inventoryItems[idx] = updated;
           this.addStockMap[item.id] = null as any;
-          this.showToast(`Készlet frissítve: ${updated.stock} db`, 'success');
+          this.showToast(`Készlet hozzáadva: ${updated.stock} db`, 'success');
         },
         error: () => this.showToast('Készlet feltöltés sikertelen', 'error')
       });
   }
 
+  // --- ÚJ: Készlet levonása manuálisan ---
+  subtractStock(item: InventoryItem): void {
+    const qty = this.addStockMap[item.id];
+    if (qty == null || qty <= 0) return;
+    
+    // A Backend a negatív számot levonásként értelmezi!
+    this.http.post<InventoryItem>(`${this.apiBase}/inventory/${item.id}/add`, { addedQuantity: -qty }, { headers: this.getHeaders() })
+      .subscribe({
+        next: (updated) => {
+          const idx = this.inventoryItems.findIndex((i) => i.id === updated.id);
+          if (idx !== -1) this.inventoryItems[idx] = updated;
+          this.addStockMap[item.id] = null as any;
+          this.showToast(`Készlet levonva. Új mennyiség: ${updated.stock} db`, 'success');
+        },
+        error: () => this.showToast('Készlet levonás sikertelen', 'error')
+      });
+  }
+
   deleteItem(item: InventoryItem): void {
-    if (!confirm(`Biztosan törlöd: "${item.name}"?`)) return;
+    if (!confirm(`Biztosan archiválod az elemet: "${item.name}"? Az új eseményeken már nem fog megjelenni.`)) return;
     this.http.delete(`${this.apiBase}/inventory/${item.id}`, { headers: this.getHeaders() }).subscribe({
       next: () => {
         this.inventoryItems = this.inventoryItems.filter((i) => i.id !== item.id);
-        this.showToast(`"${item.name}" törölve`, 'success');
+        this.showToast(`"${item.name}" archiválva`, 'success');
       },
-      error: () => this.showToast('Törlés sikertelen', 'error')
+      error: () => this.showToast('Archiválás sikertelen', 'error')
     });
   }
 
@@ -348,12 +354,21 @@ export class AdminComponent implements OnInit {
   }
 
   // =================== USERS ===================
-
   loadUsers(): void {
     this.http.get<AppUser[]>(`${this.apiBase}/users`, { headers: this.getHeaders() }).subscribe({
       next: (data) => (this.users = data),
       error: () => {}
     });
+  }
+
+  // --- ÚJ: Kereső Getter ---
+  get filteredUsers() {
+    if (!this.userSearchTerm) return this.users;
+    const term = this.userSearchTerm.toLowerCase();
+    return this.users.filter(u => 
+      (u.name && u.name.toLowerCase().includes(term)) || 
+      (u.email && u.email.toLowerCase().includes(term))
+    );
   }
 
   changeRole(user: AppUser, newRole: string): void {
@@ -367,8 +382,6 @@ export class AdminComponent implements OnInit {
   }
 
   // =================== UTILS ===================
-
-  // Game registry — ezekből választhat az admin
   registeredGames: RegisteredGame[] = GAME_REGISTRY;
 
   getActiveTabLabel(): string {

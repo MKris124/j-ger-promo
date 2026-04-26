@@ -23,4 +23,7 @@ public class InventoryItem {
     private Integer totalQuantity = 0; // Összesen felvitt mennyiség
 
     private Integer remainingQuantity = 0; // Jelenleg elérhető mennyiség
+
+    // ÚJ MEZŐ: Soft delete az előzmények megőrzése miatt
+    private boolean archived = false;
 }

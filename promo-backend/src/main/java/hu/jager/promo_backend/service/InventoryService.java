@@ -19,10 +19,11 @@ public class InventoryService {
 
     // --- ADMIN: összes item listázása ---
     public List<InventoryItem> getAllItems() {
-        return inventoryRepo.findAll();
+        // Csak a nem archivált (aktív) elemeket adjuk vissza a felületnek
+        return inventoryRepo.findAll().stream().filter(item -> !item.isArchived()).toList();
     }
 
-    // --- ADMIN: Raktárkészlet módosítása (lehet 0 is — nullázáshoz) ---
+    // --- ADMIN: Raktárkészlet módosítása (Feltöltés ÉS Levonás) ---
     @Transactional
     public InventoryItem addStock(Long itemId, int addedQuantity) {
         InventoryItem item = inventoryRepo.findById(itemId)
@@ -35,8 +36,12 @@ public class InventoryService {
                 ? addedQuantity * settings.getShotsPerLiter()
                 : addedQuantity;
 
-        item.setTotalQuantity(item.getTotalQuantity() + actualQuantityToAdd);
-        item.setRemainingQuantity(item.getRemainingQuantity() + actualQuantityToAdd);
+        int newRemaining = item.getRemainingQuantity() + actualQuantityToAdd;
+        int newTotal = item.getTotalQuantity() + actualQuantityToAdd;
+
+        // Biztosítás, hogy ne vigyük be mínuszba a készletet
+        item.setRemainingQuantity(Math.max(0, newRemaining));
+        item.setTotalQuantity(Math.max(0, newTotal));
 
         return inventoryRepo.save(item);
     }
@@ -49,20 +54,25 @@ public class InventoryService {
         newItem.setLiquid(isLiquid);
         newItem.setTotalQuantity(0);
         newItem.setRemainingQuantity(0);
+        newItem.setArchived(false); // Biztos, ami biztos
         return inventoryRepo.save(newItem);
     }
 
-    // --- ADMIN: Item törlése ---
+    // --- ADMIN: Item törlése (SOFT DELETE) ---
     @Transactional
     public void deleteItem(Long itemId) {
-        if (!inventoryRepo.existsById(itemId)) {
-            throw new IllegalArgumentException("Nem létező tárgy!");
-        }
-        inventoryRepo.deleteById(itemId);
+        InventoryItem item = inventoryRepo.findById(itemId)
+                .orElseThrow(() -> new IllegalArgumentException("Nem létező tárgy!"));
+
+        // Tényleges törlés helyett csak archiváljuk, hogy a meglévő játékosok kártyáin ne omoljon össze a nyeremény
+        item.setArchived(true);
+        inventoryRepo.save(item);
     }
 
-    // --- JÁTÉKOS: Elérhető nyeremények (remainingQuantity > 0) ---
+    // --- JÁTÉKOS: Elérhető nyeremények ---
     public List<InventoryItem> getAvailablePrizes() {
-        return inventoryRepo.findByRemainingQuantityGreaterThan(0);
+        return inventoryRepo.findByRemainingQuantityGreaterThan(0).stream()
+                .filter(item -> !item.isArchived())
+                .toList();
     }
 }
