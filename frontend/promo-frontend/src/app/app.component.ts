@@ -30,10 +30,10 @@ export class AppComponent implements OnInit, OnDestroy {
         this.http.get<{token: string, role: string, name: string}>(`${environment.apiUrl}/api/auth/refresh`)
           .subscribe({
             next: (res) => {
-              const oldRole = localStorage.getItem('userRole');
+              const oldRole = localStorage.getItem('role');
               
               localStorage.setItem('token', res.token);
-              localStorage.setItem('userRole', res.role);
+              localStorage.setItem('role', res.role);
               if (res.name) localStorage.setItem('userName', res.name);
 
               if (oldRole && oldRole !== res.role) {
