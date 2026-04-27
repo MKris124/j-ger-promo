@@ -82,7 +82,7 @@ export class LoginComponent implements OnInit {
 
   private processAutoLogin() {
     const token = localStorage.getItem('token');
-    const role = localStorage.getItem('userRole');
+    const role = localStorage.getItem('role');
 
     if (token) {
       if (role === 'ADMIN' || role === 'PROMOTER') {
@@ -92,7 +92,7 @@ export class LoginComponent implements OnInit {
 
       if (!this.eventActive) {
         localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
+        localStorage.removeItem('role');
         localStorage.removeItem('lastVisitedRoute');
         localStorage.removeItem('userName');
         localStorage.removeItem('userId');
