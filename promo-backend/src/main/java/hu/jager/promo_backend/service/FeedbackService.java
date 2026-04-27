@@ -18,16 +18,12 @@ import java.util.stream.Collectors;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
-    private final UserRepository userRepository;
 
-    // 1. Értékelés mentése (A játékos küldi)
-    public void saveFeedback(FeedbackRequest request, String email) {
-        AppUser user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Felhasználó nem található!"));
-
+    public void saveFeedback(FeedbackRequest request, AppUser user) {
         Feedback feedback = new Feedback();
         feedback.setRating(request.getRating());
         feedback.setComment(request.getComment());
+
         feedback.setUser(user);
 
         feedbackRepository.save(feedback);

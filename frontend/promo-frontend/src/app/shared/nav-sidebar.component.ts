@@ -30,6 +30,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
     { key: 'games',     label: 'Játékok',     icon: '🎮' },
     { key: 'inventory', label: 'Készlet',     icon: '📦' },
     { key: 'users',     label: 'Felhasználók',icon: '👥' },
+    { key: 'feedbacks', label: 'Értékelések',  icon: '⭐' },
   ];
 
   private pollInterval: any = null;
