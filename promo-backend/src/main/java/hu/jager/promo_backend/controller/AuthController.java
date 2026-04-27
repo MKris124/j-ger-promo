@@ -67,22 +67,5 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("eventActive", adminService.isEventCurrentlyActive()));
     }
 
-    @GetMapping("/refresh")
-    public ResponseEntity<?> refreshToken() {
-        Authentication auth =
-                SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !(auth.getPrincipal() instanceof AppUser user)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nincs bejelentkezve");
-        }
-
-        String newToken = jwtUtils.generateToken(user);
-
-        return ResponseEntity.ok(Map.of(
-                "token", newToken,
-                "name", user.getName(),
-                "role", user.getRole().name(),
-                "id", user.getId()
-        ));
-    }
 }
