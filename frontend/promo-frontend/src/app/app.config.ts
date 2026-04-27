@@ -1,16 +1,20 @@
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
-// FIGYELD AZ IMPORTOT: Itt húzzuk be a SOCIAL_AUTH_CONFIG-ot!
 import { SOCIAL_AUTH_CONFIG, SocialAuthServiceConfig, GoogleLoginProvider } from '@abacritt/angularx-social-login';
+import { authInterceptor } from './shared/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(),
+    
+    provideHttpClient(
+      withInterceptors([authInterceptor])
+    ),
+    
     {
-      provide: SOCIAL_AUTH_CONFIG, // <-- NINCS IDÉZŐJEL! Ezt a konstanst kereste a rendszer!
+      provide: SOCIAL_AUTH_CONFIG,
       useValue: {
         autoLogin: false,
         providers: [

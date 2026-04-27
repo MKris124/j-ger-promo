@@ -31,59 +31,39 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
 
-  // Esemény státusz
-  eventActive = false;
+  isEventOffline = false;
   eventLoading = true;
 
   // Age Gate (18+)
   showAgeGate = false;
 
-  // Titkos Személyzeti Belépés (Secret Tap)
   isStaffOverride = false;
   secretClickCount = 0;
 
   ngOnInit() {
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('userRole');
-
-    if (token) {
-      const lastRoute = localStorage.getItem('lastVisitedRoute');
-
-      if (lastRoute && lastRoute !== '/' && lastRoute !== '/login') {
-        this.router.navigateByUrl(lastRoute).catch(() => {
-          this.redirectToDefault(role);
-        });
-      } else {
-        this.redirectToDefault(role);
-      }
-      return;
-    }
-    if (!sessionStorage.getItem('ageVerified')) {
-      this.showAgeGate = true;
-    }
-
-    this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
+    this.http.get<{ isOffline: boolean }>(`${environment.apiUrl}/api/settings/public`).subscribe({
       next: (res) => {
-        this.eventActive = res.eventActive;
+        this.isEventOffline = res.isOffline;
         this.eventLoading = false;
+        this.processAutoLogin();
       },
       error: () => {
-        this.eventActive = true;
+        this.isEventOffline = true;
         this.eventLoading = false;
+        this.processAutoLogin();
       }
     });
 
-    // 3. Google Social Auth figyelése
     this.socialAuthService.authState.subscribe((user) => {
-      // Ne engedjük a Google automatikus belépést, amíg a korhatár panel kint van
       if (this.showAgeGate) return;
 
       if (user && user.idToken) {
-        // Ha le van lőve az esemény ÉS nincs titkos override, blokkoljuk a Google-t is
-        if (!this.eventActive && !this.isStaffOverride) {
+        if (this.isEventOffline && !this.isStaffOverride) {
           this.errorMessage = 'Az esemény jelenleg szünetel. Hamarosan visszatérünk!';
+          this.socialAuthService.signOut().catch(() => {});
           return;
         }
+        
         this.isLoading = true;
         this.errorMessage = '';
         this.authService.loginWithGoogle(user.idToken).subscribe({
@@ -100,13 +80,54 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  private redirectToDefault(role: string | null) {
-  if (role === 'ADMIN' || role === 'PROMOTER') {
-    this.router.navigate(['/admin']);
-  } else {
-    this.router.navigate(['/game']);
+  // --- AUTO LOGIN & OFFLINE VÉDELEM LOGIKA ---
+  private processAutoLogin() {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('userRole');
+
+    if (token) {
+      // A személyzet (Admin/Promoter) mindig bejut
+      if (role === 'ADMIN' || role === 'PROMOTER') {
+        this.handleRedirect(role);
+        return;
+      }
+
+      // Ha sima USER és OFFLINE az esemény
+      if (this.isEventOffline) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('lastVisitedRoute');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userId');
+      } else {
+        this.handleRedirect(role);
+        return;
+      }
+    }
+
+    if (!sessionStorage.getItem('ageVerified') && !this.isEventOffline) {
+      this.showAgeGate = true;
+    }
   }
-}
+
+  private handleRedirect(role: string | null) {
+    const lastRoute = localStorage.getItem('lastVisitedRoute');
+    if (lastRoute && lastRoute !== '/' && lastRoute !== '/login') {
+      this.router.navigateByUrl(lastRoute).catch(() => {
+        this.redirectToDefault(role);
+      });
+    } else {
+      this.redirectToDefault(role);
+    }
+  }
+
+  private redirectToDefault(role: string | null) {
+    if (role === 'ADMIN' || role === 'PROMOTER') {
+      this.router.navigate(['/admin']);
+    } else {
+      this.router.navigate(['/game']);
+    }
+  }
 
   // --- AGE GATE LOGIKA ---
   verifyAge(isAdult: boolean): void {
@@ -119,7 +140,6 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  // --- TITKOS KATTINTÁS (EASTER EGG) LOGIKA ---
   onSecretClick() {
     this.secretClickCount++;
     if (this.secretClickCount >= 5) {
@@ -130,8 +150,9 @@ export class LoginComponent implements OnInit {
 
   enableStaffOverride() {
     this.isStaffOverride = true;
-    this.isLoginMode = true; // Fixen belépés módba váltunk
+    this.isLoginMode = true;
     this.errorMessage = '';
+    this.showAgeGate = false; 
   }
 
   toggleMode() {
@@ -149,8 +170,7 @@ export class LoginComponent implements OnInit {
   onSubmit() {
     this.errorMessage = '';
 
-    // Belépés blokkolása, ha nem aktív az esemény ÉS nincs titkos override
-    if (!this.eventActive && !this.isStaffOverride) {
+    if (this.isEventOffline && !this.isStaffOverride) {
       this.errorMessage = 'Az esemény jelenleg szünetel. Hamarosan visszatérünk!';
       return;
     }

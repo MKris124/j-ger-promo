@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/promoter")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 public class PromoterController {
 
     private final PromoterService promoterService;
