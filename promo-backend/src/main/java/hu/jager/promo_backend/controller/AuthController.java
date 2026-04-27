@@ -9,7 +9,9 @@ import hu.jager.promo_backend.security.JwtUtils; // Ezt importáljuk!
 import hu.jager.promo_backend.service.AdminService;
 import hu.jager.promo_backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -61,5 +63,19 @@ public class AuthController {
     public ResponseEntity<?> getEventStatus() {
         AppSettings settings = adminService.getSettings();
         return ResponseEntity.ok(Map.of("eventActive", adminService.isEventCurrentlyActive()));
+    }
+
+    @GetMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@AuthenticationPrincipal AppUser user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nincs bejelentkezve");
+        }
+
+        String newToken = jwtUtils.generateToken(user);
+        return ResponseEntity.ok(Map.of(
+                "token", newToken,
+                "name", user.getName(),
+                "role", user.getRole().name()
+        ));
     }
 }

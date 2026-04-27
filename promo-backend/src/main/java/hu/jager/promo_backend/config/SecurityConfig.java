@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/refresh").authenticated()
                         .requestMatchers("/api/auth/**", "/api/admin/event-status").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
 
