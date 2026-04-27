@@ -31,7 +31,7 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isLoading = false;
 
-  isEventOffline = false;
+  eventActive = false; // Visszaállítva a te változódra!
   eventLoading = true;
 
   // Age Gate (18+)
@@ -41,14 +41,14 @@ export class LoginComponent implements OnInit {
   secretClickCount = 0;
 
   ngOnInit() {
-    this.http.get<{ isOffline: boolean }>(`${environment.apiUrl}/api/settings/public`).subscribe({
+    this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
       next: (res) => {
-        this.isEventOffline = res.isOffline;
+        this.eventActive = res.eventActive;
         this.eventLoading = false;
         this.processAutoLogin();
       },
       error: () => {
-        this.isEventOffline = true;
+        this.eventActive = false;
         this.eventLoading = false;
         this.processAutoLogin();
       }
@@ -58,7 +58,7 @@ export class LoginComponent implements OnInit {
       if (this.showAgeGate) return;
 
       if (user && user.idToken) {
-        if (this.isEventOffline && !this.isStaffOverride) {
+        if (!this.eventActive && !this.isStaffOverride) {
           this.errorMessage = 'Az esemény jelenleg szünetel. Hamarosan visszatérünk!';
           this.socialAuthService.signOut().catch(() => {});
           return;
@@ -80,20 +80,17 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // --- AUTO LOGIN & OFFLINE VÉDELEM LOGIKA ---
   private processAutoLogin() {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userRole');
 
     if (token) {
-      // A személyzet (Admin/Promoter) mindig bejut
       if (role === 'ADMIN' || role === 'PROMOTER') {
         this.handleRedirect(role);
         return;
       }
 
-      // Ha sima USER és OFFLINE az esemény
-      if (this.isEventOffline) {
+      if (!this.eventActive) {
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
         localStorage.removeItem('lastVisitedRoute');
@@ -105,7 +102,7 @@ export class LoginComponent implements OnInit {
       }
     }
 
-    if (!sessionStorage.getItem('ageVerified') && !this.isEventOffline) {
+    if (!sessionStorage.getItem('ageVerified') && this.eventActive) {
       this.showAgeGate = true;
     }
   }
@@ -170,7 +167,7 @@ export class LoginComponent implements OnInit {
   onSubmit() {
     this.errorMessage = '';
 
-    if (this.isEventOffline && !this.isStaffOverride) {
+    if (!this.eventActive && !this.isStaffOverride) {
       this.errorMessage = 'Az esemény jelenleg szünetel. Hamarosan visszatérünk!';
       return;
     }
