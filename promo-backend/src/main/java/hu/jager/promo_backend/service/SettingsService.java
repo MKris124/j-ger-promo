@@ -13,6 +13,6 @@ public class SettingsService {
 
     public boolean isEventOffline() {
         AppSettings settings = settingsRepo.findById(1L).orElse(null);
-        return settings != null && settings.isEventActive();
+        return settings == null || !settings.isEventActive();
     }
 }
