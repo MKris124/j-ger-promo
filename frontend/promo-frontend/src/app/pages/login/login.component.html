@@ -32,7 +32,7 @@
       </h1>
       <p class="text-gray-400 text-sm font-medium tracking-wide uppercase">
         @if (eventLoading) { Kis türelmet... }
-        @else if (!eventActive && !isStaffOverride) { Esemény szünetel }
+        @else if (isEventOffline && !isStaffOverride) { Esemény szünetel }
         @else if (isLoginMode) { Jelentkezz be a játékhoz! }
         @else { Regisztrálj és nyerj! }
       </p>
@@ -48,7 +48,7 @@
       </div>
     }
 
-    @if (!eventLoading && !eventActive && !isStaffOverride) {
+    @if (!eventLoading && (isEventOffline || isStaffOverride)) {
       <div class="flex flex-col items-center text-center py-6 gap-5">
         
         <div 
@@ -68,7 +68,7 @@
       </div>
     }
 
-    @if (!eventLoading && (eventActive || isStaffOverride)) {
+    @if (!eventLoading && (isEventOffline || isStaffOverride)) {
 
       @if (isStaffOverride) {
         <div class="bg-red-950/60 border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-lg text-center mb-6 animate-pulse">
