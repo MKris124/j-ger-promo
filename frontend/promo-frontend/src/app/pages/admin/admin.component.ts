@@ -25,6 +25,7 @@ interface AppSettings {
   eventEnd: string | null;
   drawMode: 'TIMED' | 'PERCENTAGE';
 }
+
 interface InventoryItem {
   id: number;
   name: string;
@@ -41,10 +42,18 @@ interface AppUser {
 }
 
 interface Tab {
-  key: 'settings' | 'inventory' | 'users' | 'games';
+  key: 'settings' | 'inventory' | 'users' | 'games' | 'feedbacks'; 
   label: string;
   shortLabel: string;
   icon: string;
+}
+
+interface FeedbackResponse {
+  id: number;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 @Component({
@@ -61,13 +70,16 @@ export class AdminComponent implements OnInit {
 
   private apiBase = `${environment.apiUrl}/api/admin`;
 
+  feedbacks: FeedbackResponse[] = [];
+
   tabs: Tab[] = [
     { key: 'settings',  label: 'Beállítások', shortLabel: 'Beáll.',  icon: '⚙️' },
     { key: 'games',     label: 'Játékok',      shortLabel: 'Játék',   icon: '🎮' },
     { key: 'inventory', label: 'Készlet',      shortLabel: 'Készlet', icon: '📦' },
     { key: 'users',     label: 'Felhasználók', shortLabel: 'Userek',  icon: '👥' },
+    { key: 'feedbacks', label: 'Értékelések',  shortLabel: 'Vélem.',  icon: '⭐' }, 
   ];
-  activeTab: 'settings' | 'inventory' | 'users' | 'games' = 'settings';
+  activeTab: 'settings' | 'inventory' | 'users' | 'games' | 'feedbacks' = 'settings'; 
 
   loading = false;
   toast: { message: string; type: 'success' | 'error' } | null = null;
@@ -109,6 +121,7 @@ export class AdminComponent implements OnInit {
     this.loadGames();
     this.loadInventory();
     this.loadUsers();
+    this.loadFeedbacks(); // ÚJ: Betöltjük a visszajelzéseket induláskor!
 
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
@@ -183,6 +196,15 @@ export class AdminComponent implements OnInit {
   toggleEvent(): void {
     this.settings.eventActive = !this.settings.eventActive;
     this.updateSettings();
+  }
+
+  // --- ÚJ: Visszajelzések Lekérése ---
+  loadFeedbacks() {
+    this.http.get<FeedbackResponse[]>(`${this.apiBase}/feedbacks`, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data) => this.feedbacks = data,
+        error: (err) => console.error('Hiba a visszajelzések betöltésekor', err)
+      });
   }
 
   getLiterExamples(): { label: string; shots: string }[] {
