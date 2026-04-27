@@ -68,6 +68,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
+
+        if (path.equals("/api/auth/refresh")) {
+            return false;
+        }
         // A filter NEM fut le a H2 konzolon és az auth végpontokon
         return path.startsWith("/h2-console") || path.startsWith("/api/auth/");
     }
