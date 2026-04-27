@@ -31,7 +31,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.http.get<any>(`${environment.apiUrl}/api/auth/refresh`)
           .subscribe({
             next: (res) => {
-              const oldRole = localStorage.getItem('role'); 
+              const oldRole = localStorage.getItem('role');
               
               localStorage.setItem('token', res.token);
               localStorage.setItem('role', res.role); 
@@ -39,7 +39,7 @@ export class AppComponent implements OnInit, OnDestroy {
               if (res.id) localStorage.setItem('userId', res.id.toString());
 
               if (oldRole && oldRole !== res.role) {
-                console.warn(`Rangfrissítés: ${oldRole} -> ${res.role}. Újratöltés...`);
+                console.warn(`Rangfrissítés: ${oldRole} -> ${res.role}.`);
                 window.location.reload(); 
               }
             },

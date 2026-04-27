@@ -90,20 +90,22 @@ export class LoginComponent implements OnInit {
         return;
       }
 
-      if (!this.eventActive) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('lastVisitedRoute');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('userId');
-      } else {
-        this.handleRedirect(role);
-        return;
+      if (!this.eventLoading) {
+        if (!this.eventActive) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('lastVisitedRoute');
+          return; 
+        } else {
+          this.handleRedirect(role);
+        }
       }
-    }
-
-    if (!sessionStorage.getItem('ageVerified') && this.eventActive) {
-      this.showAgeGate = true;
+    } else {
+      if (!sessionStorage.getItem('ageVerified') && this.eventActive) {
+        this.showAgeGate = true;
+      }
     }
   }
 
