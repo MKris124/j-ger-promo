@@ -63,9 +63,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/admin/event-status").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+
+
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+
+                        // Promóter jogosultságok
                         .requestMatchers("/api/promoter/**").hasAnyAuthority("PROMOTER", "ADMIN")
-                        .requestMatchers("/api/game/**").hasAnyAuthority("USER", "PROMOTER", "ADMIN")
+
+                        // Játék és Feedback jogosultságok (Bárki, aki be van lépve, játszhat és értékelhet)
+                        .requestMatchers("/api/game/**", "/api/feedback/**").hasAnyAuthority("USER", "PROMOTER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers

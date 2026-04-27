@@ -10,6 +10,7 @@ import { gameGuard } from './pages/game/game.guard';
 
 import { PrivacyComponent } from './pages/privacy/privacy.component';
 import { FaqComponent } from './pages/faq/faq.components';
+import { FeedbackComponent } from './pages/feedback/feedback.component';
 
 export const routes: Routes = [
   { path: '',        component: LoginComponent },
@@ -19,5 +20,6 @@ export const routes: Routes = [
   { path: 'promoter',component: PromoterComponent,canActivate: [promoterGuard] },
   { path: 'privacy', component: PrivacyComponent },
   { path: 'faq', component: FaqComponent },
+  { path: 'feedback', component: FeedbackComponent },
   { path: '**', redirectTo: '' }
 ];

@@ -5,6 +5,7 @@ import hu.jager.promo_backend.entity.AppSettings;
 import hu.jager.promo_backend.entity.AppUser;
 import hu.jager.promo_backend.entity.Game;
 import hu.jager.promo_backend.service.AdminService;
+import hu.jager.promo_backend.service.FeedbackService;
 import hu.jager.promo_backend.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final InventoryService inventoryService;
+    private final FeedbackService feedbackService;
 
     @GetMapping("/settings")
     public ResponseEntity<AppSettings> getSettings() {
@@ -37,6 +39,13 @@ public class AdminController {
     @GetMapping("/event-status")
     public ResponseEntity<Map<String, Boolean>> getEventStatus() {
         return ResponseEntity.ok(Map.of("eventActive", adminService.isEventCurrentlyActive()));
+    }
+
+
+    @GetMapping("/feedbacks")
+    public ResponseEntity<List<FeedbackResponse>> getAllFeedbacks() {
+        // Itt is mindent a Service csinál!
+        return ResponseEntity.ok(feedbackService.getAllFeedbacksForAdmin());
     }
 
     // ===================== JÁTÉKOK =====================
