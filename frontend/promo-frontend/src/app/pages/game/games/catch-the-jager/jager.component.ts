@@ -155,18 +155,18 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
         });
 
         this.worker.postMessage({
-          type: 'init',
-          canvas: offscreen,
-          canvasW: this.CANVAS_W,
-          canvasH: this.CANVAS_H,
-          bitmaps: {
-            glass: this.bitmapGlass,
-            glow:  this.bitmapGlow,
-            drop:  this.bitmapDrop,
-            ice:   this.bitmapIce,
-            bad:   this.bitmapBad,
-          }
-        }, [offscreen, this.bitmapGlass, this.bitmapGlow, this.bitmapDrop, this.bitmapIce, this.bitmapBad]);
+            type: 'init',
+            canvas: offscreen,
+            canvasW: this.CANVAS_W,
+            canvasH: this.CANVAS_H,
+            bitmaps: {
+              glass: this.bitmapGlass,
+              glow:  this.bitmapGlow,
+              drop:  this.bitmapDrop,
+              ice:   this.bitmapIce,
+              bad:   this.bitmapBad,
+            }
+          }, [offscreen]);
 
         this.worker.postMessage({ type: 'start' });
         this.startTimer();

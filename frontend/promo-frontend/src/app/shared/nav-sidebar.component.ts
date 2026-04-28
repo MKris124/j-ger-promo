@@ -1,9 +1,10 @@
 import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router'; // <-- ActivatedRoute hozzáadva
+import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environments';
+import { SocialAuthService } from '@abacritt/angularx-social-login';
 
 @Component({
   selector: 'app-nav-sidebar',
@@ -14,8 +15,9 @@ import { environment } from '../../environments/environments';
 export class NavSidebarComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
-  private route = inject(ActivatedRoute); // <-- Route injektálása az URL frissítéshez
+  private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
+  private socialAuthService = inject(SocialAuthService);
 
   @Output() profileClicked = new EventEmitter<void>();
   @Output() tabChanged = new EventEmitter<string>();
@@ -36,7 +38,6 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   private pollInterval: any = null;
   private sidebarClicked = false;
 
-  // Document-szintű click figyelő — ha a kattintás NEM a sidebaron belül volt, bezárjuk
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     if (!this.isOpen) return;
@@ -53,7 +54,6 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
       this.activeSubTab = e.detail;
     });
 
-    // Ha az oldal betöltődik F5-tel, a sidebar is vegye fel a helyes aktív fület az URL-ből
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.activeSubTab = params['tab'];
@@ -69,7 +69,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   private checkEventStatus(): void {
     if (this.role === 'ADMIN' || this.role === 'PROMOTER') return;
     this.http.get<{ eventActive: boolean }>(`${environment.apiUrl}/api/auth/event-status`).subscribe({
-      next: (res) => { if (!res.eventActive) this.authService.logout(); },
+      next: (res) => { if (!res.eventActive) this.logout(); },
       error: () => {}
     });
   }
@@ -81,12 +81,10 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   close(): void { this.isOpen = false; this.enableScroll(); }
 
   toggle(): void {
-    // A hamburger gombra kattintáskor jelöljük hogy sidebarban voltunk
     this.sidebarClicked = true;
     this.isOpen ? this.close() : this.open();
   }
 
-  // Sidebar panelen belüli kattintásnál jelöljük — ne csukja be a document listener
   onSidebarClick(): void {
     this.sidebarClicked = true;
   }
@@ -99,17 +97,13 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   setSubTab(tabKey: string) {
     this.activeSubTab = tabKey;
     
-    // 1. Frissítjük az URL query paraméterét
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { tab: tabKey },
-      queryParamsHandling: 'merge' // Megtartja a többi paramétert
+      queryParamsHandling: 'merge'
     });
     
-    // 2. Szólunk az AdminComponent-nek (mivel az window eseményt figyel), hogy váltson fület
     window.dispatchEvent(new CustomEvent('adminTabChange', { detail: tabKey }));
-
-    // 3. Ha mobilon vagyunk, zárjuk be a sidebart a kattintás után, hogy látszódjon is a tartalom
     this.close();
   }
 
@@ -117,8 +111,15 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
     this.navigate('/profile');
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.close();
+    
+    try {
+      await this.socialAuthService.signOut();
+    } catch (error) {
+
+    }
+    
     this.authService.logout();
   }
 
@@ -127,7 +128,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   get allNavItems() {
     const items = [
       { path: '/game',     label: 'Játék',         icon: '🎮', roles: ['USER', 'PROMOTER', 'ADMIN'] },
-      { path: '/profile',  label: 'Profilom',       icon: '👤', roles: ['USER'] },
+      { path: '/profile',  label: 'Profilom',      icon: '👤', roles: ['USER'] },
       { path: '/promoter', label: 'Promoter nézet', icon: '🔍', roles: ['PROMOTER', 'ADMIN'] },
       { path: '/admin',    label: 'Admin panel',    icon: '⚙️', roles: ['ADMIN'] },
       { path: '/feedback', label: 'Értékelés', icon: '⭐' , roles: ['USER'] },
@@ -137,7 +138,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
       .filter(item => item.roles.includes(this.role))
       .map(item => ({
         ...item,
-        isActive: this.router.url.split('?')[0] === item.path // URL paraméterek (pl. ?tab=X) levágása az egyezéshez
+        isActive: this.router.url.split('?')[0] === item.path
       }));
   }
 
