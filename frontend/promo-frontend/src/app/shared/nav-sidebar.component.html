@@ -49,7 +49,7 @@
       <div class="px-2 pt-1 pb-1 text-jager-amber text-[10px] font-black tracking-[0.2em] uppercase opacity-70">Navigáció</div>
     }
 
-    @for (item of navItemsList; track item.path) {
+    @for (item of allNavItems; track item.path) {
       <button
         (click)="item.isActive ? null : navigate(item.path)"
         [ngClass]="item.isActive
