@@ -32,17 +32,17 @@
     <!-- Gyors mennyiség gombok (folyadék: literben, merch: darabban) -->
     @if (item.liquid) {
       <div class="flex gap-1.5">
-        <button (click)="setQuickStock.emit({ item, value: 0.5 })" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">0.5L</button>
-        <button (click)="setQuickStock.emit({ item, value: 0.7 })" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">0.7L</button>
-        <button (click)="setQuickStock.emit({ item, value: 1.0 })" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">1.0L</button>
-        <button (click)="setQuickStock.emit({ item, value: 1.75 })" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">1.75L</button>
+        <button (click)="setQuickStock.emit(0.5)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">0.5L</button>
+        <button (click)="setQuickStock.emit(0.7)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">0.7L</button>
+        <button (click)="setQuickStock.emit(1.0)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">1.0L</button>
+        <button (click)="setQuickStock.emit(1.75)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">1.75L</button>
       </div>
     } @else {
       <div class="flex gap-1.5">
-        <button (click)="setQuickStock.emit({ item, value: 1 })"  class="flex-1 py-1.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 text-[10px] font-bold text-gray-400 hover:text-purple-400 rounded-md transition-colors uppercase tracking-widest">1 db</button>
-        <button (click)="setQuickStock.emit({ item, value: 5 })"  class="flex-1 py-1.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 text-[10px] font-bold text-gray-400 hover:text-purple-400 rounded-md transition-colors uppercase tracking-widest">5 db</button>
-        <button (click)="setQuickStock.emit({ item, value: 10 })" class="flex-1 py-1.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 text-[10px] font-bold text-gray-400 hover:text-purple-400 rounded-md transition-colors uppercase tracking-widest">10 db</button>
-        <button (click)="setQuickStock.emit({ item, value: 50 })" class="flex-1 py-1.5 bg-white/5 hover:bg-purple-500/20 border border-white/10 hover:border-purple-500/50 text-[10px] font-bold text-gray-400 hover:text-purple-400 rounded-md transition-colors uppercase tracking-widest">50 db</button>
+        <button (click)="setQuickStock.emit(1)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">1 db</button>
+        <button (click)="setQuickStock.emit(5)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">5 db</button>
+        <button (click)="setQuickStock.emit(10)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">10 db</button>
+        <button (click)="setQuickStock.emit(50)" class="flex-1 py-1.5 bg-white/5 hover:bg-jager-orange/20 border border-white/10 hover:border-jager-orange/50 text-[10px] font-bold text-gray-400 hover:text-jager-orange rounded-md transition-colors uppercase tracking-widest">50 db</button>
       </div>
     }
 

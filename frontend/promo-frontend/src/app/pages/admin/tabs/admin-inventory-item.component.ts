@@ -17,6 +17,8 @@ export class AdminInventoryItemComponent {
   @Output() setQuickStock = new EventEmitter<number>();
   @Output() deleteItem = new EventEmitter<any>();
 
+  @Output() stockInputChange = new EventEmitter<{ id: number, value: number }>();
+
   getStockPercent(stock: number): number {
     return Math.min((stock / 200) * 100, 100);
   }

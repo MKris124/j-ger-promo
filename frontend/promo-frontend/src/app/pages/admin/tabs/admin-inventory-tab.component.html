@@ -51,7 +51,7 @@
         [addStockMap]="addStockMap"
         (addStock)="addStock.emit($event)"
         (subtractStock)="subtractStock.emit($event)"
-        (setQuickStock)="setQuickStock.emit($event)"
+        (setQuickStock)="onSetQuickStock(item, $event)" 
         (deleteItem)="deleteItem.emit($event)"
         (stockInputChange)="onStockInputChange($event)"
       />

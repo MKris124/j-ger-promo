@@ -25,6 +25,11 @@ export class AdminInventoryTabComponent {
   @Output() setQuickStock = new EventEmitter<{ item: any, value: number }>();
   @Output() deleteItem = new EventEmitter<any>();
 
+  onStockInputChange(event: { id: number, value: number }) {
+    // Frissítjük a map-et a megfelelő ID alapján
+    this.addStockMap[event.id] = event.value;
+  }
+
   // Segédmetódus a quick stock esemény kényelmesebb továbbítására
   onSetQuickStock(item: any, value: number) {
     this.setQuickStock.emit({ item, value });
