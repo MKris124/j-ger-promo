@@ -1,0 +1,103 @@
+<section class="max-w-2xl mx-auto md:mx-0 md:max-w-5xl">
+
+  <!-- Fejléc + kereső -->
+  <div class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Felhasználók</h1>
+      <p class="text-gray-400 text-sm mt-1">Összesen {{ users.length }} felhasználó regisztrált.</p>
+    </div>
+    <div class="relative w-full md:w-64">
+      <input
+        type="text"
+        [ngModel]="userSearchTerm"
+        (ngModelChange)="searchTermChange.emit($event)"
+        placeholder="Keresés névre / emailre..."
+        class="w-full bg-black/40 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors"
+      >
+      <span class="absolute left-3.5 top-2.5 text-gray-500">🔍</span>
+    </div>
+  </div>
+
+  <!-- Mobil nézet: kártyák -->
+  <div class="block md:hidden flex flex-col gap-3">
+    @for (user of filteredUsers; track user.id) {
+      <div class="jager-card p-4 flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-jager-orange/10 border border-jager-orange/20 flex items-center justify-center text-jager-orange font-bold text-sm flex-shrink-0">
+          {{ user.name?.charAt(0)?.toUpperCase() || '?' }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-sm text-jager-light truncate">{{ user.name }}</div>
+          <div class="text-xs text-gray-500 truncate">{{ user.email }}</div>
+        </div>
+        <div class="flex-shrink-0">
+          <select
+            [value]="user.role"
+            (change)="changeRole.emit({ user, role: $any($event.target).value })"
+            class="px-2 py-1.5 bg-black/40 border border-gray-700 rounded-lg text-xs text-gray-300 focus:outline-none focus:border-jager-orange transition-colors cursor-pointer"
+          >
+            @for (r of roleOptions; track r) {
+              <option [value]="r" [selected]="r === user.role">{{ r }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    }
+    @if (filteredUsers.length === 0) {
+      <div class="flex flex-col items-center justify-center py-16 text-gray-600">
+        <span class="text-4xl mb-3">👥</span>
+        <p class="text-sm">Nincs találat a keresésre.</p>
+      </div>
+    }
+  </div>
+
+  <!-- Desktop nézet: táblázat -->
+  <div class="hidden md:block jager-card overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-jager-green/50 bg-black/40">
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">ID</th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Név</th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Email</th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Szerepkör</th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Módosítás</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of filteredUsers; track user.id) {
+          <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
+            <td class="px-5 py-4 text-gray-500 font-mono text-xs">#{{ user.id }}</td>
+            <td class="px-5 py-4 font-medium text-jager-light">{{ user.name }}</td>
+            <td class="px-5 py-4 text-gray-400 text-xs">{{ user.email }}</td>
+            <td class="px-5 py-4">
+              @if (user.role === 'ADMIN') {
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase bg-jager-orange/10 border border-jager-orange/30 text-jager-orange">ADMIN</span>
+              } @else if (user.role === 'PROMOTER') {
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase bg-blue-500/10 border border-blue-500/20 text-blue-400">PROMOTER</span>
+              } @else {
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold tracking-widest uppercase bg-white/5 border border-white/10 text-gray-400">USER</span>
+              }
+            </td>
+            <td class="px-5 py-4">
+              <select
+                [value]="user.role"
+                (change)="changeRole.emit({ user, role: $any($event.target).value })"
+                class="px-3 py-1.5 bg-black/40 border border-gray-700 rounded-lg text-xs text-gray-300 focus:outline-none focus:border-jager-orange transition-colors cursor-pointer"
+              >
+                @for (r of roleOptions; track r) {
+                  <option [value]="r" [selected]="r === user.role">{{ r }}</option>
+                }
+              </select>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    @if (filteredUsers.length === 0) {
+      <div class="flex flex-col items-center justify-center py-20 text-gray-600">
+        <span class="text-4xl mb-3">👥</span>
+        <p class="text-sm">Nincs találat a keresésre.</p>
+      </div>
+    }
+  </div>
+
+</section>

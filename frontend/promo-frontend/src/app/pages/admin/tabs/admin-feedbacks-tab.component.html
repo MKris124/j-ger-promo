@@ -1,0 +1,54 @@
+<section class="max-w-2xl mx-auto md:mx-0 md:max-w-5xl animate-[ptrPulse_0.3s_ease-out]">
+  <div class="mb-6 md:mb-8">
+    <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Értékelések</h1>
+    <p class="text-gray-400 text-sm mt-1">Nézd meg, mit gondolnak a játékosok az eseményről.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+    <!-- Üres állapot -->
+    @if (feedbacks.length === 0) {
+      <div class="col-span-full jager-card py-16 text-center text-gray-500">
+        <span class="text-4xl mb-3 block">⭐</span>
+        <p class="text-sm font-medium">Még nem érkezett visszajelzés.</p>
+      </div>
+    }
+
+    <!-- Visszajelzés kártyák -->
+    @for (fb of feedbacks; track fb.id) {
+      <div class="jager-card p-5 relative overflow-hidden group border border-white/5 hover:border-jager-orange/30 transition-colors flex flex-col">
+
+        <!-- Fejléc: felhasználó + csillagok -->
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <h3 class="text-white font-bold tracking-wide flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-jager-green flex items-center justify-center text-[10px] text-jager-orange font-black">
+                {{ fb.userName.charAt(0).toUpperCase() }}
+              </span>
+              {{ fb.userName }}
+            </h3>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">
+              {{ fb.createdAt | date:'yyyy. MM. dd. HH:mm' }}
+            </p>
+          </div>
+          <div class="flex gap-1 text-lg">
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <span [class]="star <= fb.rating ? 'text-jager-orange drop-shadow-[0_0_5px_rgba(243,112,33,0.5)]' : 'text-gray-700'">
+                ★
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Szöveges komment (opcionális) -->
+        @if (fb.comment) {
+          <div class="mt-auto pt-3 p-3 bg-black/40 rounded-lg text-sm text-gray-300 italic border-l-2 border-jager-amber">
+            "{{ fb.comment }}"
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+</section>

@@ -1,0 +1,211 @@
+<section class="max-w-2xl mx-auto md:mx-0 md:max-w-4xl">
+  <div class="mb-6 md:mb-8">
+    <h1 class="text-2xl md:text-3xl font-extrabold tracking-wider text-jager-light uppercase">Beállítások</h1>
+    <p class="text-gray-400 text-sm mt-1">Az esemény és a sorsolási paraméterek kezelése.</p>
+  </div>
+
+  <div class="flex flex-col gap-4 md:gap-5">
+
+    <!-- 1. sor: Esemény státusz + Kemcső db/Liter -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+
+      <!-- Esemény státusz kártya -->
+      <div class="jager-card p-5 md:p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="text-xl">🎯</span>
+          <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Esemény státusz</h2>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-400">
+            {{ settings.eventActive ? 'Játékosok játszhatnak' : 'Regisztráció szünetel' }}
+          </span>
+          <button
+            (click)="toggleEvent.emit()"
+            [class]="settings.eventActive
+              ? 'relative w-12 h-6 rounded-full bg-jager-orange border border-jager-orange transition-all duration-200 flex-shrink-0'
+              : 'relative w-12 h-6 rounded-full bg-gray-700 border border-gray-600 transition-all duration-200 flex-shrink-0'"
+          >
+            <span
+              [class]="settings.eventActive
+                ? 'absolute top-0.5 left-6 w-5 h-5 rounded-full bg-white transition-all duration-200 shadow'
+                : 'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-gray-500 transition-all duration-200'"
+            ></span>
+          </button>
+        </div>
+        <p class="text-xs text-gray-600 mt-3">Ez a manuális kapcsoló. Ha időzítés is be van állítva, az automatikusan felülírja.</p>
+      </div>
+
+      <!-- Kemcső db / Liter kártya -->
+      <div class="jager-card p-5 md:p-6">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-xl">🍶</span>
+          <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Kemcső db / Liter</h2>
+        </div>
+        <p class="text-xs text-gray-400 mb-4 leading-relaxed">
+          Hány Jäger kemcsövet ér egy 1 literes üveg.
+        </p>
+        <div class="flex items-center gap-3 mb-4">
+          <div class="flex items-center bg-black/40 border border-gray-700 rounded-lg overflow-hidden">
+            <button
+              (click)="shotsPerLiterChange.emit(shotsPerLiterInput > 0 ? +(shotsPerLiterInput - 0.5).toFixed(1) : 0)"
+              class="w-11 h-11 text-gray-400 hover:bg-jager-orange/10 hover:text-jager-orange text-xl transition-colors"
+            >−</button>
+            <input
+              type="number"
+              [ngModel]="shotsPerLiterInput"
+              (ngModelChange)="shotsPerLiterChange.emit($event)"
+              min="0"
+              step="0.5"
+              class="w-16 h-11 text-center bg-transparent text-jager-light font-bold text-lg focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              (click)="shotsPerLiterChange.emit(+(shotsPerLiterInput + 0.5).toFixed(1))"
+              class="w-11 h-11 text-gray-400 hover:bg-jager-orange/10 hover:text-jager-orange text-xl transition-colors"
+            >+</button>
+          </div>
+          <span class="text-sm text-gray-400">kemcső / liter</span>
+        </div>
+        @if (shotsPerLiterInput > 0) {
+          <div class="bg-black/40 border border-gray-700 rounded-lg p-3">
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Példa arányok</p>
+            <div class="grid grid-cols-3 gap-2">
+              @for (ex of getLiterExamples(); track ex.label) {
+                <div class="flex flex-col items-center gap-0.5">
+                  <span class="text-jager-orange font-bold text-sm">{{ ex.shots }}</span>
+                  <span class="text-gray-500 text-xs">{{ ex.label }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Esemény időzítés kártya -->
+    <div class="jager-card p-5 md:p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-xl">⏰</span>
+        <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Esemény időzítés</h2>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mb-5">
+        <button
+          (click)="scheduleModeChange.emit('manual')"
+          [class]="scheduleMode === 'manual'
+            ? 'py-2.5 rounded-lg text-sm font-medium bg-jager-orange/10 border border-jager-orange/40 text-jager-orange'
+            : 'py-2.5 rounded-lg text-sm font-medium bg-black/40 border border-gray-700 text-gray-400 transition-colors'"
+        >🖐 Manuális</button>
+        <button
+          (click)="scheduleModeChange.emit('scheduled')"
+          [class]="scheduleMode === 'scheduled'
+            ? 'py-2.5 rounded-lg text-sm font-medium bg-jager-orange/10 border border-jager-orange/40 text-jager-orange'
+            : 'py-2.5 rounded-lg text-sm font-medium bg-black/40 border border-gray-700 text-gray-400 transition-colors'"
+        >📅 Időzített</button>
+      </div>
+      @if (scheduleMode === 'manual') {
+        <p class="text-sm text-gray-500 text-center py-2">Az esemény a fenti kapcsolóval irányítható kézzel.</p>
+      }
+      @if (scheduleMode === 'scheduled') {
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Kezdés</label>
+            <input type="datetime-local" [ngModel]="eventStartInput" (ngModelChange)="eventStartChange.emit($event)" class="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors text-sm"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Befejezés</label>
+            <input type="datetime-local" [ngModel]="eventEndInput" (ngModelChange)="eventEndChange.emit($event)" class="w-full bg-black/40 border border-gray-700 rounded-lg px-4 py-3 text-jager-light focus:outline-none focus:border-jager-orange focus:ring-1 focus:ring-jager-orange transition-colors text-sm"/>
+          </div>
+        </div>
+        @if (getEventTimeStatus()) {
+          <div class="mt-3 px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-sm text-gray-300">{{ getEventTimeStatus() }}</div>
+        }
+      }
+    </div>
+
+    <!-- Sorsolási mód kártya -->
+    <div class="jager-card p-5 md:p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-xl">🎰</span>
+        <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Sorsolási mód</h2>
+      </div>
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button
+          (click)="scheduleMode !== 'manual' && (settings.drawMode = 'TIMED')"
+          [class]="settings.drawMode === 'TIMED' && scheduleMode !== 'manual'
+            ? 'py-3 px-3 rounded-xl text-sm font-semibold bg-jager-orange/10 border border-jager-orange/40 text-jager-orange text-left transition-colors'
+            : scheduleMode === 'manual'
+              ? 'py-3 px-3 rounded-xl text-sm font-medium bg-black/40 border border-gray-700 text-gray-600 text-left opacity-40 cursor-not-allowed'
+              : 'py-3 px-3 rounded-xl text-sm font-medium bg-black/40 border border-gray-700 text-gray-400 text-left transition-colors hover:border-gray-600'"
+        >
+          <div class="text-base mb-1">⏱</div>
+          <div class="font-bold text-xs">Nyerő pillanatok</div>
+          <div class="text-[10px] mt-0.5" [class]="scheduleMode === 'manual' ? 'text-gray-700' : 'text-gray-500'">{{ scheduleMode === 'manual' ? 'Időzítés szükséges' : 'Egyenletes elosztás' }}</div>
+        </button>
+        <button
+          (click)="settings.drawMode = 'PERCENTAGE'"
+          [class]="settings.drawMode === 'PERCENTAGE' || scheduleMode === 'manual'
+            ? 'py-3 px-3 rounded-xl text-sm font-semibold bg-jager-orange/10 border border-jager-orange/40 text-jager-orange text-left transition-colors'
+            : 'py-3 px-3 rounded-xl text-sm font-medium bg-black/40 border border-gray-700 text-gray-400 text-left transition-colors hover:border-gray-600'"
+        >
+          <div class="text-base mb-1">⚖️</div>
+          <div class="font-bold text-xs">Készlet-arányos</div>
+          <div class="text-[10px] text-gray-500 mt-0.5">Shot vs merch esélye</div>
+        </button>
+      </div>
+      @if (settings.drawMode === 'TIMED') {
+        <div class="bg-black/40 border border-gray-700 rounded-xl p-3 text-xs text-gray-400 leading-relaxed">
+          <p class="font-semibold text-gray-300 mb-1">⏱ Nyerő pillanatok mód</p>
+          Minden merch itemhez előre generál pillanatokat az esemény idején egyenletesen elosztva. A pillanatok között mindenki shotot kap — így a merch garantáltan kitart a buli végéig. <span class="text-jager-orange font-medium"> Csak időzített módban működik.</span>
+        </div>
+      }
+      @if (settings.drawMode === 'PERCENTAGE') {
+        <div class="bg-black/40 border border-gray-700 rounded-xl p-3 text-xs text-gray-400 leading-relaxed">
+          <p class="font-semibold text-gray-300 mb-1">⚖️ Készlet-arányos mód</p>
+          A backend a meglévő készlet arányában sorsol. Ha elfogy a merch, automatikusan csak shot marad. Ha minden elfogy, az esemény leáll.
+        </div>
+      }
+    </div>
+
+    <!-- Aktív játék kártya -->
+    <div class="jager-card p-5 md:p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-xl">🎮</span>
+        <h2 class="font-bold tracking-wider text-sm uppercase text-gray-300">Aktív játék</h2>
+      </div>
+      @if (games.length === 0) {
+        <p class="text-sm text-gray-500">Még nincs játék létrehozva. Menj a Játékok fülre!</p>
+      } @else {
+        <div class="flex flex-col gap-2">
+          @for (game of games; track game.id) {
+            <button
+              (click)="setActiveGame.emit(game)"
+              [class]="settings.activeGame?.id === game.id
+                ? 'flex items-center gap-3 px-4 py-3 rounded-xl bg-jager-orange/10 border border-jager-orange/40 text-left w-full'
+                : 'flex items-center gap-3 px-4 py-3 rounded-xl bg-black/40 border border-gray-700 text-left w-full hover:border-gray-600 transition-colors'"
+            >
+              <span [class]="settings.activeGame?.id === game.id ? 'w-2 h-2 rounded-full bg-jager-orange flex-shrink-0' : 'w-2 h-2 rounded-full bg-gray-600 flex-shrink-0'"></span>
+              <div class="flex-1 min-w-0">
+                <div [class]="settings.activeGame?.id === game.id ? 'text-sm font-semibold text-jager-orange' : 'text-sm font-medium text-gray-300'">{{ game.name }}</div>
+                <div class="text-xs text-gray-500 truncate">{{ game.gameKey }}</div>
+              </div>
+              @if (settings.activeGame?.id === game.id) {
+                <span class="text-[10px] font-bold text-jager-orange uppercase tracking-widest flex-shrink-0">Aktív</span>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Mentés gomb -->
+    <button
+      (click)="updateSettings.emit()"
+      [disabled]="loading"
+      class="w-full bg-jager-orange hover:bg-orange-600 disabled:opacity-40 text-black font-bold py-3.5 rounded-xl transition-colors tracking-wider uppercase text-sm"
+    >
+      @if (loading) {
+        <svg class="animate-spin h-5 w-5 mx-auto text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle><path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path></svg>
+      } @else { Beállítások mentése }
+    </button>
+
+  </div>
+</section>

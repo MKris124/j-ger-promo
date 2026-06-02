@@ -8,6 +8,13 @@ import { PageHeaderComponent } from '../../shared/page-header.component';
 import { GAME_REGISTRY, RegisteredGame } from '../../shared/game-registry';
 import { environment } from '../../../environments/environments';
 
+
+import { AdminSettingsTabComponent } from './tabs/admin-settings-tab.component';
+import { AdminUsersTabComponent } from './tabs/admin-users-tab.component';
+import { AdminGamesTabComponent } from './tabs/admin-games-tab.component';
+import { AdminInventoryTabComponent } from './tabs/admin-inventory-tab.component';
+import { AdminFeedbacksTabComponent } from './tabs/admin-feedbacks-tab.component';
+
 interface Game {
   id: number;
   name: string;
@@ -59,7 +66,14 @@ interface FeedbackResponse {
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent],
+  imports: [CommonModule, 
+    FormsModule, 
+    PageHeaderComponent, 
+    AdminSettingsTabComponent, 
+    AdminGamesTabComponent, 
+    AdminInventoryTabComponent, 
+    AdminUsersTabComponent, 
+    AdminFeedbacksTabComponent],
   templateUrl: './admin.component.html',
 })
 export class AdminComponent implements OnInit {
