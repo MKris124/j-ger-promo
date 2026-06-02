@@ -1,25 +1,16 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login.component';
-import { GameComponent } from './pages/game/game.component';
-import { AdminComponent } from './pages/admin/admin.component';
-import { PromoterComponent } from './pages/promoter/promoter.component';
-import { ProfileComponent } from './pages/profile/profile.component';
 import { adminGuard } from './pages/admin/admin.guard';
 import { promoterGuard } from './pages/promoter/promoter.guard';
 import { gameGuard } from './pages/game/game.guard';
 
-import { PrivacyComponent } from './pages/privacy/privacy.component';
-import { FaqComponent } from './pages/faq/faq.components';
-import { FeedbackComponent } from './pages/feedback/feedback.component';
-
 export const routes: Routes = [
-  { path: '',        component: LoginComponent },
-  { path: 'game',    component: GameComponent,    canActivate: [gameGuard] },
-  { path: 'profile', component: ProfileComponent, canActivate: [gameGuard] },
-  { path: 'admin',   component: AdminComponent,   canActivate: [adminGuard] },
-  { path: 'promoter',component: PromoterComponent,canActivate: [promoterGuard] },
-  { path: 'privacy', component: PrivacyComponent },
-  { path: 'faq', component: FaqComponent },
-  { path: 'feedback', component: FeedbackComponent },
+  { path: '', loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) },
+  { path: 'game', loadComponent: () => import('./pages/game/game.component').then(m => m.GameComponent), canActivate: [gameGuard] },
+  { path: 'profile', loadComponent: () => import('./pages/profile/profile.component').then(m => m.ProfileComponent), canActivate: [gameGuard] },
+  { path: 'admin', loadComponent: () => import('./pages/admin/admin.component').then(m => m.AdminComponent), canActivate: [adminGuard] },
+  { path: 'promoter', loadComponent: () => import('./pages/promoter/promoter.component').then(m => m.PromoterComponent), canActivate: [promoterGuard] },
+  { path: 'privacy', loadComponent: () => import('./pages/privacy/privacy.component').then(m => m.PrivacyComponent) },
+  { path: 'faq', loadComponent: () => import('./pages/faq/faq.components').then(m => m.FaqComponent) },
+  { path: 'feedback', loadComponent: () => import('./pages/feedback/feedback.component').then(m => m.FeedbackComponent) },
   { path: '**', redirectTo: '' }
 ];

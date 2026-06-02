@@ -62,11 +62,23 @@
     }
 
     @if (activeGame?.gameKey === 'catch-the-jager') {
-      <app-catch-jager (gameWon)="onGameWon()" (gameLost)="onGameLost()"></app-catch-jager>
+      @defer {
+        <app-catch-jager (gameWon)="onGameWon()" (gameLost)="onGameLost()"></app-catch-jager>
+      } @loading {
+        <div class="flex justify-center items-center h-40 text-jager-amber text-sm font-bold animate-pulse">
+          Játék betöltése...
+        </div>
+      }
     }
 
     @if (activeGame?.gameKey === 'ride-the-bus') {
-      <app-ride-the-bus (gameWon)="onGameWon()" (gameLost)="onGameLost()"></app-ride-the-bus>
+      @defer {
+        <app-ride-the-bus (gameWon)="onGameWon()" (gameLost)="onGameLost()"></app-ride-the-bus>
+      } @loading {
+        <div class="flex justify-center items-center h-40 text-jager-amber text-sm font-bold animate-pulse">
+          Játék betöltése...
+        </div>
+      }
     }
 
   </div>
