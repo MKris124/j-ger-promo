@@ -1,14 +1,13 @@
 package hu.jager.promo_backend.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class AuthRequest {
+public class ResendCodeRequest {
 
     @NotBlank(message = "Az e-mail cím megadása kötelező!")
+    @Email(message = "Érvénytelen e-mail cím formátum!")
     private String email;
-
-    @NotBlank(message = "A jelszó megadása kötelező!")
-    private String password;
 }

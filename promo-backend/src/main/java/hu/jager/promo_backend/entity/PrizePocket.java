@@ -6,7 +6,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "prize_pockets")
+@Table(name = "prize_pockets", indexes = {
+        @Index(name = "idx_prize_pockets_user_id", columnList = "user_id"),
+        @Index(name = "idx_prize_pockets_redeemed_by_promoter_id", columnList = "redeemed_by_promoter_id")
+})
 @Data
 @NoArgsConstructor
 public class PrizePocket {

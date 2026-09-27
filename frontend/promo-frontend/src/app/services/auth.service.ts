@@ -23,10 +23,19 @@ export class AuthService {
     );
   }
 
+  // Regisztráció után NINCS azonnali belépés — a fiók csak a kód megerősítése után használható
   register(credentials: any) {
-    return this.http.post<any>(`${this.apiUrl}/register`, credentials).pipe(
+    return this.http.post<any>(`${this.apiUrl}/register`, credentials);
+  }
+
+  verifyEmail(payload: { email: string; code: string }) {
+    return this.http.post<any>(`${this.apiUrl}/verify-email`, payload).pipe(
       tap(response => this.saveSession(response))
     );
+  }
+
+  resendCode(email: string) {
+    return this.http.post<any>(`${this.apiUrl}/resend-code`, { email });
   }
 
   loginWithGoogle(token: string) {

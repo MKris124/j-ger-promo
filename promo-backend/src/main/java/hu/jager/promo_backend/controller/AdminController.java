@@ -31,7 +31,7 @@ public class AdminController {
     @PostMapping("/settings")
     public ResponseEntity<AppSettings> updateSettings(@RequestBody UpdateSettingsRequest req) {
         return ResponseEntity.ok(adminService.updateSettings(
-                req.isEventActive(), req.getShotsPerLiter(), req.getActiveGameId(),
+                req.isEventActive(), req.getShotsPerLiter(), req.getMaxPocketsPerUser(), req.getActiveGameId(),
                 req.getDrawMode(), req.getEventStart(), req.getEventEnd()
         ));
     }
@@ -129,6 +129,16 @@ public class AdminController {
                                         @RequestBody ChangeRoleRequest req) {
         try {
             return ResponseEntity.ok(adminService.changeUserRole(userId, req.getRole()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+        try {
+            adminService.deleteUser(userId);
+            return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

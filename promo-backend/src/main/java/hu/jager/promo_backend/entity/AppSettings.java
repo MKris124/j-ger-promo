@@ -21,6 +21,10 @@ public class AppSettings {
 
     private Integer shotsPerLiter = 52;
 
+    // Hány AVAILABLE zsebet (nyereményt) tarthat egyszerre egy felhasználó — eseményenként állítható.
+    // NULL a régi (funkció előtti) sorokon — ilyenkor a szolgáltatás 2-t vesz alapértelmezettnek.
+    private Integer maxPocketsPerUser = 2;
+
     private boolean isEventActive = false;
 
     // Időzített mód: ha be van állítva start+end, automatikusan kapcsol

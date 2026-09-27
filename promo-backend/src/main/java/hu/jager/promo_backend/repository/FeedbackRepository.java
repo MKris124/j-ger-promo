@@ -4,4 +4,7 @@ import hu.jager.promo_backend.entity.Feedback;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
+
+    // Felhasználó törlésekor: a saját visszajelzései törlődnek
+    void deleteAllByUserId(Long userId);
 }

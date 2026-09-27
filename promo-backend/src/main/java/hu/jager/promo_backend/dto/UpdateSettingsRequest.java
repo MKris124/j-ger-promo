@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public class UpdateSettingsRequest {
     private boolean eventActive;
     private Integer shotsPerLiter;
+    private Integer maxPocketsPerUser;
     private Long activeGameId;
     private String drawMode;         // "TIMED" vagy "PERCENTAGE"
     private LocalDateTime eventStart;

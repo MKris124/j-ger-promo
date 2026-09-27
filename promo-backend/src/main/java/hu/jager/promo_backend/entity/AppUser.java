@@ -33,6 +33,14 @@ public class AppUser {
     @Column(nullable = false)
     private AuthProvider provider = AuthProvider.LOCAL;
 
+    // Boxed Boolean (nem primitív) — a régi, e funkció előtt regisztrált userek sora
+    // NULL marad migráláskor, amit "megerősítettnek" kezelünk (ne zárjuk ki a meglévőket)
+    private Boolean emailVerified = Boolean.FALSE;
+
+    private String verificationCode;
+
+    private LocalDateTime verificationCodeExpiresAt;
+
     public enum Role {
         USER, PROMOTER, ADMIN
     }

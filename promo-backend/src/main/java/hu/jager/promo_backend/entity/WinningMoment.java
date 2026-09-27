@@ -7,7 +7,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "winning_moments")
+@Table(name = "winning_moments", indexes = {
+        @Index(name = "idx_winning_moments_claimed_by_user_id", columnList = "claimed_by_user_id"),
+        @Index(name = "idx_winning_moments_scheduled_claimed", columnList = "scheduled_at, claimed")
+})
 @Data
 @NoArgsConstructor
 public class WinningMoment {

@@ -20,6 +20,9 @@ public class AdminService {
     private final GameRepository gameRepo;
     private final DrawService drawService;
     private final PrizePocketRepository prizePocketRepo;
+    private final GameLogRepository gameLogRepo;
+    private final WinningMomentRepository winningMomentRepo;
+    private final FeedbackRepository feedbackRepo;
 
     // ===================== SETTINGS =====================
 
@@ -42,6 +45,7 @@ public class AdminService {
     @Transactional
     public AppSettings updateSettings(boolean isEventActive,
                                       Integer shotsPerLiter,
+                                      Integer maxPocketsPerUser,
                                       Long activeGameId,
                                       String drawMode,
                                       LocalDateTime eventStart,
@@ -54,6 +58,10 @@ public class AdminService {
 
         if (shotsPerLiter != null && shotsPerLiter > 0) {
             settings.setShotsPerLiter(shotsPerLiter);
+        }
+
+        if (maxPocketsPerUser != null && maxPocketsPerUser > 0) {
+            settings.setMaxPocketsPerUser(maxPocketsPerUser);
         }
 
         if (drawMode != null && (drawMode.equals("TIMED") || drawMode.equals("PERCENTAGE"))) {
@@ -157,5 +165,24 @@ public class AdminService {
                 .orElseThrow(() -> new IllegalArgumentException("A felhasználó nem található!"));
         user.setRole(newRole);
         return userRepo.save(user);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        AppUser user = userRepo.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("A felhasználó nem található!"));
+
+        // Ha promóterként váltott be másoknak zsebeket, azokat megtartjuk —
+        // csak a promóter referenciát oldjuk el, hogy a user törölhető legyen
+        prizePocketRepo.detachRedeemedByPromoter(userId);
+
+        // A user saját adatai: mind törlődnek
+        prizePocketRepo.deleteAllByUserId(userId);
+        gameLogRepo.deleteAllByUserId(userId);
+        winningMomentRepo.deleteAllByClaimedById(userId);
+        feedbackRepo.deleteAllByUserId(userId);
+
+        userRepo.delete(user);
+        log.info("Felhasználó törölve: {}", user.getEmail());
     }
 }

@@ -70,8 +70,6 @@ public class InventoryService {
 
     // --- JÁTÉKOS: Elérhető nyeremények ---
     public List<InventoryItem> getAvailablePrizes() {
-        return inventoryRepo.findByRemainingQuantityGreaterThan(0).stream()
-                .filter(item -> !item.isArchived())
-                .toList();
+        return inventoryRepo.findByRemainingQuantityGreaterThanAndArchivedFalse(0);
     }
 }

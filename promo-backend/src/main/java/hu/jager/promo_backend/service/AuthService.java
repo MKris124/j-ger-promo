@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -20,10 +22,19 @@ public class AuthService {
 
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
+    private static final SecureRandom CODE_RANDOM = new SecureRandom();
+    private static final long CODE_VALIDITY_MINUTES = 15;
 
     // FONTOS: Ezt majd a Google Cloud Console-ban kapott azonosítóra kell cserélned!
     // (Ugyanezt az ID-t fogja használni az Angular frontend is).
     private static final String GOOGLE_CLIENT_ID = "567887725034-56lg9t1s9rplp8q572v48697qmh76pfg.apps.googleusercontent.com";
+
+    // Csak egyszer épül fel (HTTP transport + JSON factory) — nem minden Google belépésnél újra
+    private final GoogleIdTokenVerifier googleVerifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
+            .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
+            .build();
 
     // --- 1. HAGYOMÁNYOS (E-MAIL + JELSZÓ) REGISZTRÁCIÓ ---
     @Transactional
@@ -38,8 +49,63 @@ public class AuthService {
         user.setName(name); // <-- EZT ADTUK HOZZÁ! Mentsük el az adatbázisba!
         user.setRole(AppUser.Role.USER);
         user.setProvider(AppUser.AuthProvider.LOCAL);
+        user.setEmailVerified(false);
+        user.setVerificationCode(generateVerificationCode());
+        user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
 
+        AppUser saved = userRepo.save(user);
+
+        // Ha a küldés hibázik, ez az egész tranzakció (a user mentése is) visszagördül —
+        // nem maradhat fenn egy user, aki sosem kapja meg a kódot
+        emailService.sendVerificationCode(saved.getEmail(), saved.getName(), saved.getVerificationCode());
+
+        return saved;
+    }
+
+    // --- E-MAIL MEGERŐSÍTÉS ---
+    @Transactional
+    public AppUser verifyEmail(String email, String code) {
+        AppUser user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen felhasználó!"));
+
+        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+            return user; // már meg van erősítve — idempotens
+        }
+
+        if (user.getVerificationCode() == null
+                || user.getVerificationCodeExpiresAt() == null
+                || user.getVerificationCodeExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("A kód lejárt vagy érvénytelen. Kérj egy újat!");
+        }
+
+        if (!user.getVerificationCode().equals(code)) {
+            throw new IllegalArgumentException("Hibás megerősítő kód!");
+        }
+
+        user.setEmailVerified(true);
+        user.setVerificationCode(null);
+        user.setVerificationCodeExpiresAt(null);
         return userRepo.save(user);
+    }
+
+    @Transactional
+    public void resendVerificationCode(String email) {
+        AppUser user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen felhasználó!"));
+
+        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+            throw new IllegalArgumentException("Ez a fiók már meg van erősítve!");
+        }
+
+        user.setVerificationCode(generateVerificationCode());
+        user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
+        userRepo.save(user);
+
+        emailService.sendVerificationCode(user.getEmail(), user.getName(), user.getVerificationCode());
+    }
+
+    private String generateVerificationCode() {
+        return String.format("%06d", CODE_RANDOM.nextInt(1_000_000));
     }
 
     // --- 2. HAGYOMÁNYOS BELÉPÉS ---
@@ -57,19 +123,20 @@ public class AuthService {
             throw new IllegalArgumentException("Hibás e-mail vagy jelszó!");
         }
 
+        // Csak a funkció bevezetése UTÁN regisztráltakat zárjuk ki (explicit false) —
+        // a régebbi usereknél emailVerified még null, azokat nem zárjuk ki utólag
+        if (Boolean.FALSE.equals(user.getEmailVerified())) {
+            throw new IllegalArgumentException("Kérlek, erősítsd meg az e-mail címed a kapott kóddal, mielőtt belépnél!");
+        }
+
         return user;
     }
 
     // --- 3. GOOGLE BELÉPÉS / AUTOMATIKUS REGISZTRÁCIÓ ---
     @Transactional
     public AppUser loginWithGoogle(String googleIdTokenString) throws Exception {
-        // 1. Google Token ellenőrző felépítése
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
-                .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
-                .build();
-
-        // 2. Token validálása (Leellenőrzi a Google szerverein, hogy tényleg érvényes-e)
-        GoogleIdToken idToken = verifier.verify(googleIdTokenString);
+        // Token validálása (Leellenőrzi a Google szerverein, hogy tényleg érvényes-e)
+        GoogleIdToken idToken = googleVerifier.verify(googleIdTokenString);
         if (idToken == null) {
             throw new IllegalArgumentException("Érvénytelen vagy lejárt Google token!");
         }
@@ -97,6 +164,7 @@ public class AuthService {
             newUser.setName(name);
             newUser.setRole(AppUser.Role.USER); // Szintén alapértelmezett rang
             newUser.setProvider(AppUser.AuthProvider.GOOGLE);
+            newUser.setEmailVerified(true); // A Google már ellenőrizte az e-mail címet
             // Jelszó mező üresen marad, mert a Google azonosítja
 
             return userRepo.save(newUser);

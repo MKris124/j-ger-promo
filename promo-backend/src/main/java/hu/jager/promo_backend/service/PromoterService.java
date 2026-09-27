@@ -34,7 +34,10 @@ public class PromoterService {
     // Tényleges beváltás — ITT történik a készlet levonása
     @Transactional
     public PrizePocket redeemPrize(String qrCodeHash, Long promoterId) {
-        PrizePocket pocket = prizePocketRepo.findByQrCodeHash(qrCodeHash)
+        // Sorzárral olvassuk — így egy párhuzamos második beváltási kérés megvárja,
+        // amíg ez a tranzakció lezár és REDEEMED-re állítja, ahelyett hogy mindkettő
+        // AVAILABLE-nek látná ugyanazt a zsebet és mindkettő levonná a készletet
+        PrizePocket pocket = prizePocketRepo.findByQrCodeHashForUpdate(qrCodeHash)
                 .orElseThrow(() -> new IllegalArgumentException("Érvénytelen QR kód!"));
 
         if (pocket.getStatus() == PrizePocket.Status.REDEEMED) {
@@ -69,9 +72,7 @@ public class PromoterService {
 
     // Ha minden item 0 → esemény leáll
     private void checkAndStopEventIfEmpty() {
-        boolean anyLeft = inventoryRepo.findByRemainingQuantityGreaterThan(0)
-                .stream()
-                .anyMatch(i -> true);
+        boolean anyLeft = inventoryRepo.existsByRemainingQuantityGreaterThanAndArchivedFalse(0);
 
         if (!anyLeft) {
             AppSettings settings = settingsRepo.findById(1L).orElse(null);

@@ -35,6 +35,11 @@ app:
   jwt:
     secret: dev-secret-key-min-32-characters-long
     expiration: 86400000
+  mail:
+    from: no-reply@jager-sbm-game.hu
+
+# Nincs spring.mail.host beállítva dev-ben -> nem jön létre JavaMailSender bean,
+# az EmailService ilyenkor a szerver logba írja ki a megerősítő kódot
 
 ---
 # ===========================
@@ -50,6 +55,11 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+    hikari:
+      # Env-változóval hangolható esemény napján, kód-módosítás nélkül
+      maximum-pool-size: ${DB_POOL_MAX:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: 30000
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -61,8 +71,24 @@ spring:
     console:
       enabled: false
 
+  mail:
+    # Üres alapértelmezés — ha ezek nincsenek beállítva a szerveren, az app AKKOR IS elinduljon
+    # (csak a levélküldés hibázik majd egyesével, nem a teljes backend a boot-nál)
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 app:
   base-url: ${APP_BASE_URL}
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
+  mail:
+    from: ${MAIL_FROM:no-reply@jager-sbm-game.hu}

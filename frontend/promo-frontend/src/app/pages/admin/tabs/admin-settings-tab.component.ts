@@ -9,6 +9,9 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './admin-settings-tab.component.html'
 })
 export class AdminSettingsTabComponent {
+  // Sablonban használt segéd (pl. Math.max a stepper gomboknál)
+  Math = Math;
+
   // Beérkező adatok a szülőtől
   @Input() settings: any = {}; // Javasolt típus: AppSettings
   @Input() games: any[] = []; // Javasolt típus: Game[]

@@ -16,7 +16,7 @@ public interface WinningMomentRepository extends JpaRepository<WinningMoment, Lo
 
     // Legrégebbi lejárt, még ki nem adott nyerő pillanat
     @Query("SELECT w FROM WinningMoment w WHERE w.scheduledAt <= :now AND w.claimed = false " +
-            "AND w.inventoryItem.remainingQuantity > 0 ORDER BY w.scheduledAt ASC")
+            "AND w.inventoryItem.remainingQuantity > 0 AND w.inventoryItem.archived = false ORDER BY w.scheduledAt ASC")
     List<WinningMoment> findUnclaimedMoments(@Param("now") LocalDateTime now, Pageable pageable);
 
     default Optional<WinningMoment> findNextUnclaimedMoment(LocalDateTime now) {
@@ -30,4 +30,7 @@ public interface WinningMomentRepository extends JpaRepository<WinningMoment, Lo
 
     // Hány nyerő pillanat van még
     long countByClaimedFalse();
+
+    // Felhasználó törlésekor: az általa megnyert pillanatok törlődnek
+    void deleteAllByClaimedById(Long userId);
 }

@@ -16,4 +16,7 @@ public interface GameLogRepository extends JpaRepository<GameLog, Long> {
     long countByUserId(Long userId);
 
     List<GameLog> findByUserIdOrderByPlayedAtDesc(Long userId);
+
+    // Felhasználó törlésekor: a saját logjai törlődnek
+    void deleteAllByUserId(Long userId);
 }

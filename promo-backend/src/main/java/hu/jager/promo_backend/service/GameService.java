@@ -20,6 +20,13 @@ public class GameService {
     private final UserRepository userRepo;
     private final GameRepository gameRepo;
     private final DrawService drawService;
+    private final AppSettingsRepository settingsRepo;
+
+    // Régi (funkció előtti) settings sorokon maxPocketsPerUser NULL lehet — akkor a korábbi fix 2 marad
+    private int getMaxPocketsPerUser() {
+        Integer max = settingsRepo.findById(1L).map(AppSettings::getMaxPocketsPerUser).orElse(null);
+        return max != null ? max : 2;
+    }
 
     /**
      * Játék kör rögzítése.
@@ -48,9 +55,9 @@ public class GameService {
             return null;
         }
 
-        // Max 2 nyeremény ellenőrzése
+        // Max nyeremény ellenőrzése — eseményenként állítható (AppSettings.maxPocketsPerUser)
         long currentPrizes = prizePocketRepo.countByUserIdAndStatus(userId, PrizePocket.Status.AVAILABLE);
-        if (currentPrizes >= 2) {
+        if (currentPrizes >= getMaxPocketsPerUser()) {
             throw new IllegalStateException("Mára kimaxoltad a Jäger élményt!");
         }
 
@@ -83,8 +90,8 @@ public class GameService {
     @Transactional
     public PrizePocket claimPrize(Long userId, Long inventoryItemId) {
         long currentPrizes = prizePocketRepo.countByUserIdAndStatus(userId, PrizePocket.Status.AVAILABLE);
-        if (currentPrizes >= 2) {
-            throw new IllegalStateException("Már elérted a maximális 2 nyereményt a mai napra!");
+        if (currentPrizes >= getMaxPocketsPerUser()) {
+            throw new IllegalStateException("Már elérted a maximális nyeremény mennyiséget a mai napra!");
         }
 
         InventoryItem item = inventoryRepo.findById(inventoryItemId).orElseThrow();

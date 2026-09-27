@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -27,6 +28,7 @@ interface AppSettings {
   id: number;
   eventActive: boolean;
   shotsPerLiter: number;
+  maxPocketsPerUser: number;
   activeGame: Game | null;
   eventStart: string | null;
   eventEnd: string | null;
@@ -76,11 +78,12 @@ interface FeedbackResponse {
     AdminFeedbacksTabComponent],
   templateUrl: './admin.component.html',
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   private apiBase = `${environment.apiUrl}/api/admin`;
 
@@ -98,7 +101,7 @@ export class AdminComponent implements OnInit {
   loading = false;
   toast: { message: string; type: 'success' | 'error' } | null = null;
 
-  settings: AppSettings = { id: 1, eventActive: false, shotsPerLiter: 0, activeGame: null, eventStart: null, eventEnd: null, drawMode: 'TIMED' };
+  settings: AppSettings = { id: 1, eventActive: false, shotsPerLiter: 0, maxPocketsPerUser: 2, activeGame: null, eventStart: null, eventEnd: null, drawMode: 'TIMED' };
   shotsPerLiterInput = 0;
   
   get scheduleMode(): 'manual' | 'scheduled' { return this._scheduleMode; }
@@ -130,27 +133,57 @@ export class AdminComponent implements OnInit {
   // --- ÚJ: Felhasználó Keresőmező ---
   userSearchTerm: string = '';
 
+  // inventory/users/feedbacks csak akkor töltődik be, ha az adott fül tényleg megnyílik —
+  // settings+games mindig kell, mert a settings fül is használja a games listát
+  private tabDataLoaded: Partial<Record<Tab['key'], boolean>> = {};
+
+  private adminTabChangeHandler = (e: Event) => {
+    const tab = (e as CustomEvent).detail as Tab['key'];
+    this.activeTab = tab;
+    this.ensureTabDataLoaded(tab);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: this.activeTab },
+      queryParamsHandling: 'merge'
+    });
+  };
+
   ngOnInit(): void {
     this.loadSettings();
     this.loadGames();
-    this.loadInventory();
-    this.loadUsers();
-    this.loadFeedbacks(); // ÚJ: Betöltjük a visszajelzéseket induláskor!
 
-    this.route.queryParams.subscribe(params => {
-      if (params['tab']) {
-        this.activeTab = params['tab'] as any;
-      }
-    });
+    const initialTab = this.route.snapshot.queryParams['tab'];
+    if (initialTab) {
+      this.activeTab = initialTab;
+    }
+    this.ensureTabDataLoaded(this.activeTab);
 
-    window.addEventListener('adminTabChange', (e: any) => {
-      this.activeTab = e.detail;
-      this.router.navigate([], {
-        relativeTo: this.route,
-        queryParams: { tab: this.activeTab },
-        queryParamsHandling: 'merge'
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        if (params['tab']) {
+          this.activeTab = params['tab'] as any;
+          this.ensureTabDataLoaded(this.activeTab);
+        }
       });
-    });
+
+    window.addEventListener('adminTabChange', this.adminTabChangeHandler);
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('adminTabChange', this.adminTabChangeHandler);
+  }
+
+  private ensureTabDataLoaded(tab: Tab['key']): void {
+    if (this.tabDataLoaded[tab]) return;
+    this.tabDataLoaded[tab] = true;
+
+    switch (tab) {
+      case 'inventory': this.loadInventory(); break;
+      case 'users': this.loadUsers(); break;
+      case 'feedbacks': this.loadFeedbacks(); break;
+      // 'settings' és 'games' mindig betöltve az init-kor (loadSettings/loadGames)
+    }
   }
 
   private getHeaders(): HttpHeaders {
@@ -181,6 +214,7 @@ export class AdminComponent implements OnInit {
     const body: any = {
       eventActive: this.settings.eventActive,
       shotsPerLiter: this.shotsPerLiterInput,
+      maxPocketsPerUser: this.settings.maxPocketsPerUser,
       activeGameId: this.settings.activeGame?.id ?? null,
       drawMode: this.settings.drawMode,
     };

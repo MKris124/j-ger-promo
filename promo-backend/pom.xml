@@ -47,6 +47,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Mail (e-mail megerősítő kód küldéséhez) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
         <!-- H2 (dev) -->
         <dependency>
             <groupId>com.h2database</groupId>

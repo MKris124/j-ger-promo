@@ -33,6 +33,7 @@
       <p class="text-gray-400 text-sm font-medium tracking-wide uppercase">
         @if (eventLoading) { Kis türelmet... }
         @else if (!eventActive && !isStaffOverride) { Esemény szünetel }
+        @else if (isVerifying) { Erősítsd meg az e-mail címed! }
         @else if (isLoginMode) { Jelentkezz be a játékhoz! }
         @else { Regisztrálj és nyerj! }
       </p>
@@ -81,6 +82,44 @@
           {{ errorMessage }}
         </div>
       }
+
+      @if (isVerifying && infoMessage) {
+        <div class="bg-jager-green-light/30 border border-jager-amber/40 text-jager-amber text-xs font-bold px-4 py-3 rounded-xl mb-6 text-center uppercase tracking-tighter">
+          {{ infoMessage }}
+        </div>
+      }
+
+      @if (isVerifying) {
+        <p class="text-center text-sm text-gray-400 mb-6 leading-relaxed">
+          Elküldtük a megerősítő kódot ide: <span class="text-jager-amber font-bold">{{ pendingEmail }}</span>.<br>
+          Add meg lent a kódot a folytatáshoz!
+        </p>
+
+        <form (ngSubmit)="onVerifySubmit()" class="space-y-4">
+          <div class="relative">
+            <input type="text" inputmode="numeric" id="verificationCode" name="verificationCode" [(ngModel)]="verificationCode" autocomplete="one-time-code" class="peer w-full bg-jager-dark/50 border border-white/5 rounded-xl px-4 pt-6 pb-2 text-jager-light text-center text-2xl tracking-[0.3em] focus:outline-none focus:border-jager-amber focus:ring-1 focus:ring-jager-amber transition-all duration-300 placeholder-transparent" placeholder="Kód">
+            <label for="verificationCode" class="absolute left-4 top-2 text-[10px] uppercase font-black text-gray-500 transform-gpu transition-all duration-300 ease-out peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-jager-amber pointer-events-none tracking-widest">Megerősítő kód</label>
+          </div>
+
+          <button type="submit" [disabled]="isLoading" class="mt-6 w-full bg-jager-orange hover:bg-orange-500 text-black font-black py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(243,112,33,0.2)] hover:shadow-[0_0_35px_rgba(243,112,33,0.4)] flex justify-center items-center tracking-widest text-sm transform-gpu active:scale-95">
+            @if (isLoading) {
+              <svg class="animate-spin h-5 w-5 mr-3 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
+              </svg>
+              VÁRJ...
+            } @else {
+              MEGERŐSÍTÉS
+            }
+          </button>
+        </form>
+
+        <div class="mt-8 text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest space-x-1">
+          <button type="button" (click)="onResendCode()" class="text-jager-amber hover:text-jager-orange transition-colors">Kód újraküldése</button>
+          <span>·</span>
+          <button type="button" (click)="cancelVerification()" class="text-gray-500 hover:text-gray-300 transition-colors">Vissza</button>
+        </div>
+      } @else {
 
       <form (ngSubmit)="onSubmit()" class="space-y-4">
         
@@ -154,6 +193,8 @@
       <div class="mt-6 text-center">
         <a routerLink="/privacy" class="text-[9px] text-gray-600 hover:text-gray-400 transition-colors uppercase tracking-[0.3em] font-black">Adatkezelési tájékoztató</a>
       </div>
+
+      }
     }
   </div>
 </div>

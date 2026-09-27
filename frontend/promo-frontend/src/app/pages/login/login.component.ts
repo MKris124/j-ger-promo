@@ -29,6 +29,12 @@ export class LoginComponent implements OnInit {
   showPassword = false;
   showPasswordConfirm = false;
   errorMessage = '';
+
+  // E-mail megerősítés állapotok (regisztráció után)
+  isVerifying = false;
+  pendingEmail = '';
+  verificationCode = '';
+  infoMessage = '';
   isLoading = false;
 
   eventActive = false; // Visszaállítva a te változódra!
@@ -195,23 +201,74 @@ export class LoginComponent implements OnInit {
     }
 
     this.isLoading = true;
-    const payload = this.isLoginMode
-      ? { email: this.email, password: this.password }
-      : { email: this.email, password: this.password, name: this.name };
 
-    const request = this.isLoginMode
-      ? this.authService.login(payload)
-      : this.authService.register(payload);
+    if (this.isLoginMode) {
+      this.authService.login({ email: this.email, password: this.password }).subscribe({
+        next: (res) => {
+          this.isLoading = false;
+          if (res.name) localStorage.setItem('userName', res.name);
+        },
+        error: (err) => {
+          this.isLoading = false;
+          this.errorMessage = err.error || 'Váratlan hiba történt. Próbáld újra!';
+        }
+      });
+      return;
+    }
 
-    request.subscribe({
-      next: (res) => {
+    this.authService.register({ email: this.email, password: this.password, name: this.name }).subscribe({
+      next: () => {
         this.isLoading = false;
-        if (res.name) localStorage.setItem('userName', res.name);
+        this.pendingEmail = this.email;
+        this.verificationCode = '';
+        this.isVerifying = true;
       },
       error: (err) => {
         this.isLoading = false;
         this.errorMessage = err.error || 'Váratlan hiba történt. Próbáld újra!';
       }
     });
+  }
+
+  onVerifySubmit() {
+    this.errorMessage = '';
+    this.infoMessage = '';
+
+    if (!this.verificationCode) {
+      this.errorMessage = 'Add meg a kapott kódot!';
+      return;
+    }
+
+    this.isLoading = true;
+    this.authService.verifyEmail({ email: this.pendingEmail, code: this.verificationCode }).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        if (res.name) localStorage.setItem('userName', res.name);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.error || 'Hibás vagy lejárt kód!';
+      }
+    });
+  }
+
+  onResendCode() {
+    this.errorMessage = '';
+    this.infoMessage = '';
+    this.authService.resendCode(this.pendingEmail).subscribe({
+      next: () => {
+        this.infoMessage = 'Új kódot küldtünk az e-mail címedre!';
+      },
+      error: (err) => {
+        this.errorMessage = err.error || 'Nem sikerült új kódot küldeni!';
+      }
+    });
+  }
+
+  cancelVerification() {
+    this.isVerifying = false;
+    this.verificationCode = '';
+    this.errorMessage = '';
+    this.infoMessage = '';
   }
 }

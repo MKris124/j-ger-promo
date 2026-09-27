@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -73,14 +74,14 @@ public class DrawService {
     // ======================== WEIGHTED MÓD ========================
 
     private InventoryItem drawWeighted(AppUser winner) {
-        List<InventoryItem> available = inventoryRepo.findByRemainingQuantityGreaterThan(0);
+        List<InventoryItem> available = inventoryRepo.findByRemainingQuantityGreaterThanAndArchivedFalse(0);
         if (available.isEmpty()) return null;
 
         int totalWeight = available.stream()
                 .mapToInt(InventoryItem::getRemainingQuantity)
                 .sum();
 
-        int rand = new Random().nextInt(totalWeight);
+        int rand = ThreadLocalRandom.current().nextInt(totalWeight);
         int cumulative = 0;
         InventoryItem selected = available.get(0);
 
@@ -97,7 +98,7 @@ public class DrawService {
     // ======================== SHOT FALLBACK ========================
 
     private InventoryItem fallbackToShot(AppUser winner) {
-        return inventoryRepo.findByRemainingQuantityGreaterThan(0)
+        return inventoryRepo.findByRemainingQuantityGreaterThanAndArchivedFalse(0)
                 .stream()
                 .filter(InventoryItem::isLiquid)
                 .max(Comparator.comparingInt(InventoryItem::getRemainingQuantity))
@@ -115,7 +116,7 @@ public class DrawService {
     public int generateWinningMoments(LocalDateTime eventStart, LocalDateTime eventEnd) {
         winningMomentRepo.deleteAllByClaimedFalse();
 
-        List<InventoryItem> merchItems = inventoryRepo.findByRemainingQuantityGreaterThan(0)
+        List<InventoryItem> merchItems = inventoryRepo.findByRemainingQuantityGreaterThanAndArchivedFalse(0)
                 .stream()
                 .filter(item -> !item.isLiquid())
                 .toList();

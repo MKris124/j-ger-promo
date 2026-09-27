@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, HostListener } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, Output, EventEmitter, HostListener, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -18,6 +19,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private socialAuthService = inject(SocialAuthService);
+  private destroyRef = inject(DestroyRef);
 
   @Output() profileClicked = new EventEmitter<void>();
   @Output() tabChanged = new EventEmitter<string>();
@@ -37,6 +39,9 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
 
   private pollInterval: any = null;
   private sidebarClicked = false;
+  private adminTabChangeHandler = (e: Event) => {
+    this.activeSubTab = (e as CustomEvent).detail;
+  };
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -50,19 +55,20 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.pollInterval = setInterval(() => this.checkEventStatus(), 30000);
-    window.addEventListener('adminTabChange', (e: any) => {
-      this.activeSubTab = e.detail;
-    });
+    window.addEventListener('adminTabChange', this.adminTabChangeHandler);
 
-    this.route.queryParams.subscribe(params => {
-      if (params['tab']) {
-        this.activeSubTab = params['tab'];
-      }
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        if (params['tab']) {
+          this.activeSubTab = params['tab'];
+        }
+      });
   }
 
   ngOnDestroy(): void {
     if (this.pollInterval) clearInterval(this.pollInterval);
+    window.removeEventListener('adminTabChange', this.adminTabChangeHandler);
     this.enableScroll();
   }
 

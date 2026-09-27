@@ -20,8 +20,11 @@ public class JwtUtils {
     // Meddig érvényes a belépés? (1000 ms * 60 mp * 60 perc * 24 óra = 1 nap)
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
 
+    // A kulcsot csak egyszer számoljuk ki — minden auth-olt kérés ezt hívná újra generálás nélkül is
+    private static final Key SIGNING_KEY = Keys.hmacShaKeyFor(SECRET.getBytes());
+
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
+        return SIGNING_KEY;
     }
 
     // 1. Token generálása sikeres belépés után
