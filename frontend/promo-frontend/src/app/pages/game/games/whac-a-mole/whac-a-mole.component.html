@@ -7,7 +7,7 @@
       <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
         Csapj rá a felbukkanó <span class="text-jager-orange font-semibold">szarvasokra</span> —
         de vigyázz, a <span class="text-red-400 font-semibold">törött poharat</span> hagyd ki,
-        az pontot von le! 30 másodperced van.
+        az pontot von le! {{ ROUND_SECONDS }} másodperced van, és a tempó menet közben felgyorsul!
       </p>
     </div>
     <button (click)="startGame()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase active:scale-95">
@@ -22,7 +22,7 @@
 
     <div class="flex items-center justify-between px-1">
       <div class="text-sm font-bold text-jager-amber uppercase tracking-widest">⏱ {{ timeLeft }} mp</div>
-      <div class="text-sm font-bold text-jager-orange uppercase tracking-widest">🏆 {{ score }} / 12</div>
+      <div class="text-sm font-bold text-jager-orange uppercase tracking-widest">🏆 {{ score }} / {{ WIN_SCORE }}</div>
     </div>
 
     <div class="h-2 bg-black/40 rounded-full overflow-hidden">
@@ -39,9 +39,9 @@
           <div class="absolute inset-x-2 bottom-0 h-3 bg-black/70 rounded-t-full"></div>
 
           @if (mole === 'good') {
-            <img src="/assets/stag.png" class="w-10 h-10 sm:w-12 sm:h-12 object-contain invert sepia saturate-[5] hue-rotate-[340deg] brightness-110 relative z-10 animate-[popUp_0.15s_ease-out]">
+            <img src="/assets/stag.png" class="w-14 h-14 sm:w-16 sm:h-16 object-contain invert sepia saturate-[5] hue-rotate-[340deg] brightness-110 drop-shadow-[0_0_10px_rgba(243,112,33,0.9)] relative z-10 animate-[popUp_0.15s_ease-out]">
           } @else if (mole === 'bad') {
-            <img src="/assets/broken.png" class="w-10 h-10 sm:w-12 sm:h-12 object-contain relative z-10 animate-[popUp_0.15s_ease-out]">
+            <img src="/assets/broken.png" class="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_0_10px_rgba(239,68,68,0.8)] relative z-10 animate-[popUp_0.15s_ease-out]">
           }
         </button>
       }

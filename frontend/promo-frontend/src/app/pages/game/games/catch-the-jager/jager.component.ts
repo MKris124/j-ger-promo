@@ -7,6 +7,13 @@ import { CommonModule } from '@angular/common';
 
 type GameState = 'idle' | 'playing' | 'won' | 'lost';
 
+interface ConfettiPiece {
+  emoji: string;
+  left: number;
+  delay: number;
+  duration: number;
+}
+
 @Component({
   selector: 'app-catch-jager',
   standalone: true,
@@ -29,6 +36,9 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
   score        = 0;
   assetsReady  = false;
   canvasScale  = 1;
+  confetti: ConfettiPiece[] = [];
+
+  private readonly CONFETTI_EMOJI = ['🎉', '🎊', '🍀', '⭐', '🥃'];
 
   private readonly CANVAS_W = 320;
   private readonly CANVAS_H = 680;
@@ -130,6 +140,7 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
     this.fillPercent = 0;
     this.timeLeft    = 30;
     this.score       = 0;
+    this.confetti    = [];
     this.glassX      = this.CANVAS_W / 2 - this.GLASS_W / 2;
 
     this.assetsReadyPromise.then(() => {
@@ -189,6 +200,7 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
         this.zone.run(() => {
           this.stopGame();
           this.state = 'won';
+          this.celebrateWin();
           this.cdr.markForCheck();
           this.gameWon.emit();
         });
@@ -317,6 +329,16 @@ export class CatchTheJagerComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   private onMouseUp(): void { this.isDragging = false; }
+
+  private celebrateWin(): void {
+    navigator.vibrate?.([120, 60, 120, 60, 200]);
+    this.confetti = Array.from({ length: 16 }, () => ({
+      emoji: this.CONFETTI_EMOJI[Math.floor(Math.random() * this.CONFETTI_EMOJI.length)],
+      left: Math.random() * 100,
+      delay: Math.random() * 0.6,
+      duration: 1 + Math.random() * 0.8,
+    }));
+  }
 
   retry(): void { this.state = 'idle'; }
 }

@@ -22,16 +22,25 @@ export class WhacAMoleComponent implements OnDestroy {
   @Output() gameLost = new EventEmitter<void>();
 
   private readonly GRID_SIZE = 9;
-  private readonly ROUND_SECONDS = 30;
-  private readonly WIN_SCORE = 12;
+  readonly ROUND_SECONDS = 45; // a template is használja (idle szöveg)
+  readonly WIN_SCORE = 16; // a template is használja (pontszám kijelzés)
   private readonly GOOD_POINTS = 1;
   private readonly BAD_PENALTY = 2;
   private readonly CONFETTI_EMOJI = ['🎉', '🎊', '🍀', '⭐', '🥃'];
 
+  // Nehézségi görbe végpontjai — a teljes kör hosszára arányosítva, nem fix
+  // másodpercenkénti csökkentéssel, hogy a "beelőzés" a JÁTÉKIDŐ EGÉSZÉRE elosztva történjen
+  private readonly SPAWN_INTERVAL_START_MS = 900;
+  private readonly SPAWN_INTERVAL_END_MS = 280;
+  private readonly MOLE_UP_DURATION_START_MS = 1100;
+  private readonly MOLE_UP_DURATION_END_MS = 420;
+  private readonly BAD_CHANCE_START = 0.15;
+  private readonly BAD_CHANCE_END = 0.45;
+
   private spawnTimer: ReturnType<typeof setTimeout> | null = null;
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
   private retractTimeouts: (ReturnType<typeof setTimeout> | null)[] = Array(this.GRID_SIZE).fill(null);
-  private spawnIntervalMs = 900;
+  private spawnIntervalMs = this.SPAWN_INTERVAL_START_MS;
   private elapsedSeconds = 0;
 
   state: GameState = 'idle';
@@ -49,12 +58,18 @@ export class WhacAMoleComponent implements OnDestroy {
     this.score = 0;
     this.timeLeft = this.ROUND_SECONDS;
     this.elapsedSeconds = 0;
-    this.spawnIntervalMs = 900;
+    this.spawnIntervalMs = this.SPAWN_INTERVAL_START_MS;
     this.holes = Array(this.GRID_SIZE).fill(null);
     this.confetti = [];
 
     this.scheduleNextSpawn();
     this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
+  }
+
+  // 0 a kör elején, 1 a kör végén — minden nehézségi görbe ebből számol,
+  // így a ROUND_SECONDS bármikor változtatható anélkül, hogy a görbét újra kéne hangolni
+  private get progress(): number {
+    return Math.min(1, this.elapsedSeconds / this.ROUND_SECONDS);
   }
 
   whack(index: number): void {
@@ -85,8 +100,10 @@ export class WhacAMoleComponent implements OnDestroy {
     if (this.state !== 'playing') return;
     this.spawnTimer = setTimeout(() => {
       this.spawnMole();
-      // Nehézségi görbe: egyre gyorsabban jönnek az ütők, ahogy telik az idő
-      this.spawnIntervalMs = Math.max(350, 900 - this.elapsedSeconds * 18);
+      // Nehézségi görbe a TELJES kör hosszára elosztva — minél tovább tart a kör,
+      // annál gyorsabban pörög fel a tempó a végéig
+      this.spawnIntervalMs = this.SPAWN_INTERVAL_START_MS
+          - this.progress * (this.SPAWN_INTERVAL_START_MS - this.SPAWN_INTERVAL_END_MS);
       this.scheduleNextSpawn();
     }, this.spawnIntervalMs);
   }
@@ -99,11 +116,12 @@ export class WhacAMoleComponent implements OnDestroy {
 
     const idx = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
     // A "rossz" (törött pohár) esély is nő az idővel — egyre óvatosabban kell célozni
-    const badChance = Math.min(0.45, 0.15 + this.elapsedSeconds * 0.01);
+    const badChance = this.BAD_CHANCE_START + this.progress * (this.BAD_CHANCE_END - this.BAD_CHANCE_START);
     const type: MoleType = Math.random() < badChance ? 'bad' : 'good';
     this.holes[idx] = type;
 
-    const upDurationMs = Math.max(500, 1100 - this.elapsedSeconds * 15);
+    const upDurationMs = this.MOLE_UP_DURATION_START_MS
+        - this.progress * (this.MOLE_UP_DURATION_START_MS - this.MOLE_UP_DURATION_END_MS);
     this.retractTimeouts[idx] = setTimeout(() => {
       if (this.holes[idx] === type) this.holes[idx] = null;
       this.retractTimeouts[idx] = null;

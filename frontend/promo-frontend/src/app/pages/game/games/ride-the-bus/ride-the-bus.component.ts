@@ -20,6 +20,13 @@ interface Round {
   options: string[];
 }
 
+interface ConfettiPiece {
+  emoji: string;
+  left: number;
+  delay: number;
+  duration: number;
+}
+
 @Component({
   selector: 'app-ride-the-bus',
   standalone: true,
@@ -40,6 +47,9 @@ export class RideTheBusComponent {
 
   // true csak az 1. szint megnyerése UTÁN, és csak addig amíg nem döntött
   hasShotPrize = false;
+
+  confetti: ConfettiPiece[] = [];
+  private readonly CONFETTI_EMOJI = ['🎉', '🎊', '🍀', '⭐', '🥃'];
 
   readonly rounds: Round[] = [
     { level: 0, question: 'Piros vagy Fekete?',   options: ['♥ Piros', '♠ Fekete'] },
@@ -66,6 +76,7 @@ export class RideTheBusComponent {
     this.previousCards = [];
     this.hasShotPrize = false;
     this.currentCard = null;
+    this.confetti = [];
   }
 
   guess(option: number): void {
@@ -113,6 +124,7 @@ export class RideTheBusComponent {
   // Játékos kikéri a shotot az 1. szint után — NYERT, nem veszített
   keepShot(): void {
     this.gameState = 'kept_shot';
+    this.celebrateWin();
     this.gameWon.emit();
   }
 
@@ -124,6 +136,7 @@ export class RideTheBusComponent {
 
     if (this.currentLevel === 3) {
       this.gameState = 'champion';
+      this.celebrateWin();
       this.gameWon.emit();
     } else {
       this.currentLevel++;
@@ -134,6 +147,16 @@ export class RideTheBusComponent {
   bust(): void {
     this.gameState = 'busted';
     this.gameLost.emit();
+  }
+
+  private celebrateWin(): void {
+    navigator.vibrate?.([120, 60, 120, 60, 200]);
+    this.confetti = Array.from({ length: 16 }, () => ({
+      emoji: this.CONFETTI_EMOJI[Math.floor(Math.random() * this.CONFETTI_EMOJI.length)],
+      left: Math.random() * 100,
+      delay: Math.random() * 0.6,
+      duration: 1 + Math.random() * 0.8,
+    }));
   }
 
   retry(): void { this.gameState = 'idle'; }

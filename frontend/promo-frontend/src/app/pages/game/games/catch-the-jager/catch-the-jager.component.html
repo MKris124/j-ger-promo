@@ -98,9 +98,18 @@
 }
 
 @if (state === 'won') {
-  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center">
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center relative">
+    <div class="absolute inset-0 pointer-events-none overflow-visible">
+      @for (piece of confetti; track $index) {
+        <span
+          class="absolute top-0 text-xl"
+          [style.left.%]="piece.left"
+          [style.animation]="'confettiFall ' + piece.duration + 's ease-in ' + piece.delay + 's forwards'"
+        >{{ piece.emoji }}</span>
+      }
+    </div>
     <div class="relative">
-      <div class="w-24 h-24 rounded-full bg-jager-orange/20 border-2 border-jager-orange flex items-center justify-center text-5xl animate-pulse">
+      <div class="w-24 h-24 rounded-full bg-jager-orange/20 border-2 border-jager-orange flex items-center justify-center text-5xl animate-bounce">
         🏆
       </div>
     </div>
