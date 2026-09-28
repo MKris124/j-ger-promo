@@ -157,6 +157,49 @@ public class AuthService {
         return String.format("%06d", CODE_RANDOM.nextInt(1_000_000));
     }
 
+    // --- ELFELEJTETT JELSZÓ ---
+    @Transactional
+    public void forgotPassword(String email) {
+        AppUser user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen felhasználó!"));
+
+        if (user.getProvider() == AppUser.AuthProvider.GOOGLE) {
+            throw new IllegalArgumentException("Ezzel az e-mail címmel Google fiókon keresztül regisztráltál. Kérlek, használd a Google belépést!");
+        }
+
+        user.setPasswordResetToken(generateVerificationCode());
+        user.setPasswordResetTokenExpiresAt(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
+        userRepo.save(user);
+
+        emailService.sendPasswordResetCode(user.getEmail(), user.getName(), user.getPasswordResetToken());
+    }
+
+    @Transactional
+    public AppUser resetPassword(String email, String code, String newPassword) {
+        AppUser user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Nincs ilyen felhasználó!"));
+
+        if (user.getPasswordResetToken() == null
+                || user.getPasswordResetTokenExpiresAt() == null
+                || user.getPasswordResetTokenExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("A kód lejárt vagy érvénytelen. Kérj egy újat!");
+        }
+
+        if (!user.getPasswordResetToken().equals(code)) {
+            throw new IllegalArgumentException("Hibás kód!");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetTokenExpiresAt(null);
+        // Ha korábban sosem erősítette meg az e-mailjét (pl. régi grandfather-elt fiók esetén ez
+        // nem lenne releváns), a sikeres kód-visszafejtés önmagában bizonyítja hogy hozzáfér az e-mailhez
+        if (Boolean.FALSE.equals(user.getEmailVerified())) {
+            user.setEmailVerified(true);
+        }
+        return userRepo.save(user);
+    }
+
     // --- 2. HAGYOMÁNYOS BELÉPÉS ---
     public AppUser login(String email, String rawPassword) {
         AppUser user = userRepo.findByEmail(email)

@@ -22,19 +22,9 @@ public class EmailService {
     private String fromAddress;
 
     public void sendVerificationCode(String toEmail, String name, String code) {
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-
-        if (mailSender == null) {
-            // Nincs SMTP konfigurálva — fejlesztéskor a kód a logban jelenik meg
-            log.warn("SMTP nincs konfigurálva! Megerősítő kód ehhez: {} -> {}", toEmail, code);
-            return;
-        }
-
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromAddress);
-        message.setTo(toEmail);
-        message.setSubject("Jägermeister SBM Game — Erősítsd meg a regisztrációdat");
-        message.setText("""
+        send(toEmail, code,
+                "Jägermeister SBM Game — Erősítsd meg a regisztrációdat",
+                """
                 Szia %s!
 
                 A megerősítő kódod: %s
@@ -43,15 +33,46 @@ public class EmailService {
 
                 Jägermeister SBM Game csapat
                 """.formatted(name, code));
+    }
+
+    public void sendPasswordResetCode(String toEmail, String name, String code) {
+        send(toEmail, code,
+                "Jägermeister SBM Game — Jelszó visszaállítása",
+                """
+                Szia %s!
+
+                Valaki (remélhetőleg te) jelszó-visszaállítást kért a fiókodhoz.
+                A kódod: %s
+
+                A kód 15 percig érvényes. Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt az e-mailt.
+
+                Jägermeister SBM Game csapat
+                """.formatted(name, code));
+    }
+
+    private void send(String toEmail, String code, String subject, String body) {
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+
+        if (mailSender == null) {
+            // Nincs SMTP konfigurálva — fejlesztéskor a kód a logban jelenik meg
+            log.warn("SMTP nincs konfigurálva! Kód ehhez: {} -> {}", toEmail, code);
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(toEmail);
+        message.setSubject(subject);
+        message.setText(body);
 
         try {
             mailSender.send(message);
         } catch (MailException e) {
             // A MailParseException egyargumentumos konstruktora mindig "Could not parse mail"-t ad vissza —
             // a valódi ok a cause láncban van, azt is kilogoljuk (from-ot is, hogy látszódjon pl. ha idézőjeles)
-            log.error("Nem sikerült elküldeni a megerősítő e-mailt: to={} from='{}' — {}",
+            log.error("Nem sikerült elküldeni az e-mailt: to={} from='{}' — {}",
                     toEmail, fromAddress, e.getMessage(), e);
-            throw new IllegalArgumentException("Nem sikerült elküldeni a megerősítő e-mailt. Kérlek, próbáld meg később!");
+            throw new IllegalArgumentException("Nem sikerült elküldeni az e-mailt. Kérlek, próbáld meg később!");
         }
     }
 }

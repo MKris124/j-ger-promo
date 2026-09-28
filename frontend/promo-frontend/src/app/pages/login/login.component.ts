@@ -37,6 +37,15 @@ export class LoginComponent implements OnInit {
   infoMessage = '';
   isLoading = false;
 
+  // Elfelejtett jelszó állapotok
+  isForgotPassword = false;
+  forgotPasswordStep: 'request' | 'reset' = 'request';
+  resetEmail = '';
+  resetCode = '';
+  newPassword = '';
+  newPasswordConfirm = '';
+  showNewPassword = false;
+
   eventActive = false; // Visszaállítva a te változódra!
   eventLoading = true;
 
@@ -270,5 +279,91 @@ export class LoginComponent implements OnInit {
     this.verificationCode = '';
     this.errorMessage = '';
     this.infoMessage = '';
+  }
+
+  openForgotPassword(): void {
+    this.isForgotPassword = true;
+    this.forgotPasswordStep = 'request';
+    this.resetEmail = this.email;
+    this.resetCode = '';
+    this.newPassword = '';
+    this.newPasswordConfirm = '';
+    this.errorMessage = '';
+    this.infoMessage = '';
+  }
+
+  cancelForgotPassword(): void {
+    this.isForgotPassword = false;
+    this.resetCode = '';
+    this.newPassword = '';
+    this.newPasswordConfirm = '';
+    this.errorMessage = '';
+    this.infoMessage = '';
+  }
+
+  onForgotPasswordSubmit(): void {
+    this.errorMessage = '';
+    this.infoMessage = '';
+
+    if (!this.resetEmail) {
+      this.errorMessage = 'Add meg az e-mail címed!';
+      return;
+    }
+
+    this.isLoading = true;
+    this.authService.forgotPassword(this.resetEmail).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.forgotPasswordStep = 'reset';
+        this.infoMessage = 'Elküldtük a kódot az e-mail címedre!';
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.error || 'Váratlan hiba történt. Próbáld újra!';
+      }
+    });
+  }
+
+  onResendResetCode(): void {
+    this.errorMessage = '';
+    this.infoMessage = '';
+    this.authService.forgotPassword(this.resetEmail).subscribe({
+      next: () => {
+        this.infoMessage = 'Új kódot küldtünk az e-mail címedre!';
+      },
+      error: (err) => {
+        this.errorMessage = err.error || 'Nem sikerült új kódot küldeni!';
+      }
+    });
+  }
+
+  onResetPasswordSubmit(): void {
+    this.errorMessage = '';
+    this.infoMessage = '';
+
+    if (!this.resetCode || !this.newPassword) {
+      this.errorMessage = 'Töltsd ki az összes mezőt!';
+      return;
+    }
+    if (this.newPassword !== this.newPasswordConfirm) {
+      this.errorMessage = 'A két jelszó nem egyezik!';
+      return;
+    }
+    if (this.newPassword.length < 6) {
+      this.errorMessage = 'A jelszónak legalább 6 karakternek kell lennie!';
+      return;
+    }
+
+    this.isLoading = true;
+    this.authService.resetPassword({ email: this.resetEmail, code: this.resetCode, newPassword: this.newPassword }).subscribe({
+      next: (res) => {
+        this.isLoading = false;
+        if (res.name) localStorage.setItem('userName', res.name);
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.error || 'Hibás vagy lejárt kód!';
+      }
+    });
   }
 }

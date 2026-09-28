@@ -41,6 +41,11 @@ public class AppUser {
 
     private LocalDateTime verificationCodeExpiresAt;
 
+    // Elfelejtett jelszó — külön mezők, hogy ne keveredjen a regisztrációs email-megerősítéssel
+    private String passwordResetToken;
+
+    private LocalDateTime passwordResetTokenExpiresAt;
+
     public enum Role {
         USER, PROMOTER, ADMIN
     }

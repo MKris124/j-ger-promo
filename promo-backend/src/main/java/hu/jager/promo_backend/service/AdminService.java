@@ -83,22 +83,22 @@ public class AdminService {
 
             if (prevGameId != null && !prevGameId.equals(activeGameId)) {
                 // Játékváltáskor MINDEN zseb törlődik — beváltottak sem relevánsak már
-                prizePocketRepo.deleteAllPockets();
-                log.info("Játék váltás: összes zseb törölve");
+                int deleted = prizePocketRepo.deleteAllPockets();
+                log.info("Játék váltás: {} zseb törölve", deleted);
             }
         }
 
-        // Esemény BE → zsebek törlése + activatedAt mentése
+        // Esemény BE → MINDEN zseb törlése (beváltott is) + activatedAt mentése
         if (!wasActive && isEventActive) {
             settings.setActivatedAt(LocalDateTime.now());
-            int deleted = prizePocketRepo.deleteAllNotRedeemed();
-            log.info("Esemény bekapcsolva: {} zseb törölve", deleted);
+            int deleted = prizePocketRepo.deleteAllPockets();
+            log.info("Esemény bekapcsolva: {} zseb törölve (beváltottak is)", deleted);
         }
 
-        // Esemény KI → zsebek törlése
+        // Esemény KI → MINDEN zseb törlése (beváltott is)
         if (wasActive && !isEventActive) {
-            int deleted = prizePocketRepo.deleteAllNotRedeemed();
-            log.info("Esemény leállítva: {} zseb törölve", deleted);
+            int deleted = prizePocketRepo.deleteAllPockets();
+            log.info("Esemény leállítva: {} zseb törölve (beváltottak is)", deleted);
         }
 
         AppSettings saved = settingsRepo.save(settings);

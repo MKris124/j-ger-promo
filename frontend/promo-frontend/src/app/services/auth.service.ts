@@ -38,6 +38,16 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/resend-code`, { email });
   }
 
+  forgotPassword(email: string) {
+    return this.http.post<any>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  resetPassword(payload: { email: string; code: string; newPassword: string }) {
+    return this.http.post<any>(`${this.apiUrl}/reset-password`, payload).pipe(
+      tap(response => this.saveSession(response))
+    );
+  }
+
   loginWithGoogle(token: string) {
     return this.http.post<any>(`${this.apiUrl}/google`, { token }).pipe(
       tap(response => this.saveSession(response))

@@ -30,15 +30,11 @@ public interface PrizePocketRepository extends JpaRepository<PrizePocket, Long> 
     // Csak AVAILABLE zsebeket számol — a 2 nyeremény limit ellenőrzéséhez
     long countByUserIdAndStatus(Long userId, PrizePocket.Status status);
 
-    // Csak AVAILABLE zsebek törlése (esemény be/ki kapcsoláskor)
-    @Modifying
-    @Query("DELETE FROM PrizePocket p WHERE p.status = 'AVAILABLE'")
-    int deleteAllNotRedeemed();
-
-    // MINDEN zseb törlése — játékváltáskor (beváltottak sem kellenek)
+    // MINDEN zseb törlése — esemény be/ki kapcsoláskor ÉS játékváltáskor is
+    // (beváltottak sem kellenek, teljes reset)
     @Modifying
     @Query("DELETE FROM PrizePocket p")
-    void deleteAllPockets();
+    int deleteAllPockets();
 
     // Felhasználó törlésekor: a saját zsebei törlődnek
     @Modifying

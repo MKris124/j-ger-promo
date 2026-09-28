@@ -85,6 +85,12 @@ spring:
           starttls:
             enable: true
 
+# Az Nginx Proxy Manager mögött fut — enélkül request.getRemoteAddr() mindig
+# az NPM konténer belső IP-jét adná vissza minden kérésre, nem a valódi kliensét,
+# ami az IP-alapú rate limitinget teljesen hatástalanná tenné
+server:
+  forward-headers-strategy: framework
+
 app:
   base-url: ${APP_BASE_URL}
   jwt:

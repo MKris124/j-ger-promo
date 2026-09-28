@@ -34,6 +34,7 @@
         @if (eventLoading) { Kis türelmet... }
         @else if (!eventActive && !isStaffOverride) { Esemény szünetel }
         @else if (isVerifying) { Erősítsd meg az e-mail címed! }
+        @else if (isForgotPassword) { Jelszó visszaállítása }
         @else if (isLoginMode) { Jelentkezz be a játékhoz! }
         @else { Regisztrálj és nyerj! }
       </p>
@@ -83,7 +84,7 @@
         </div>
       }
 
-      @if (isVerifying && infoMessage) {
+      @if ((isVerifying || isForgotPassword) && infoMessage) {
         <div class="bg-jager-green-light/30 border border-jager-amber/40 text-jager-amber text-xs font-bold px-4 py-3 rounded-xl mb-6 text-center uppercase tracking-tighter">
           {{ infoMessage }}
         </div>
@@ -119,6 +120,78 @@
           <span>·</span>
           <button type="button" (click)="cancelVerification()" class="text-gray-500 hover:text-gray-300 transition-colors">Vissza</button>
         </div>
+      } @else if (isForgotPassword) {
+
+        @if (forgotPasswordStep === 'request') {
+          <p class="text-center text-sm text-gray-400 mb-6 leading-relaxed">
+            Add meg az e-mail címed, és küldünk egy kódot, amivel új jelszót állíthatsz be.
+          </p>
+
+          <form (ngSubmit)="onForgotPasswordSubmit()" class="space-y-4">
+            <div class="relative">
+              <input type="email" id="resetEmail" name="resetEmail" [(ngModel)]="resetEmail" autocomplete="email" class="peer w-full bg-jager-dark/50 border border-white/5 rounded-xl px-4 pt-6 pb-2 text-jager-light focus:outline-none focus:border-jager-amber focus:ring-1 focus:ring-jager-amber transition-all duration-300 placeholder-transparent" placeholder="Email">
+              <label for="resetEmail" class="absolute left-4 top-2 text-[10px] uppercase font-black text-gray-500 transform-gpu transition-all duration-300 ease-out peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-jager-amber pointer-events-none tracking-widest">E-mail cím</label>
+            </div>
+
+            <button type="submit" [disabled]="isLoading" class="mt-6 w-full bg-jager-orange hover:bg-orange-500 text-black font-black py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(243,112,33,0.2)] hover:shadow-[0_0_35px_rgba(243,112,33,0.4)] flex justify-center items-center tracking-widest text-sm transform-gpu active:scale-95">
+              @if (isLoading) {
+                <svg class="animate-spin h-5 w-5 mr-3 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
+                </svg>
+                VÁRJ...
+              } @else {
+                KÓD KÉRÉSE
+              }
+            </button>
+          </form>
+        } @else {
+          <p class="text-center text-sm text-gray-400 mb-6 leading-relaxed">
+            Elküldtük a kódot ide: <span class="text-jager-amber font-bold">{{ resetEmail }}</span>.<br>
+            Add meg lent a kódot és az új jelszavad!
+          </p>
+
+          <form (ngSubmit)="onResetPasswordSubmit()" class="space-y-4">
+            <div class="relative">
+              <input type="text" inputmode="numeric" id="resetCode" name="resetCode" [(ngModel)]="resetCode" autocomplete="one-time-code" class="peer w-full bg-jager-dark/50 border border-white/5 rounded-xl px-4 pt-6 pb-2 text-jager-light text-center text-2xl tracking-[0.3em] focus:outline-none focus:border-jager-amber focus:ring-1 focus:ring-jager-amber transition-all duration-300 placeholder-transparent" placeholder="Kód">
+              <label for="resetCode" class="absolute left-4 top-2 text-[10px] uppercase font-black text-gray-500 transform-gpu transition-all duration-300 ease-out peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-jager-amber pointer-events-none tracking-widest">Kód</label>
+            </div>
+
+            <div class="relative">
+              <input [type]="showNewPassword ? 'text' : 'password'" id="newPassword" name="newPassword" [(ngModel)]="newPassword" autocomplete="new-password" class="peer w-full bg-jager-dark/50 border border-white/5 rounded-xl px-4 pt-6 pb-2 text-jager-light focus:outline-none focus:border-jager-amber focus:ring-1 focus:ring-jager-amber transition-all duration-300 placeholder-transparent" placeholder="Új jelszó">
+              <label for="newPassword" class="absolute left-4 top-2 text-[10px] uppercase font-black text-gray-500 transform-gpu transition-all duration-300 ease-out peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-jager-amber pointer-events-none tracking-widest">Új jelszó</label>
+              <button type="button" (click)="showNewPassword = !showNewPassword" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-jager-amber transition-colors">
+                @if (showNewPassword) { <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+                @else { <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+              </button>
+            </div>
+
+            <div class="relative">
+              <input type="password" id="newPasswordConfirm" name="newPasswordConfirm" [(ngModel)]="newPasswordConfirm" autocomplete="new-password" class="peer w-full bg-jager-dark/50 border border-white/5 rounded-xl px-4 pt-6 pb-2 text-jager-light focus:outline-none focus:border-jager-amber focus:ring-1 focus:ring-jager-amber transition-all duration-300 placeholder-transparent" placeholder="Új jelszó újra">
+              <label for="newPasswordConfirm" class="absolute left-4 top-2 text-[10px] uppercase font-black text-gray-500 transform-gpu transition-all duration-300 ease-out peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-jager-amber pointer-events-none tracking-widest">Új jelszó újra</label>
+            </div>
+
+            <button type="submit" [disabled]="isLoading" class="mt-6 w-full bg-jager-orange hover:bg-orange-500 text-black font-black py-4 rounded-xl transition-all shadow-[0_0_20px_rgba(243,112,33,0.2)] hover:shadow-[0_0_35px_rgba(243,112,33,0.4)] flex justify-center items-center tracking-widest text-sm transform-gpu active:scale-95">
+              @if (isLoading) {
+                <svg class="animate-spin h-5 w-5 mr-3 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <circle cx="12" cy="12" r="10" stroke-width="4" stroke-opacity="0.25"></circle>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke-width="4" stroke-linecap="round"></path>
+                </svg>
+                VÁRJ...
+              } @else {
+                JELSZÓ BEÁLLÍTÁSA
+              }
+            </button>
+          </form>
+
+          <div class="mt-6 text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+            <button type="button" (click)="onResendResetCode()" class="text-jager-amber hover:text-jager-orange transition-colors">Kód újraküldése</button>
+          </div>
+        }
+
+        <div class="mt-8 text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest">
+          <button type="button" (click)="cancelForgotPassword()" class="text-gray-500 hover:text-gray-300 transition-colors">Vissza a belépéshez</button>
+        </div>
       } @else {
 
       <form (ngSubmit)="onSubmit()" class="space-y-4">
@@ -143,6 +216,12 @@
             @else { <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
           </button>
         </div>
+
+        @if (isLoginMode) {
+          <div class="text-right -mt-1">
+            <button type="button" (click)="openForgotPassword()" class="text-[11px] font-bold text-gray-500 hover:text-jager-amber transition-colors uppercase tracking-widest">Elfelejtetted a jelszavad?</button>
+          </div>
+        }
 
         @if (!isLoginMode) {
           <div class="relative">
