@@ -91,5 +91,15 @@
       }
     }
 
+    @if (activeGame?.gameKey === 'whac-a-mole') {
+      @defer {
+        <app-whac-a-mole (gameWon)="onGameWon()" (gameLost)="onGameLost()"></app-whac-a-mole>
+      } @loading {
+        <div class="flex justify-center items-center h-40 text-jager-amber text-sm font-bold animate-pulse">
+          Játék betöltése...
+        </div>
+      }
+    }
+
   </div>
 </div>

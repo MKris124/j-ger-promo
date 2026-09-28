@@ -2,6 +2,7 @@ import { Type } from '@angular/core';
 import { CatchTheJagerComponent } from '../pages/game/games/catch-the-jager/jager.component';
 import { RideTheBusComponent } from '../pages/game/games/ride-the-bus/ride-the-bus.component';
 import { SlotMachineComponent } from '../pages/game/games/slot-machine/slot-machine.component';
+import { WhacAMoleComponent } from '../pages/game/games/whac-a-mole/whac-a-mole.component';
 
 export interface RegisteredGame {
   id: string;           // egyedi kulcs — ez kerül az adatbázisba gameKey-ként
@@ -28,6 +29,12 @@ export const GAME_REGISTRY: RegisteredGame[] = [
     name: 'Jäger Nyerőgép',
     description: '3 azonos szarvas = nyeremény',
     component: SlotMachineComponent,
+  },
+  {
+    id: 'whac-a-mole',
+    name: 'Üsd a Szarvast!',
+    description: 'Csapj a szarvasokra, kerüld a törött poharat — 30 mp',
+    component: WhacAMoleComponent,
   },
   // Új játék hozzáadásához: importáld a komponenst és vedd fel ide
 ];

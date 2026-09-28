@@ -1,0 +1,89 @@
+<!-- IDLE -->
+@if (state === 'idle') {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-6 text-center">
+    <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-4xl">🔨</div>
+    <div>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-jager-light mb-2">Üsd a Szarvast!</h2>
+      <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
+        Csapj rá a felbukkanó <span class="text-jager-orange font-semibold">szarvasokra</span> —
+        de vigyázz, a <span class="text-red-400 font-semibold">törött poharat</span> hagyd ki,
+        az pontot von le! 30 másodperced van.
+      </p>
+    </div>
+    <button (click)="startGame()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase active:scale-95">
+      Kezdés!
+    </button>
+  </div>
+}
+
+<!-- PLAYING -->
+@if (state === 'playing') {
+  <div class="flex flex-col min-h-[60vh] p-4 gap-4">
+
+    <div class="flex items-center justify-between px-1">
+      <div class="text-sm font-bold text-jager-amber uppercase tracking-widest">⏱ {{ timeLeft }} mp</div>
+      <div class="text-sm font-bold text-jager-orange uppercase tracking-widest">🏆 {{ score }} / 12</div>
+    </div>
+
+    <div class="h-2 bg-black/40 rounded-full overflow-hidden">
+      <div class="h-full bg-jager-orange rounded-full transition-all duration-300" [style.width.%]="scorePercent"></div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3 mt-2 max-w-sm mx-auto w-full">
+      @for (mole of holes; track $index) {
+        <button
+          (click)="whack($index)"
+          class="aspect-square rounded-2xl bg-black/50 border-2 border-jager-green-light/40 relative overflow-hidden flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <!-- Lyuk -->
+          <div class="absolute inset-x-2 bottom-0 h-3 bg-black/70 rounded-t-full"></div>
+
+          @if (mole === 'good') {
+            <img src="/assets/stag.png" class="w-10 h-10 sm:w-12 sm:h-12 object-contain invert sepia saturate-[5] hue-rotate-[340deg] brightness-110 relative z-10 animate-[popUp_0.15s_ease-out]">
+          } @else if (mole === 'bad') {
+            <img src="/assets/broken.png" class="w-10 h-10 sm:w-12 sm:h-12 object-contain relative z-10 animate-[popUp_0.15s_ease-out]">
+          }
+        </button>
+      }
+    </div>
+  </div>
+}
+
+<!-- WON -->
+@if (state === 'won') {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center relative">
+    <div class="absolute inset-0 pointer-events-none overflow-visible">
+      @for (piece of confetti; track $index) {
+        <span
+          class="absolute top-0 text-xl"
+          [style.left.%]="piece.left"
+          [style.animation]="'confettiFall ' + piece.duration + 's ease-in ' + piece.delay + 's forwards'"
+        >{{ piece.emoji }}</span>
+      }
+    </div>
+    <div class="w-24 h-24 rounded-full bg-jager-orange/20 border-4 border-jager-orange flex items-center justify-center text-5xl animate-bounce">🏆</div>
+    <div>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-jager-orange mb-2">Telitalálat!</h2>
+      <p class="text-gray-300 text-sm leading-relaxed max-w-xs">
+        {{ score }} pontot szereztél — nézd meg a nyereményed a profilodon!
+      </p>
+    </div>
+    <button (click)="retry()" class="w-full max-w-xs py-3 border border-jager-orange/30 text-jager-orange font-bold rounded-xl text-sm hover:bg-jager-orange/10 uppercase tracking-wider transition-colors">
+      Újra játszom
+    </button>
+  </div>
+}
+
+<!-- LOST -->
+@if (state === 'lost') {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-5 text-center">
+    <div class="w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center text-5xl">⏱</div>
+    <div>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-red-400 mb-2">Lejárt az idő!</h2>
+      <p class="text-gray-400 text-sm leading-relaxed max-w-xs">{{ score }} pontot szereztél — próbáld újra bármikor!</p>
+    </div>
+    <button (click)="startGame()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase active:scale-95">
+      Újra próbálom!
+    </button>
+  </div>
+}

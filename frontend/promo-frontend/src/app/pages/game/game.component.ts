@@ -7,6 +7,7 @@ import { PageHeaderComponent } from '../../shared/page-header.component';
 import { CatchTheJagerComponent } from './games/catch-the-jager/jager.component';
 import { RideTheBusComponent } from './games/ride-the-bus/ride-the-bus.component';
 import { SlotMachineComponent } from './games/slot-machine/slot-machine.component';
+import { WhacAMoleComponent } from './games/whac-a-mole/whac-a-mole.component';
 import { environment } from '../../../environments/environments';
 
 interface PrizePocket {
@@ -21,7 +22,7 @@ interface PrizePocket {
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, CatchTheJagerComponent, RideTheBusComponent, SlotMachineComponent, PageHeaderComponent],
+  imports: [CommonModule, CatchTheJagerComponent, RideTheBusComponent, SlotMachineComponent, WhacAMoleComponent, PageHeaderComponent],
   templateUrl: './game.component.html',
 })
 export class GameComponent implements OnInit, OnDestroy {

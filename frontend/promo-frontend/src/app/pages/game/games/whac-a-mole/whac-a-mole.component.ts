@@ -1,0 +1,164 @@
+import { Component, Output, EventEmitter, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+type MoleType = 'good' | 'bad';
+type GameState = 'idle' | 'playing' | 'won' | 'lost';
+
+interface ConfettiPiece {
+  emoji: string;
+  left: number;
+  delay: number;
+  duration: number;
+}
+
+@Component({
+  selector: 'app-whac-a-mole',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './whac-a-mole.component.html',
+})
+export class WhacAMoleComponent implements OnDestroy {
+  @Output() gameWon = new EventEmitter<void>();
+  @Output() gameLost = new EventEmitter<void>();
+
+  private readonly GRID_SIZE = 9;
+  private readonly ROUND_SECONDS = 30;
+  private readonly WIN_SCORE = 12;
+  private readonly GOOD_POINTS = 1;
+  private readonly BAD_PENALTY = 2;
+  private readonly CONFETTI_EMOJI = ['🎉', '🎊', '🍀', '⭐', '🥃'];
+
+  private spawnTimer: ReturnType<typeof setTimeout> | null = null;
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
+  private retractTimeouts: (ReturnType<typeof setTimeout> | null)[] = Array(this.GRID_SIZE).fill(null);
+  private spawnIntervalMs = 900;
+  private elapsedSeconds = 0;
+
+  state: GameState = 'idle';
+  holes: (MoleType | null)[] = Array(this.GRID_SIZE).fill(null);
+  score = 0;
+  timeLeft = this.ROUND_SECONDS;
+  confetti: ConfettiPiece[] = [];
+
+  get scorePercent(): number {
+    return Math.min(100, (this.score / this.WIN_SCORE) * 100);
+  }
+
+  startGame(): void {
+    this.state = 'playing';
+    this.score = 0;
+    this.timeLeft = this.ROUND_SECONDS;
+    this.elapsedSeconds = 0;
+    this.spawnIntervalMs = 900;
+    this.holes = Array(this.GRID_SIZE).fill(null);
+    this.confetti = [];
+
+    this.scheduleNextSpawn();
+    this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
+  }
+
+  whack(index: number): void {
+    if (this.state !== 'playing') return;
+    const mole = this.holes[index];
+    if (!mole) return;
+
+    if (this.retractTimeouts[index]) {
+      clearTimeout(this.retractTimeouts[index]!);
+      this.retractTimeouts[index] = null;
+    }
+    this.holes[index] = null;
+
+    if (mole === 'good') {
+      this.score += this.GOOD_POINTS;
+      navigator.vibrate?.(30);
+    } else {
+      this.score = Math.max(0, this.score - this.BAD_PENALTY);
+      navigator.vibrate?.([50, 30, 50]);
+    }
+
+    if (this.score >= this.WIN_SCORE) {
+      this.finish(true);
+    }
+  }
+
+  private scheduleNextSpawn(): void {
+    if (this.state !== 'playing') return;
+    this.spawnTimer = setTimeout(() => {
+      this.spawnMole();
+      // Nehézségi görbe: egyre gyorsabban jönnek az ütők, ahogy telik az idő
+      this.spawnIntervalMs = Math.max(350, 900 - this.elapsedSeconds * 18);
+      this.scheduleNextSpawn();
+    }, this.spawnIntervalMs);
+  }
+
+  private spawnMole(): void {
+    const emptyIndexes = this.holes
+      .map((m, i) => (m === null ? i : -1))
+      .filter(i => i !== -1);
+    if (emptyIndexes.length === 0) return;
+
+    const idx = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+    // A "rossz" (törött pohár) esély is nő az idővel — egyre óvatosabban kell célozni
+    const badChance = Math.min(0.45, 0.15 + this.elapsedSeconds * 0.01);
+    const type: MoleType = Math.random() < badChance ? 'bad' : 'good';
+    this.holes[idx] = type;
+
+    const upDurationMs = Math.max(500, 1100 - this.elapsedSeconds * 15);
+    this.retractTimeouts[idx] = setTimeout(() => {
+      if (this.holes[idx] === type) this.holes[idx] = null;
+      this.retractTimeouts[idx] = null;
+    }, upDurationMs);
+  }
+
+  private tickCountdown(): void {
+    this.elapsedSeconds++;
+    this.timeLeft--;
+    if (this.timeLeft <= 0) {
+      this.finish(this.score >= this.WIN_SCORE);
+    }
+  }
+
+  private finish(isWin: boolean): void {
+    this.state = isWin ? 'won' : 'lost';
+    this.stopTimers();
+    this.holes = Array(this.GRID_SIZE).fill(null);
+
+    if (isWin) {
+      this.celebrateWin();
+      this.gameWon.emit();
+    } else {
+      this.gameLost.emit();
+    }
+  }
+
+  private celebrateWin(): void {
+    navigator.vibrate?.([120, 60, 120, 60, 200]);
+    this.confetti = Array.from({ length: 16 }, () => ({
+      emoji: this.CONFETTI_EMOJI[Math.floor(Math.random() * this.CONFETTI_EMOJI.length)],
+      left: Math.random() * 100,
+      delay: Math.random() * 0.6,
+      duration: 1 + Math.random() * 0.8,
+    }));
+  }
+
+  private stopTimers(): void {
+    if (this.spawnTimer) clearTimeout(this.spawnTimer);
+    if (this.countdownTimer) clearInterval(this.countdownTimer);
+    this.spawnTimer = null;
+    this.countdownTimer = null;
+    this.retractTimeouts.forEach(t => t && clearTimeout(t));
+    this.retractTimeouts = Array(this.GRID_SIZE).fill(null);
+  }
+
+  ngOnDestroy(): void {
+    this.stopTimers();
+  }
+
+  retry(): void {
+    this.state = 'idle';
+    this.score = 0;
+    this.timeLeft = this.ROUND_SECONDS;
+    this.holes = Array(this.GRID_SIZE).fill(null);
+    this.confetti = [];
+  }
+}
