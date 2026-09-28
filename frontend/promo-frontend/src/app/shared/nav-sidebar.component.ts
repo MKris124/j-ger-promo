@@ -53,7 +53,23 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
     this.close();
   }
 
+  // bfcache-ből visszaállított oldalon (pl. vissza gomb, vagy némely böngésző "frissítés"
+  // viselkedése) az Angular lifecycle NEM fut újra — a JS állapot befagyva marad.
+  // Ha a scroll-lock épp aktív volt kilépéskor, enélkül a body örökre "hidden" maradna.
+  private readonly boundPageShow = (e: PageTransitionEvent) => {
+    if (e.persisted) {
+      this.isOpen = false;
+      this.enableScroll();
+    }
+  };
+
   ngOnInit(): void {
+    // Defenzív reset — friss mountnál a komponens saját state-je (isOpen=false) szerint
+    // a scroll-nak enélkül is engedélyezettnek KELLENE lennie; ha egy korábbi, nem tiszta
+    // leállás (pl. bfcache) mégis "hidden"-en hagyta, itt biztosan feloldjuk
+    this.enableScroll();
+    window.addEventListener('pageshow', this.boundPageShow);
+
     this.pollInterval = setInterval(() => this.checkEventStatus(), 30000);
     window.addEventListener('adminTabChange', this.adminTabChangeHandler);
 
@@ -69,6 +85,7 @@ export class NavSidebarComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.pollInterval) clearInterval(this.pollInterval);
     window.removeEventListener('adminTabChange', this.adminTabChangeHandler);
+    window.removeEventListener('pageshow', this.boundPageShow);
     this.enableScroll();
   }
 

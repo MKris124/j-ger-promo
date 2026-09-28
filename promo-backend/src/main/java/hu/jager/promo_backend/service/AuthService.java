@@ -7,6 +7,8 @@ import com.google.api.client.json.gson.GsonFactory;
 import hu.jager.promo_backend.entity.AppUser;
 import hu.jager.promo_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -41,10 +44,6 @@ public class AuthService {
     // --- 1. HAGYOMÁNYOS (E-MAIL + JELSZÓ) REGISZTRÁCIÓ ---
     @Transactional
     public AppUser register(String email, String rawPassword, String name) { // <-- Itt a név paraméter
-        if (userRepo.existsByEmail(email)) {
-            throw new IllegalArgumentException("Ez az e-mail cím már regisztrálva van!");
-        }
-
         if (disposableEmailService.isDisposable(email)) {
             throw new IllegalArgumentException("Ideiglenes/eldobható e-mail címekkel nem lehet regisztrálni. Kérlek, adj meg egy valódi e-mail címet!");
         }
@@ -53,12 +52,40 @@ public class AuthService {
             throw new IllegalArgumentException("Ez az e-mail cím domainje nem létezik vagy nem tud leveleket fogadni. Kérlek, ellenőrizd az e-mail címed!");
         }
 
-        AppUser user = new AppUser();
-        user.setEmail(email);
+        AppUser user;
+        Optional<AppUser> existing = userRepo.findByEmail(email);
+
+        if (existing.isPresent()) {
+            AppUser existingUser = existing.get();
+
+            // FONTOS: csak az explicit false (= ezen a flow-n keresztül indult, de sosem
+            // befejezett próbálkozás) számít újrahasználhatónak. A null (régi, a funkció
+            // előtti, már működő fiókok) ÉS a true (ténylegesen megerősített) egyaránt
+            // "már regisztráltnak" számít — különben egy régi felhasználó fiókját írnánk felül!
+            if (!Boolean.FALSE.equals(existingUser.getEmailVerified())) {
+                throw new IllegalArgumentException("Ez az e-mail cím már regisztrálva van!");
+            }
+
+            boolean codeStillActive = existingUser.getVerificationCodeExpiresAt() != null
+                    && existingUser.getVerificationCodeExpiresAt().isAfter(LocalDateTime.now());
+            if (codeStillActive) {
+                // Már folyamatban van egy megerősítés erre a címre — ne küldjünk feleslegesen
+                // egy második kódot, irányítsuk a meglévő kód beírására / újraküldésére
+                throw new IllegalArgumentException("Már küldtünk egy megerősítő kódot erre a címre. Ellenőrizd a postaládád, vagy kérj új kódot!");
+            }
+
+            // Korábbi próbálkozás, ami SOSEM lett megerősítve és a kódja is lejárt már —
+            // nem tekintjük "regisztráltnak", újrahasználjuk ugyanazt a sort friss adatokkal
+            user = existingUser;
+        } else {
+            user = new AppUser();
+            user.setEmail(email);
+            user.setRole(AppUser.Role.USER);
+            user.setProvider(AppUser.AuthProvider.LOCAL);
+        }
+
         user.setPasswordHash(passwordEncoder.encode(rawPassword));
-        user.setName(name); // <-- EZT ADTUK HOZZÁ! Mentsük el az adatbázisba!
-        user.setRole(AppUser.Role.USER);
-        user.setProvider(AppUser.AuthProvider.LOCAL);
+        user.setName(name);
         user.setEmailVerified(false);
         user.setVerificationCode(generateVerificationCode());
         user.setVerificationCodeExpiresAt(LocalDateTime.now().plusMinutes(CODE_VALIDITY_MINUTES));
@@ -70,6 +97,18 @@ public class AuthService {
         emailService.sendVerificationCode(saved.getEmail(), saved.getName(), saved.getVerificationCode());
 
         return saved;
+    }
+
+    // Óránként lefut: sosem megerősített, régen lejárt kódú regisztrációk törlése.
+    // 24 órás puffer — jóval a 15 perces kód-érvényesség fölött, hogy ne törölje ki
+    // valaki alól, aki csak "később nézi meg" a postaládáját még aznap
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void purgeStaleUnverifiedAccounts() {
+        int deleted = userRepo.deleteStaleUnverified(LocalDateTime.now().minusHours(24));
+        if (deleted > 0) {
+            log.info("{} sosem megerősített, elavult regisztráció törölve", deleted);
+        }
     }
 
     // --- E-MAIL MEGERŐSÍTÉS ---
