@@ -100,4 +100,25 @@
     }
 
   </main>
+
+  <!-- Megerősítő modal (törlés/archiválás) -->
+  @if (confirmDialog) {
+    <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-[#060B08]/90 backdrop-blur-md px-4" (click)="confirmDialogNo()">
+      <div class="jager-card w-full max-w-sm p-6 md:p-8 text-center" (click)="$event.stopPropagation()">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-2xl">⚠️</div>
+        <h3 class="text-lg font-['Oswald'] font-black uppercase tracking-widest text-jager-light mb-2">Megerősítés szükséges</h3>
+        <p class="text-sm text-gray-400 leading-relaxed mb-6">{{ confirmDialog.message }}</p>
+        <div class="flex gap-3">
+          <button
+            (click)="confirmDialogNo()"
+            class="flex-1 bg-transparent border border-white/10 hover:bg-white/5 text-gray-300 font-bold py-3 rounded-xl transition-colors uppercase tracking-widest text-xs"
+          >Mégse</button>
+          <button
+            (click)="confirmDialogYes()"
+            class="flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-3 rounded-xl transition-colors uppercase tracking-widest text-xs"
+          >Törlés</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

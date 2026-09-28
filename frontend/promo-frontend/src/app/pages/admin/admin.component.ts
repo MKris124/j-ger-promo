@@ -48,6 +48,7 @@ interface AppUser {
   email: string;
   name: string;
   role: string;
+  provider: 'LOCAL' | 'GOOGLE';
 }
 
 interface Tab {
@@ -100,6 +101,21 @@ export class AdminComponent implements OnInit, OnDestroy {
 
   loading = false;
   toast: { message: string; type: 'success' | 'error' } | null = null;
+  confirmDialog: { message: string; onConfirm: () => void } | null = null;
+
+  private askConfirm(message: string, onConfirm: () => void): void {
+    this.confirmDialog = { message, onConfirm };
+  }
+
+  confirmDialogYes(): void {
+    const action = this.confirmDialog?.onConfirm;
+    this.confirmDialog = null;
+    action?.();
+  }
+
+  confirmDialogNo(): void {
+    this.confirmDialog = null;
+  }
 
   settings: AppSettings = { id: 1, eventActive: false, shotsPerLiter: 0, maxPocketsPerUser: 2, activeGame: null, eventStart: null, eventEnd: null, drawMode: 'TIMED' };
   shotsPerLiterInput = 0;
@@ -338,16 +354,17 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   deleteGame(game: Game): void {
-    if (!confirm(`Biztosan törlöd: "${game.name}"?`)) return;
-    this.http.delete(`${this.apiBase}/games/${game.id}`, { headers: this.getHeaders() }).subscribe({
-      next: () => {
-        this.games = this.games.filter(g => g.id !== game.id);
-        if (this.settings.activeGame?.id === game.id) {
-          this.settings.activeGame = null;
-        }
-        this.showToast(`"${game.name}" törölve`, 'success');
-      },
-      error: () => this.showToast('Törlés sikertelen', 'error')
+    this.askConfirm(`Biztosan törlöd: "${game.name}"?`, () => {
+      this.http.delete(`${this.apiBase}/games/${game.id}`, { headers: this.getHeaders() }).subscribe({
+        next: () => {
+          this.games = this.games.filter(g => g.id !== game.id);
+          if (this.settings.activeGame?.id === game.id) {
+            this.settings.activeGame = null;
+          }
+          this.showToast(`"${game.name}" törölve`, 'success');
+        },
+        error: () => this.showToast('Törlés sikertelen', 'error')
+      });
     });
   }
 
@@ -413,13 +430,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   deleteItem(item: InventoryItem): void {
-    if (!confirm(`Biztosan archiválod az elemet: "${item.name}"? Az új eseményeken már nem fog megjelenni.`)) return;
-    this.http.delete(`${this.apiBase}/inventory/${item.id}`, { headers: this.getHeaders() }).subscribe({
-      next: () => {
-        this.inventoryItems = this.inventoryItems.filter((i) => i.id !== item.id);
-        this.showToast(`"${item.name}" archiválva`, 'success');
-      },
-      error: () => this.showToast('Archiválás sikertelen', 'error')
+    this.askConfirm(`Biztosan archiválod az elemet: "${item.name}"? Az új eseményeken már nem fog megjelenni.`, () => {
+      this.http.delete(`${this.apiBase}/inventory/${item.id}`, { headers: this.getHeaders() }).subscribe({
+        next: () => {
+          this.inventoryItems = this.inventoryItems.filter((i) => i.id !== item.id);
+          this.showToast(`"${item.name}" archiválva`, 'success');
+        },
+        error: () => this.showToast('Archiválás sikertelen', 'error')
+      });
     });
   }
 
@@ -456,13 +474,14 @@ export class AdminComponent implements OnInit, OnDestroy {
   }
 
   deleteUser(user: AppUser): void {
-    if (!confirm(`Biztosan törlöd: "${user.name}" (${user.email})? Ez a felhasználó összes nyereménye és játéknaplója is törlődik.`)) return;
-    this.http.delete(`${this.apiBase}/users/${user.id}`, { headers: this.getHeaders() }).subscribe({
-      next: () => {
-        this.users = this.users.filter(u => u.id !== user.id);
-        this.showToast(`"${user.name}" törölve`, 'success');
-      },
-      error: () => this.showToast('Törlés sikertelen', 'error')
+    this.askConfirm(`Biztosan törlöd: "${user.name}" (${user.email})? Ez a felhasználó összes nyereménye és játéknaplója is törlődik.`, () => {
+      this.http.delete(`${this.apiBase}/users/${user.id}`, { headers: this.getHeaders() }).subscribe({
+        next: () => {
+          this.users = this.users.filter(u => u.id !== user.id);
+          this.showToast(`"${user.name}" törölve`, 'success');
+        },
+        error: () => this.showToast('Törlés sikertelen', 'error')
+      });
     });
   }
 
