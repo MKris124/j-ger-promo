@@ -47,7 +47,10 @@ public class EmailService {
         try {
             mailSender.send(message);
         } catch (MailException e) {
-            log.error("Nem sikerült elküldeni a megerősítő e-mailt: {} — {}", toEmail, e.getMessage());
+            // A MailParseException egyargumentumos konstruktora mindig "Could not parse mail"-t ad vissza —
+            // a valódi ok a cause láncban van, azt is kilogoljuk (from-ot is, hogy látszódjon pl. ha idézőjeles)
+            log.error("Nem sikerült elküldeni a megerősítő e-mailt: to={} from='{}' — {}",
+                    toEmail, fromAddress, e.getMessage(), e);
             throw new IllegalArgumentException("Nem sikerült elküldeni a megerősítő e-mailt. Kérlek, próbáld meg később!");
         }
     }

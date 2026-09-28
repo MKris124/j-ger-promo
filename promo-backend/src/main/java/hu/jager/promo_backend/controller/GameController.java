@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/game")
@@ -24,6 +25,12 @@ public class GameController {
     private final GameService gameService;
     private final InventoryService inventoryService;
     private final AdminService adminService;
+
+    // Hány zsebet (nyereményt) tarthat egyszerre egy felhasználó ezen az eseményen — admin állítja
+    @GetMapping("/max-pockets")
+    public ResponseEntity<Map<String, Integer>> getMaxPockets() {
+        return ResponseEntity.ok(Map.of("maxPocketsPerUser", gameService.getMaxPocketsPerUser()));
+    }
 
     // Aktív játék lekérdezése (a frontend ebből tudja melyik komponenst töltse be)
     @GetMapping("/active")

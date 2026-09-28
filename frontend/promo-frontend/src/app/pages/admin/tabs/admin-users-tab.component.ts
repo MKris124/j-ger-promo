@@ -18,4 +18,5 @@ export class AdminUsersTabComponent {
   // Események küldése a szülőnek
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() changeRole = new EventEmitter<{ user: any, role: string }>();
+  @Output() deleteUser = new EventEmitter<any>();
 }

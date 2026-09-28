@@ -15,7 +15,9 @@ body {
   @apply bg-jager-dark text-jager-light font-sans m-0 p-0 min-h-screen;
   /* Mélyzöld palack-effekt a fekete-narancs pornós vibe helyett */
   background: radial-gradient(circle at top, #1A3323 0%, #060B08 80%);
-  background-attachment: fixed;
+  /* FONTOS: 'background-attachment: fixed' + backdrop-blur (pl. .jager-card) kombó
+     nagyon lassú, mert a böngészőnek szinte minden repaint-nél újra kell mintáznia
+     a blur mögötti pixeleket — főleg nagy (PC) felbontáson érezhető. */
 }
 
 /* --- KÖZÖS KOMPONENSEK (Jäger Kártya) --- */

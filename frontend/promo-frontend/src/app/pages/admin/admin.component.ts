@@ -455,6 +455,17 @@ export class AdminComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteUser(user: AppUser): void {
+    if (!confirm(`Biztosan törlöd: "${user.name}" (${user.email})? Ez a felhasználó összes nyereménye és játéknaplója is törlődik.`)) return;
+    this.http.delete(`${this.apiBase}/users/${user.id}`, { headers: this.getHeaders() }).subscribe({
+      next: () => {
+        this.users = this.users.filter(u => u.id !== user.id);
+        this.showToast(`"${user.name}" törölve`, 'success');
+      },
+      error: () => this.showToast('Törlés sikertelen', 'error')
+    });
+  }
+
   // =================== UTILS ===================
   registeredGames: RegisteredGame[] = GAME_REGISTRY;
 

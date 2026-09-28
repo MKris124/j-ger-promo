@@ -40,12 +40,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
   gameLogs: GameLog[] = [];
   loading = true;
   qrModalPocket: PrizePocket | null = null;
+  maxPockets = 2; // Amíg be nem tölt a valódi, esemény-specifikus érték a backendről
 
   private refreshInterval: any = null;
 
   ngOnInit(): void {
+    this.loadMaxPockets();
     this.loadData();
     this.refreshInterval = setInterval(() => this.loadData(), 30000);
+  }
+
+  private loadMaxPockets(): void {
+    this.http.get<{ maxPocketsPerUser: number }>(`${this.apiBase}/max-pockets`, { headers: this.getHeaders() }).subscribe({
+      next: (res) => { this.maxPockets = res.maxPocketsPerUser; },
+      error: () => {}
+    });
   }
 
   ngOnDestroy(): void {
@@ -92,12 +101,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   getEmptySlots(): number[] {
-    const filled = Math.min(this.pockets.length, 2);
-    return Array(2 - filled).fill(0);
+    const filled = Math.min(this.pockets.length, this.maxPockets);
+    return Array(this.maxPockets - filled).fill(0);
   }
 
   isAllRedeemed(): boolean {
-    return this.pockets.length >= 2 && this.pockets.every(p => p.status === 'REDEEMED');
+    return this.pockets.length >= this.maxPockets && this.pockets.every(p => p.status === 'REDEEMED');
   }
 
   getAvailableCount(): number {

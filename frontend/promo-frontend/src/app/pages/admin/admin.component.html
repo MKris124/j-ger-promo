@@ -88,6 +88,7 @@
         [userSearchTerm]="userSearchTerm"
         [roleOptions]="roleOptions"
         (changeRole)="changeRole($event.user, $event.role)"
+        (deleteUser)="deleteUser($event)"
         (searchTermChange)="userSearchTerm = $event"
       />
     }

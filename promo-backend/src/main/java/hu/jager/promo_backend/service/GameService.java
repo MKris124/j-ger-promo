@@ -23,7 +23,7 @@ public class GameService {
     private final AppSettingsRepository settingsRepo;
 
     // Régi (funkció előtti) settings sorokon maxPocketsPerUser NULL lehet — akkor a korábbi fix 2 marad
-    private int getMaxPocketsPerUser() {
+    public int getMaxPocketsPerUser() {
         Integer max = settingsRepo.findById(1L).map(AppSettings::getMaxPocketsPerUser).orElse(null);
         return max != null ? max : 2;
     }
