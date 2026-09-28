@@ -36,6 +36,12 @@ body {
   }
 }
 
+/* --- NYERŐGÉP: konfetti szemcse-effekt nyerésnél --- */
+@keyframes confettiFall {
+  0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(180px) rotate(360deg); opacity: 0; }
+}
+
 /* --- EGYEDI GÖRGETŐSÁV (Webkit - Chrome, Safari, Edge) --- */
 ::-webkit-scrollbar {
   width: 6px;
