@@ -20,7 +20,7 @@
 
   <!-- Mobil nézet: kártyák -->
   <div class="block md:hidden flex flex-col gap-3">
-    @for (user of filteredUsers; track user.id) {
+    @for (user of pagedUsers; track user.id) {
       <div class="jager-card p-4 flex items-center gap-4">
         <div class="w-10 h-10 rounded-full bg-jager-orange/10 border border-jager-orange/20 flex items-center justify-center text-jager-orange font-bold text-sm flex-shrink-0">
           {{ user.name?.charAt(0)?.toUpperCase() || '?' }}
@@ -65,17 +65,27 @@
     <table class="w-full text-sm">
       <thead>
         <tr class="border-b border-jager-green/50 bg-black/40">
-          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">ID</th>
-          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Név</th>
-          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Email</th>
-          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Belépés módja</th>
-          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Szerepkör</th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            <button (click)="setSort('id')" class="flex items-center gap-1.5 hover:text-jager-orange transition-colors">ID <span class="text-jager-orange">{{ sortIcon('id') }}</span></button>
+          </th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            <button (click)="setSort('name')" class="flex items-center gap-1.5 hover:text-jager-orange transition-colors">Név <span class="text-jager-orange">{{ sortIcon('name') }}</span></button>
+          </th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            <button (click)="setSort('email')" class="flex items-center gap-1.5 hover:text-jager-orange transition-colors">Email <span class="text-jager-orange">{{ sortIcon('email') }}</span></button>
+          </th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            <button (click)="setSort('provider')" class="flex items-center gap-1.5 hover:text-jager-orange transition-colors">Belépés módja <span class="text-jager-orange">{{ sortIcon('provider') }}</span></button>
+          </th>
+          <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">
+            <button (click)="setSort('role')" class="flex items-center gap-1.5 hover:text-jager-orange transition-colors">Szerepkör <span class="text-jager-orange">{{ sortIcon('role') }}</span></button>
+          </th>
           <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold">Módosítás</th>
           <th class="px-5 py-4 text-left text-[10px] text-gray-500 uppercase tracking-widest font-semibold"></th>
         </tr>
       </thead>
       <tbody>
-        @for (user of filteredUsers; track user.id) {
+        @for (user of pagedUsers; track user.id) {
           <tr class="border-b border-white/5 hover:bg-white/[0.03] transition-colors">
             <td class="px-5 py-4 text-gray-500 font-mono text-xs">#{{ user.id }}</td>
             <td class="px-5 py-4 font-medium text-jager-light">{{ user.name }}</td>
@@ -125,5 +135,25 @@
       </div>
     }
   </div>
+
+  <!-- Lapozó -->
+  @if (filteredUsers.length > 0) {
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-xs text-gray-500">{{ rangeStart }}–{{ rangeEnd }} / {{ filteredUsers.length }} találat</p>
+      <div class="flex items-center gap-2">
+        <button
+          (click)="goToPage(currentPage - 1)"
+          [disabled]="currentPage === 1"
+          class="px-3 py-2 rounded-lg bg-black/40 border border-gray-700 text-gray-400 text-xs font-bold disabled:opacity-30 hover:border-jager-orange/40 hover:text-jager-orange transition-colors"
+        >‹ Előző</button>
+        <span class="text-xs text-gray-400 font-medium px-2">{{ currentPage }} / {{ totalPages }}</span>
+        <button
+          (click)="goToPage(currentPage + 1)"
+          [disabled]="currentPage === totalPages"
+          class="px-3 py-2 rounded-lg bg-black/40 border border-gray-700 text-gray-400 text-xs font-bold disabled:opacity-30 hover:border-jager-orange/40 hover:text-jager-orange transition-colors"
+        >Következő ›</button>
+      </div>
+    </div>
+  }
 
 </section>

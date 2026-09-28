@@ -23,6 +23,8 @@ public class AuthService {
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final DisposableEmailService disposableEmailService;
+    private final EmailDomainValidator emailDomainValidator;
 
     private static final SecureRandom CODE_RANDOM = new SecureRandom();
     private static final long CODE_VALIDITY_MINUTES = 15;
@@ -41,6 +43,14 @@ public class AuthService {
     public AppUser register(String email, String rawPassword, String name) { // <-- Itt a név paraméter
         if (userRepo.existsByEmail(email)) {
             throw new IllegalArgumentException("Ez az e-mail cím már regisztrálva van!");
+        }
+
+        if (disposableEmailService.isDisposable(email)) {
+            throw new IllegalArgumentException("Ideiglenes/eldobható e-mail címekkel nem lehet regisztrálni. Kérlek, adj meg egy valódi e-mail címet!");
+        }
+
+        if (!emailDomainValidator.hasValidMailDomain(email)) {
+            throw new IllegalArgumentException("Ez az e-mail cím domainje nem létezik vagy nem tud leveleket fogadni. Kérlek, ellenőrizd az e-mail címed!");
         }
 
         AppUser user = new AppUser();
