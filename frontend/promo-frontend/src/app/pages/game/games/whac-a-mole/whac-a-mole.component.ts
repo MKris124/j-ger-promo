@@ -23,19 +23,23 @@ export class WhacAMoleComponent implements OnDestroy {
 
   private readonly GRID_SIZE = 9;
   readonly ROUND_SECONDS = 45; // a template is használja (idle szöveg)
-  readonly WIN_SCORE = 16; // a template is használja (pontszám kijelzés)
+  readonly WIN_SCORE = 26; // a template is használja (pontszám kijelzés) — végig kell teljesíteni, nem csak az első pár másodpercben
   private readonly GOOD_POINTS = 1;
-  private readonly BAD_PENALTY = 2;
+  private readonly BAD_PENALTY = 3; // szigorúbb büntetés — a figyelmetlen kapkodás ne érje meg
+
   private readonly CONFETTI_EMOJI = ['🎉', '🎊', '🍀', '⭐', '🥃'];
 
   // Nehézségi görbe végpontjai — a teljes kör hosszára arányosítva, nem fix
-  // másodpercenkénti csökkentéssel, hogy a "beelőzés" a JÁTÉKIDŐ EGÉSZÉRE elosztva történjen
-  private readonly SPAWN_INTERVAL_START_MS = 900;
-  private readonly SPAWN_INTERVAL_END_MS = 280;
-  private readonly MOLE_UP_DURATION_START_MS = 1100;
-  private readonly MOLE_UP_DURATION_END_MS = 420;
-  private readonly BAD_CHANCE_START = 0.15;
-  private readonly BAD_CHANCE_END = 0.45;
+  // másodpercenkénti csökkentéssel, hogy a "beelőzés" a JÁTÉKIDŐ EGÉSZÉRE elosztva történjen.
+  // A spawn-intervallum és a fent-idő SZÁNDÉKOSAN közel van egymáshoz (sőt, később a spawn
+  // gyorsabb is a fent-időnél) — emiatt rendszeresen 2-3 szarvas/pohár lesz kint EGYSZERRE,
+  // ami valódi megosztott figyelmet igényel, nem csak egyetlen lyuk figyelését.
+  private readonly SPAWN_INTERVAL_START_MS = 750;
+  private readonly SPAWN_INTERVAL_END_MS = 220;
+  private readonly MOLE_UP_DURATION_START_MS = 800;
+  private readonly MOLE_UP_DURATION_END_MS = 320;
+  private readonly BAD_CHANCE_START = 0.22;
+  private readonly BAD_CHANCE_END = 0.55;
 
   private spawnTimer: ReturnType<typeof setTimeout> | null = null;
   private countdownTimer: ReturnType<typeof setInterval> | null = null;

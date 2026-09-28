@@ -37,8 +37,8 @@ export class SlotMachineComponent implements OnDestroy {
   // pontos, kontrollálható esély, klasszikus promó-gép trükk).
   private readonly BASE_WIN_CHANCE = 0.10;
 
-  // "Telitalálat" erőpróbánál duplázza az esélyt — a második mini-játék tétje
-  private readonly PERFECT_PULL_WIN_CHANCE = 0.20;
+  // "Telitalálat" Tökéletes Húzásnál megnöveli az esélyt — a második mini-játék tétje
+  private readonly PERFECT_PULL_WIN_CHANCE = 0.25;
 
   // Vesztésnél ilyen eséllyel lesz szándékosan "majdnem" (2 egyforma + 1 más) —
   // ez a klasszikus "near miss" pszichológia, sokkal izgalmasabb mint a tiszta random
@@ -48,7 +48,7 @@ export class SlotMachineComponent implements OnDestroy {
   // biztonsági háló, hogy senki ne ragadjon be örökre pörgő állapotban
   private readonly AUTO_STOP_MS = [4000, 4600, 5200];
 
-  readonly SWEET_SPOT_WIDTH = 16; // % — mekkora a célzóna az erőpróba sávon (a template is használja)
+  readonly SWEET_SPOT_WIDTH = 16; // % — mekkora a célzóna a Tökéletes Húzás sávon (a template is használja)
   private readonly PULL_SPEED = 3.2; // % / tick — milyen gyorsan mozog a mutató
 
   private readonly STAG: ReelSymbol = { type: 'image', value: '/assets/stag.png' };
@@ -70,7 +70,7 @@ export class SlotMachineComponent implements OnDestroy {
 
   state: GameState = 'idle';
 
-  // --- Erőpróba (1. mini-játék) ---
+  // --- Tökéletes Húzás (1. mini-játék) ---
   pullPosition = 0;
   sweetSpotStart = 0;
   perfectPull = false;
@@ -83,7 +83,7 @@ export class SlotMachineComponent implements OnDestroy {
   isNearMiss = false;
   confetti: ConfettiPiece[] = [];
 
-  // ============== 1. ERŐPRÓBA ==============
+  // ============== 1. TÖKÉLETES HÚZÁS ==============
 
   startPull(): void {
     this.state = 'pulling';
@@ -114,8 +114,9 @@ export class SlotMachineComponent implements OnDestroy {
     navigator.vibrate?.(this.perfectPull ? [60, 40, 60, 40, 120] : 40);
 
     const winChance = this.perfectPull ? this.PERFECT_PULL_WIN_CHANCE : this.BASE_WIN_CHANCE;
-    // Rövid szünet, hogy a játékos lássa a "Telitalálat!" visszajelzést, mielőtt pörögni kezd a gép
-    setTimeout(() => this.beginSpin(winChance), this.perfectPull ? 900 : 400);
+    // Elég hosszú szünet, hogy a játékos TÉNYLEG el tudja olvasni a visszajelzést,
+    // mielőtt pörögni kezd a gép — korábban 400/900ms volt, ez alig volt észrevehető
+    setTimeout(() => this.beginSpin(winChance), this.perfectPull ? 1800 : 1200);
   }
 
   // ============== 2. NYERŐGÉP ==============
@@ -128,7 +129,10 @@ export class SlotMachineComponent implements OnDestroy {
     this.confetti = [];
 
     this.pendingIsWin = Math.random() < winChance;
-    const { symbols, nearMiss } = this.pickFinalSymbols(this.pendingIsWin);
+    // Tökéletes Húzás után SOSE lehet "hideg" vesztés (0 szarvas) — ha nem nyer,
+    // akkor garantáltan legalább majdnem-találat, hogy a mini-játék MINDIG érezhetően
+    // fizessen valamit, ne csak egy láthatatlan valószínűség-eltolást
+    const { symbols, nearMiss } = this.pickFinalSymbols(this.pendingIsWin, this.perfectPull);
     this.finalSymbols = symbols;
     this.pendingNearMiss = nearMiss;
 
@@ -173,13 +177,13 @@ export class SlotMachineComponent implements OnDestroy {
     if (this.pullInterval) clearInterval(this.pullInterval);
   }
 
-  private pickFinalSymbols(isWin: boolean): { symbols: ReelSymbol[]; nearMiss: boolean } {
+  private pickFinalSymbols(isWin: boolean, guaranteeNearMiss = false): { symbols: ReelSymbol[]; nearMiss: boolean } {
     if (isWin) {
       return { symbols: [this.STAG, this.STAG, this.STAG], nearMiss: false };
     }
 
     // Szándékos "majdnem" — 2 szarvas landol, a 3. dobon biztosan valami más
-    if (Math.random() < this.NEAR_MISS_CHANCE) {
+    if (guaranteeNearMiss || Math.random() < this.NEAR_MISS_CHANCE) {
       const missReelIndex = Math.floor(Math.random() * 3);
       const other = this.randomSymbol(this.STAG);
       const symbols: ReelSymbol[] = [this.STAG, this.STAG, this.STAG];

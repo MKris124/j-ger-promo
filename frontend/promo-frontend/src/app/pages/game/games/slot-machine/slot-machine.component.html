@@ -5,8 +5,8 @@
     <div>
       <h2 class="text-2xl font-extrabold tracking-wider uppercase text-jager-light mb-2">Jäger Nyerőgép</h2>
       <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
-        Először egy <span class="text-jager-orange font-semibold">erőpróba</span> — telitalálat esetén
-        megduplázod az esélyed! Utána Te döntöd el mikor állítod meg a dobokat.
+        Először egy <span class="text-jager-orange font-semibold">Tökéletes Húzás</span> — állítsd meg
+        pontosan a mutatót, és megduplázod az esélyed! Utána Te döntöd el mikor állítod meg a dobokat.
         Ha mind a 3 dobon a <span class="text-jager-orange font-semibold">Jäger szarvas</span> jön ki,
         nyereményt kapsz a nyereménypoolból!
       </p>
@@ -17,14 +17,14 @@
   </div>
 }
 
-<!-- PULLING (erőpróba — 1. mini-játék, ez dönti el az esélyt a pörgetés előtt) -->
+<!-- PULLING (Tökéletes Húzás — 1. mini-játék, ez dönti el az esélyt a pörgetés előtt) -->
 @if (state === 'pulling') {
   <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-8 text-center">
-    <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-4xl">💪</div>
+    <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-4xl">🎯</div>
     <div>
-      <h2 class="text-xl font-extrabold tracking-wider uppercase text-jager-light mb-2">Erőpróba</h2>
+      <h2 class="text-xl font-extrabold tracking-wider uppercase text-jager-light mb-2">Tökéletes Húzás</h2>
       <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
-        Állítsd meg a mutatót a <span class="text-jager-orange font-semibold">kijelölt zónában</span> —
+        Állítsd meg a mutatót pontosan a <span class="text-jager-orange font-semibold">kijelölt zónában</span> —
         telitalálat esetén megduplázod a nyerési esélyed a nyerőgépen!
       </p>
     </div>
@@ -58,6 +58,14 @@
 <!-- SPINNING / RESULT (a dobok mindig látszanak, csak az animáció/gombok változnak) -->
 @if (state === 'spinning' || state === 'won' || state === 'lost') {
   <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-6">
+
+    @if (perfectPull) {
+      <!-- Végig látszik amíg a kör tart — hogy TÉNYLEG érezhető legyen, hogy a Tökéletes Húzás
+           hatással volt erre a pörgetésre, nem csak egy elvillanó üzenet volt -->
+      <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-jager-orange/15 border border-jager-orange/50 text-jager-orange text-xs font-black uppercase tracking-widest">
+        🎯 Dupla esély aktív ezen a pörgetésen!
+      </div>
+    }
 
     <div class="jager-card p-5 flex items-center gap-3 relative overflow-visible">
       @if (state === 'won') {
