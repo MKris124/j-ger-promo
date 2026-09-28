@@ -1,0 +1,63 @@
+<!-- IDLE -->
+@if (state === 'idle') {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-6 text-center">
+    <div class="w-20 h-20 rounded-full bg-jager-orange/10 border-2 border-jager-orange/30 flex items-center justify-center text-4xl">🎰</div>
+    <div>
+      <h2 class="text-2xl font-extrabold tracking-wider uppercase text-jager-light mb-2">Jäger Nyerőgép</h2>
+      <p class="text-gray-400 text-sm leading-relaxed max-w-xs">
+        Húzd meg a kart! Ha mind a 3 dobon a
+        <span class="text-jager-orange font-semibold">Jäger szarvas</span> jön ki,
+        nyereményt kapsz a nyereménypoolból!
+      </p>
+    </div>
+    <button (click)="spin()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase active:scale-95">
+      Pörgetek!
+    </button>
+  </div>
+}
+
+<!-- SPINNING / RESULT (a dobok mindig látszanak, csak az animáció/gombok változnak) -->
+@if (state === 'spinning' || state === 'won' || state === 'lost') {
+  <div class="flex flex-col items-center justify-center min-h-[60vh] p-6 gap-6">
+
+    <div class="jager-card p-5 flex items-center gap-3">
+      @for (reel of reels; track $index) {
+        <div
+          [class]="spinningReels[$index]
+            ? 'w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-black/60 border-2 border-jager-orange/30 flex items-center justify-center overflow-hidden animate-pulse'
+            : 'w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-black/60 border-2 border-jager-orange/60 flex items-center justify-center overflow-hidden shadow-[0_0_15px_rgba(243,112,33,0.2)]'"
+        >
+          @if (reel.type === 'image') {
+            <img [src]="reel.value" class="w-12 h-12 sm:w-14 sm:h-14 object-contain invert sepia saturate-[5] hue-rotate-[340deg] brightness-110">
+          } @else {
+            <span class="text-4xl sm:text-5xl">{{ reel.value }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    @if (state === 'spinning') {
+      <p class="text-jager-amber text-sm font-bold uppercase tracking-widest animate-pulse">Pörög...</p>
+    }
+
+    @if (state === 'won') {
+      <div class="flex flex-col items-center gap-3 text-center">
+        <p class="text-green-400 font-extrabold text-2xl">🎉 3 Szarvas — Nyertél!</p>
+        <p class="text-gray-400 text-sm">Nézd meg a nyereményed a profilodon!</p>
+      </div>
+    }
+
+    @if (state === 'lost') {
+      <div class="flex flex-col items-center gap-3 text-center">
+        <p class="text-red-400 font-extrabold text-xl">✗ Nem talált — próbáld újra!</p>
+      </div>
+    }
+
+    @if (state !== 'spinning') {
+      <button (click)="state === 'won' ? retry() : spin()" class="w-full max-w-xs py-4 bg-jager-orange hover:bg-orange-500 text-black font-extrabold text-lg rounded-2xl transition-colors tracking-widest uppercase active:scale-95">
+        {{ state === 'won' ? 'Újra játszom' : 'Pörgetek újra!' }}
+      </button>
+    }
+
+  </div>
+}

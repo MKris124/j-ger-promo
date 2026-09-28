@@ -1,6 +1,7 @@
 import { Type } from '@angular/core';
 import { CatchTheJagerComponent } from '../pages/game/games/catch-the-jager/jager.component';
 import { RideTheBusComponent } from '../pages/game/games/ride-the-bus/ride-the-bus.component';
+import { SlotMachineComponent } from '../pages/game/games/slot-machine/slot-machine.component';
 
 export interface RegisteredGame {
   id: string;           // egyedi kulcs — ez kerül az adatbázisba gameKey-ként
@@ -21,6 +22,12 @@ export const GAME_REGISTRY: RegisteredGame[] = [
     name: 'Jäger Busz',
     description: '4 szintes kártyajáték — shot vagy főnyeremény',
     component: RideTheBusComponent,
+  },
+  {
+    id: 'slot-machine',
+    name: 'Jäger Nyerőgép',
+    description: '3 azonos szarvas = nyeremény',
+    component: SlotMachineComponent,
   },
   // Új játék hozzáadásához: importáld a komponenst és vedd fel ide
 ];

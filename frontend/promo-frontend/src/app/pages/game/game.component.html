@@ -81,5 +81,15 @@
       }
     }
 
+    @if (activeGame?.gameKey === 'slot-machine') {
+      @defer {
+        <app-slot-machine (gameWon)="onGameWon()" (gameLost)="onGameLost()"></app-slot-machine>
+      } @loading {
+        <div class="flex justify-center items-center h-40 text-jager-amber text-sm font-bold animate-pulse">
+          Játék betöltése...
+        </div>
+      }
+    }
+
   </div>
 </div>
